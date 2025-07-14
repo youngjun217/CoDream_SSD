@@ -7,7 +7,7 @@ class shell_ftn():
             raise ValueError("ERROR")
         if type(idx)!=int:
             raise ValueError("ERROR")
-        result = read_ssd(idx)
+        result = SSD().read_ssd(idx)
         print(f'[Read] LBA {idx}: {result}')
         return result
 
@@ -26,10 +26,10 @@ class shell_ftn():
         # 각 명령어마다 사용법 기입
 
     def fullwrite(self, value):
-        if len(value) > 8:
+        if len(str(value)) > 8:
             raise ValueError("ERROR")
         for x in range(100):
-            SSD().write(value)
+            SSD().write_ssd(value)
         print("[Full Write] Done")
 
     def fullread(self):

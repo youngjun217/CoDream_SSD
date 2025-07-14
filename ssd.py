@@ -8,6 +8,8 @@ class SSD:
 
 #read함수
 
-    def read_ssd(idx):
+    def read_ssd(self,idx):
         pass
 #write 함수
+    def write_ssd(self,value):
+        pass

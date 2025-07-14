@@ -30,7 +30,7 @@ class shell_ftn:
             ssd_output = open("ssd_output.txt", "w")
 
             print("[Full Read]\n")
-            for i in range(99):
+            for i in range(100):
                 str = ssd_nand.readline()
                 words = str.split()
                 print(f"LBA {words[0]} : {words[1]}\n")

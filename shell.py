@@ -1,4 +1,6 @@
 import sys
+import random
+
 from ssd import read_ssd, write
 # from ssd import SSD
 
@@ -26,8 +28,6 @@ class shell_ftn:
 
         hex_part = value[2:]
 
-        if len(hex_part) != 8:
-            raise ValueError("0x 뒤에 정확히 8자리여야 합니다.")
 
         # 각 문자들이 16진수 범위인지 검사
         valid_chars = "0123456789abcdefABCDEF"
@@ -69,7 +69,33 @@ class shell_ftn:
         print("1_FullWriteAndReadCompare")
 
     def PartialLBAWrite(self):
-        print("2_PartialLBAWrite")
+        for i in range(30):
+            r1 = random.randint(0, 0xFFFFFFFF)
+            r1 = hex(r1)
+            self.write(4,r1)
+            self.write(0,r1)
+            self.write(3,r1)
+            self.write(1,r1)
+            self.write(2,r1)
+
+            a = self.read(0)
+            if a!= self.read(1):
+                print("FAIL")
+                return False
+            if a!= self.read(2):
+                print("FAIL")
+                return False
+            if a!= self.read(3):
+                print("FAIL")
+                return False
+            if a!= self.read(4):
+                print("FAIL")
+                return False
+        print("PASS")
+        return True
+
+
+
 
     def WriteReadAging(self):
         print("3_WriteReadAging")

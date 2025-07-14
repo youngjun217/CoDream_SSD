@@ -1,5 +1,5 @@
 import sys
-from ssd import read_ssd
+from ssd import read_ssd, write
 # from ssd import SSD
 
 class shell_ftn:
@@ -13,12 +13,30 @@ class shell_ftn:
         return result
 
 
-    def write(self,idx, value):
-        if idx<0 or idx>99:
-            raise ValueError("ERROR")
-        if len(value)>8:
-            raise ValueError("ERROR")
-        print(idx, value)
+    def write(self, num:int, value:int)->None:
+        if num<0:
+            raise AssertionError()
+        if num > 99:
+            raise AssertionError()
+        if not isinstance(value, str):
+            raise TypeError("입력은 문자열이어야 합니다. 예: '0x00000000'")
+
+        if not value.startswith("0x"):
+            raise ValueError("입력은 '0x'로 시작해야 합니다.")
+
+        hex_part = value[2:]
+
+        if len(hex_part) != 8:
+            raise ValueError("0x 뒤에 정확히 8자리여야 합니다.")
+
+        # 각 문자들이 16진수 범위인지 검사
+        valid_chars = "0123456789abcdefABCDEF"
+        if not all(c in valid_chars for c in hex_part):
+            raise ValueError("16진수 숫자만 허용됩니다 (0-9, A-F).")
+
+        if write(num, value):
+            print('[Write] Done')
+        pass
 
     # help : 프로그램 사용법
     def help(self):

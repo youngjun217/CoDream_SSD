@@ -1,8 +1,7 @@
 import sys
-from ssd import read_ssd
-# from ssd import SSD
+from ssd import SSD
+class shell_ftn():
 
-class shell_ftn:
     def read(self,idx:int):
         if idx<0 or idx>99:
             raise ValueError("ERROR")
@@ -29,7 +28,9 @@ class shell_ftn:
     def fullwrite(self, value):
         if len(value) > 8:
             raise ValueError("ERROR")
-        print("fullwrite")
+        for x in range(100):
+            SSD().write(value)
+        print("[Full Write] Done")
 
     def fullread(self):
         try:
@@ -49,6 +50,14 @@ class shell_ftn:
 
     def FullWriteAndReadCompare(self):
         print("1_FullWriteAndReadCompare")
+        # 1_FullWriteAndReadCompare
+        #
+        # 1_ 라고만 입력해도 실행 가능
+        # 0 ~ 4번 LBA까지 다섯개의 동일한 랜덤 값으로 write 명령어 수행
+        # 0 ~ 4번 LBA까지 실제 저장된 값과 맞는지 확인
+        # 5 ~ 9번 LBA까지 다섯개의 동일하지만 0 ~ 4번과 다른 랜덤값으로 write 명령어 수행
+        # 5 ~ 9번 LBA까지 실제 저장된 값과 맞는지 확인
+        # 위와 같은 규칙으로 전체 영역에 대해 반복
 
     def PartialLBAWrite(self):
         print("2_PartialLBAWrite")
@@ -119,4 +128,3 @@ class shell_ftn:
 
 if __name__ == "__main__":
     shell_ftn().main()
-

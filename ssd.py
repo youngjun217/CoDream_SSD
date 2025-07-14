@@ -4,6 +4,7 @@
 
 def read_ssd(idx):
     pass
+
 #write 함수
 
 def write(num, value):

@@ -1,10 +1,13 @@
-# 초기 ssd_nand.txt 파일 생성
+class SSD:
+    def __init__(self):
+        txt=[] # 초기 ssd_nand.txt 파일 생성
+        self._txt=txt
 
-#read함수
+    def read(self,index):
+        print("read")
 
-def read_ssd(idx):
-    pass
-#write 함수
+    def read_ssd(self,idx):
+        pass
 
-def write(num, value):
-    pass
+    def write_ssd(self,num,value):
+        pass

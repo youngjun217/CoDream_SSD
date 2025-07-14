@@ -61,7 +61,6 @@ class shell_ftn:
                 if str:
                     words = str.split()
                     print(f"LBA {words[0]} : {words[1]}\n")
-
             ssd_nand.close()
             ssd_output.close()
         except Exception as e:

@@ -38,6 +38,7 @@ def test_write( mocker):
     mk.call_count == 7
     pass
 
+
 def test_fullread(capsys):
     shell = shell_ftn()
     shell.fullread()
@@ -56,4 +57,5 @@ def test_fullwrite(capsys):
     expected = "[Full Write] Done"
 
     assert captured.out=="[Full Write] Done\n"
+
 

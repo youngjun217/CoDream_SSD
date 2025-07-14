@@ -1,5 +1,10 @@
 class SSD():
     def read_ssd(self, index):
+        if type(index) is not int:
+            raise ValueError("ERROR")
+        if not 0 <= index < 100:
+            raise ValueError("ERROR")
+
         ssd_nand_txt = ""
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
             ssd_nand_txt = file.read()

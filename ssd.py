@@ -1,5 +1,9 @@
-# 초기 ssd_nand.txt 파일 생성
+class SSD():
+    ...
+    # 초기 ssd_nand.txt 파일 생성
 
-#read함수
+    # read함수
 
-#write 함수
+    # write 함수
+
+

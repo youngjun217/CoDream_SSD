@@ -69,7 +69,6 @@ class shell_ftn:
         print("1_FullWriteAndReadCompare")
 
     def PartialLBAWrite(self):
-        print("2_PartialLBAWrite")
         for i in range(30):
             r1 = random.randint(0, 0xFFFFFFFF)
             r1 = hex(r1)
@@ -79,15 +78,20 @@ class shell_ftn:
             self.write(1,r1)
             self.write(2,r1)
 
-        a = self.read(0)
-        if a!= self.read(1):
-            return False
-        if a!= self.read(2):
-            return False
-        if a!= self.read(3):
-            return False
-        if a!= self.read(4):
-            return False
+            a = self.read(0)
+            if a!= self.read(1):
+                print("FAIL")
+                return False
+            if a!= self.read(2):
+                print("FAIL")
+                return False
+            if a!= self.read(3):
+                print("FAIL")
+                return False
+            if a!= self.read(4):
+                print("FAIL")
+                return False
+        print("PASS")
         return True
 
 

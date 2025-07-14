@@ -9,7 +9,7 @@ def test_ssd():
 def test_read():
     ssd = SSD()
     index = 3
-    ssd.read(lba=index)
+    ssd.read(index)
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
         ssd_nand_txt = file.read()
     lines = ssd_nand_txt.splitlines()

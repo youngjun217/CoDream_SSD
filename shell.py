@@ -1,4 +1,16 @@
+import pytest
+import ssd
+def write(num, value):
+    pass
 
+def test_write(mocker):
+    mk = mocker.patch(__name__ + '.write')
+    write(3,0x00000000)
+    mk.assert_called_once_with(3,0x00000000)
+    pass
+
+
+# test_write(3,0x00000000)
 # read
 # write
 # exit : 프로그램 종료

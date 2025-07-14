@@ -9,4 +9,10 @@ class SSD():
         with open("ssd_output.txt", "w") as file:
             file.write(target_line)
 
+#write 함수
+def write(num, value):
+    pass
 
+
+def read(idx):
+    pass

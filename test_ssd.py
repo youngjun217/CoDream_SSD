@@ -1,5 +1,4 @@
 import pytest
-
 from ssd import SSD
 
 

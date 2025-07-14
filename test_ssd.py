@@ -32,7 +32,7 @@ def test_write():
         ssd_output_txt = file.read()
 
     written_value = lines[index].split(" ")[-1]
-    assert value == int(written_value)
+    assert f"0x{value:08X}" == written_value
     assert ssd_output_txt == ""
 
 

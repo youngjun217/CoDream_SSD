@@ -1,6 +1,19 @@
 import pytest
 import ssd
-def write(num, value):
+def write(num:int, value:int)->None:
+    if num<0:
+        raise AssertionError()
+    if num > 99:
+        raise AssertionError()
+    if not isinstance(value, int):
+        raise TypeError("입력은 정수여야 합니다. 예: 0x10000000 같은 형식으로 입력하세요.")
+
+    # 범위 제한 (선택)
+    if not (0 <= value <= 0xFFFFFFFF):
+        raise ValueError("입력값은 0x00000000 ~ 0xFFFFFFFF 범위여야 합니다.")
+
+    if ssd.write(num, value):
+        print('[Write] Done')
     pass
 
 def test_write(mocker):
@@ -9,8 +22,6 @@ def test_write(mocker):
     mk.assert_called_once_with(3,0x00000000)
     pass
 
-
-# test_write(3,0x00000000)
 # read
 # write
 # exit : 프로그램 종료

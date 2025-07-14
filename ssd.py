@@ -14,5 +14,5 @@ def write(num, value):
     pass
 
 
-def read(idx):
+def read_ssd(idx):
     pass

@@ -1,5 +1,5 @@
 import sys
-from ssd import read, write
+from ssd import read_ssd, write
 # from ssd import SSD
 
 class shell_ftn:
@@ -8,7 +8,7 @@ class shell_ftn:
             raise ValueError("ERROR")
         if type(idx)!=int:
             raise ValueError("ERROR")
-        result = read(idx)
+        result = read_ssd(idx)
         print(f'[Read] LBA {idx}: {result}')
         return result
 

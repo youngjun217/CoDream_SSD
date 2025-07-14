@@ -21,3 +21,9 @@ def test_read_fail(mocker):
         shell.read(100)
     with pytest.raises(ValueError, match='ERROR'):
         shell.read(10.1)
+
+def test_fullread(capsys):
+    shell = shell_ftn()
+    shell.fullread()
+    captured = capsys.readouterr()
+    assert captured.out.startswith("[Full Read]")

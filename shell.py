@@ -17,9 +17,16 @@ def write(num:int, value:int)->None:
     pass
 
 def test_write(mocker):
-    mk = mocker.patch(__name__ + '.write')
+    mk = mocker.patch('ssd.write')
     write(3,0x00000000)
-    mk.assert_called_once_with(3,0x00000000)
+    write(0,0x00000000)
+    write(3,0x03300000)
+    with pytest.raises(AssertionError):
+        write(-1,0x00000000)
+        write(100,0x00000000)
+        write('3',0x00000000)
+        write(3,0x0000000011)
+    mk.call_count==7
     pass
 
 # read

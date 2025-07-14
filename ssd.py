@@ -3,6 +3,5 @@
 #read함수
 
 #write 함수
-def write(num1, num2):
-    return True
+def write():
     pass

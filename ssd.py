@@ -6,6 +6,13 @@ class SSD():
 
     # write 함수
     def write(self, lba, value):
+        if type(lba) is not int:
+            raise ValueError("ERROR")
+        if lba < 0:
+            raise ValueError("ERROR")
+        if lba >= 100:
+            raise ValueError("ERROR")
+
         # ssd_nand.txt 파일 읽기
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
             ssd_nand_txt = file.readlines()

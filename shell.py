@@ -1,5 +1,20 @@
+from pytest_mock import MockerFixture
+from ssd import read_ssd
 
 # read
+def read(lba: int):
+    result = read_ssd(lba)
+    print(f'[Read] LBA {lba}: {result}')
+    return result
+
+
+def test_read(mocker):
+    mock_read_ssd = mocker.patch('shell.read_ssd')
+    mock_read_ssd.side_effect = [1,2,3]
+
+    assert read(0) == 1
+    assert read(1) == 2
+    assert read(2) == 3
 # write
 # exit : 프로그램 종료
 # help : 프로그램 사용법

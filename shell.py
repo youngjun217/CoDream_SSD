@@ -1,10 +1,17 @@
 import sys
+from ssd import read_ssd
 # from ssd import SSD
+
 class shell_ftn:
     def read(self,idx:int):
         if idx<0 or idx>99:
             raise ValueError("ERROR")
-        print(idx)
+        if type(idx)!=int:
+            raise ValueError("ERROR")
+        result = read_ssd(idx)
+        print(f'[Read] LBA {idx}: {result}')
+        return result
+
 
     def write(self,idx, value):
         if idx<0 or idx>99:

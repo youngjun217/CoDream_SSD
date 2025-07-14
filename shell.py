@@ -6,6 +6,8 @@ class shell_ftn:
     def read(self,idx:int):
         if idx<0 or idx>99:
             raise ValueError("ERROR")
+        if type(idx)!=int:
+            raise ValueError("ERROR")
         result = read_ssd(idx)
         print(f'[Read] LBA {idx}: {result}')
         return result

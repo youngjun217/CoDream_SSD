@@ -8,9 +8,15 @@ class SSD():
     def write(self, lba, value):
         if type(lba) is not int:
             raise ValueError("ERROR")
+        if type(value) is not int:
+            raise ValueError("ERROR")
         if lba < 0:
             raise ValueError("ERROR")
         if lba >= 100:
+            raise ValueError("ERROR")
+        if value < 0:
+            raise ValueError("ERROR")
+        if value >= 0x100000000:
             raise ValueError("ERROR")
 
         # ssd_nand.txt 파일 읽기

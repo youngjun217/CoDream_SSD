@@ -78,3 +78,19 @@ def test_ssd_write_error_not_digit():
     ssd = SSD()
     with pytest.raises(ValueError, match = "ERROR"):
         ssd.write("abc", 0x00000000)
+    with pytest.raises(ValueError, match="ERROR"):
+        ssd.write(3, "0xABCD0000")
+
+
+def test_ssd_write_error_minus_value():
+    ssd = SSD()
+    with pytest.raises(ValueError, match = "ERROR"):
+        ssd.write(10, -1)
+
+
+def test_ssd_write_error_value_above_32bits():
+    ssd = SSD()
+    with pytest.raises(ValueError, match = "ERROR"):
+        ssd.write(10, 0x100000000)
+    with pytest.raises(ValueError, match = "ERROR"):
+        ssd.write(10, 0x300000000)

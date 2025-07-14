@@ -25,7 +25,20 @@ class shell_ftn:
         print("fullwrite")
 
     def fullread(self):
-        print("fullread")
+        try:
+            ssd_nand = open("ssd_nand.txt", "r")
+            ssd_output = open("ssd_output.txt", "w")
+
+            print("[Full Read]\n")
+            for i in range(100):
+                str = ssd_nand.readline()
+                words = str.split()
+                print(f"LBA {words[0]} : {words[1]}\n")
+
+            ssd_nand.close()
+            ssd_output.close()
+        except Exception as e:
+            raise e
 
     def FullWriteAndReadCompare(self):
         print("1_FullWriteAndReadCompare")

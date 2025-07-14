@@ -19,9 +19,10 @@ def test_read():
 
     assert lines[index] == ssd_output_txt
 
-def test_write():
+@pytest.mark.parametrize("lst", [0,10,20,50,90,99])
+def test_write(lst):
     ssd = SSD()
-    index = 3
+    index = lst
     value = 0x1298CDEF
     ssd.write(lba=index, value=value)
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:

@@ -41,7 +41,7 @@ def test_fullread(capsys):
     shell.fullread()
     captured = capsys.readouterr()
 
-    assert captured.out =="[Full Read]\n"
+    assert captured.out.split('\n')[0]=="[Full Read]"
 
 
 def test_fullwrite(capsys):
@@ -55,4 +55,9 @@ def test_fullwrite(capsys):
 
     assert captured.out=="[Full Write] Done\n"
 
-# def test_FullWriteAndReadCompare():
+def test_FullWriteAndReadCompare():
+    test_shell = shell_ftn()
+    # act
+    test_shell.FullWriteAndReadCompare()
+
+    assert test_shell

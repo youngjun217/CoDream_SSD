@@ -22,6 +22,12 @@ def test_read_fail(mocker):
     with pytest.raises(ValueError, match='ERROR'):
         shell.read(10.1)
 
+def test_fullread(capsys):
+    shell = shell_ftn()
+    shell.fullread()
+    captured = capsys.readouterr()
+    assert captured.out.startswith("[Full Read]")
+
 def test_write( mocker):
     shell = shell_ftn()
     mk = mocker.patch('ssd.write')
@@ -35,7 +41,7 @@ def test_write( mocker):
         shell.write(3, '0x0000000011')
     mk.call_count == 7
     pass
-
+  
 def test_PartialLBAWrite():
     shell = shell_ftn()
     assert shell.PartialLBAWrite()

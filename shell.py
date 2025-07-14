@@ -54,11 +54,11 @@ class shell_ftn:
             ssd_nand = open("ssd_nand.txt", "r")
             ssd_output = open("ssd_output.txt", "w")
 
-            print("[Full Read]\n")
+            print("[Full Read]")
             for i in range(100):
                 str = ssd_nand.readline()
                 words = str.split()
-                print(f"LBA {words[0]} : {words[1]}\n")
+                print(f"LBA {words[0]} : {words[1]}")
 
             ssd_nand.close()
             ssd_output.close()

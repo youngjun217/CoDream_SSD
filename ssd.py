@@ -2,4 +2,6 @@
 
 #read함수
 
+def read_ssd(idx):
+    pass
 #write 함수

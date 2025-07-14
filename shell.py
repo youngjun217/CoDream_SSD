@@ -13,7 +13,7 @@ class shell_ftn:
         return result
 
 
-    def write(self,num, value):
+    def write(self, num:int, value:int)->None:
         if num<0:
             raise AssertionError()
         if num > 99:
@@ -91,6 +91,7 @@ class shell_ftn:
             self.PartialLBAWrite()
         elif test_intro == '3_':
             self.WriteReadAging()
+
 
     def main_function(self,args):
         if args[0].lower() == "read" and len(args)==2:

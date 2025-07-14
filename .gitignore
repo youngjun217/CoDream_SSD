@@ -51,3 +51,5 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+ssd_nand.txt
+ssd_output.txt

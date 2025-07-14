@@ -14,7 +14,7 @@ def generate_ssd_nand_txt():
 def test_read():
     ssd = SSD()
     index = 3
-    ssd.read(index)
+    ssd.read_ssd(index)
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
         ssd_nand_txt = file.read()
     lines = ssd_nand_txt.splitlines()
@@ -31,7 +31,7 @@ def test_write(lst):
     ssd = SSD()
     index = lst
     value = 0x1298CDEF
-    ssd.write(lba=index, value=value)
+    ssd.write_ssd(lba=index, value=value)
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
         ssd_nand_txt = file.read()
     lines = ssd_nand_txt.splitlines()
@@ -47,62 +47,62 @@ def test_write(lst):
 def test_ssd_read_error_minus_index():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.read(-1)
+        ssd.read_ssd(-1)
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.read(-10)
+        ssd.read_ssd(-10)
 
 
 def test_ssd_read_error_index_above_99():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.read(100)
+        ssd.read_ssd(100)
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.read(1000)
+        ssd.read_ssd(1000)
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.read(10000)
+        ssd.read_ssd(10000)
 
 
 def test_ssd_read_error_not_digit():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.read("abc")
+        ssd.read_ssd("abc")
 
 
 def test_ssd_write_error_minus_index():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(-1, 0x00000000)
+        ssd.write_ssd(-1, 0x00000000)
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(-10, 0x00000000)
+        ssd.write_ssd(-10, 0x00000000)
 
 
 def test_ssd_write_error_index_above_99():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(100, 0x00000000)
+        ssd.write_ssd(100, 0x00000000)
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(1000, 0x00000000)
+        ssd.write_ssd(1000, 0x00000000)
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(10000, 0x00000000)
+        ssd.write_ssd(10000, 0x00000000)
 
 
 def test_ssd_write_error_not_digit():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write("abc", 0x00000000)
+        ssd.write_ssd("abc", 0x00000000)
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(3, "0xABCD0000")
+        ssd.write_ssd(3, "0xABCD0000")
 
 
 def test_ssd_write_error_minus_value():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(10, -1)
+        ssd.write_ssd(10, -1)
 
 
 def test_ssd_write_error_value_above_32bits():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(10, 0x100000000)
+        ssd.write_ssd(10, 0x100000000)
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.write(10, 0x300000000)
+        ssd.write_ssd(10, 0x300000000)

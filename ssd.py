@@ -1,5 +1,5 @@
 class SSD():
-    def read(self, index):
+    def read_ssd(self, index):
         ssd_nand_txt = ""
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
             ssd_nand_txt = file.read()
@@ -10,7 +10,7 @@ class SSD():
             file.write(target_line)
 
     # write 함수
-    def write(self, lba, value):
+    def write_ssd(self, lba, value):
         if not self.check_input_validity(lba, value):
             raise ValueError("ERROR")
 
@@ -39,6 +39,3 @@ class SSD():
         if not 0 <= value <= 0xFFFFFFFF:
             return False
         return True
-
-    def read_ssd(idx):
-        pass

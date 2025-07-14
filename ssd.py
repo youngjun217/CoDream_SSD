@@ -1,8 +1,6 @@
 class SSD():
     def read_ssd(self, index):
-        if type(index) is not int:
-            raise ValueError("ERROR")
-        if not 0 <= index < 100:
+        if not self.check_input_validity(index):
             raise ValueError("ERROR")
 
         ssd_nand_txt = ""
@@ -34,7 +32,7 @@ class SSD():
         with open("ssd_output.txt", 'w', encoding='utf-8') as file:
             file.write("")
 
-    def check_input_validity(self, lba, value):
+    def check_input_validity(self, lba, value = 0x00000000):
         if type(lba) is not int:
             return False
         if type(value) is not int:

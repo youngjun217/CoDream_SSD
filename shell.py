@@ -1,5 +1,6 @@
 import sys
 from ssd import SSD
+import random
 
 class shell_ftn:
     def read(self,idx:int):
@@ -68,15 +69,14 @@ class shell_ftn:
             raise e
 
     def FullWriteAndReadCompare(self):
-        print("1_FullWriteAndReadCompare")
-        # 1_FullWriteAndReadCompare
-        #
-        # 1_ 라고만 입력해도 실행 가능
-        # 0 ~ 4번 LBA까지 다섯개의 동일한 랜덤 값으로 write 명령어 수행
-        # 0 ~ 4번 LBA까지 실제 저장된 값과 맞는지 확인
-        # 5 ~ 9번 LBA까지 다섯개의 동일하지만 0 ~ 4번과 다른 랜덤값으로 write 명령어 수행
-        # 5 ~ 9번 LBA까지 실제 저장된 값과 맞는지 확인
-        # 위와 같은 규칙으로 전체 영역에 대해 반복
+        for start_idx in range(0, 100, 5):
+            rand_num = random.randint(0x00000000, 0xFFFFFFFF)
+            rand_num_list = [rand_num] * 5
+            for x in range(5):
+                SSD().write_ssd(start_idx+x,rand_num_list[x])
+                if SSD().read_ssd(start_idx+x) == rand_num_list[x]:
+                    pass
+
 
     def PartialLBAWrite(self):
         print("2_PartialLBAWrite")

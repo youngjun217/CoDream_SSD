@@ -57,3 +57,4 @@ def test_fullwrite(capsys):
 
     assert captured.out=="[Full Write] Done\n"
 
+# def test_FullWriteAndReadCompare():

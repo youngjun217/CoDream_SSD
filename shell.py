@@ -120,20 +120,20 @@ class shell_ftn():
         print('PASS')
 
     def testScript(self,test_intro):
-        if test_intro == '1_':
-            self.FullWriteAndReadCompare()
-        elif test_intro == '2_':
-            self.PartialLBAWrite()
-        elif test_intro == '3_':
-            self.WriteReadAging()
+        test_script_dict = {
+            "1_": lambda: self.FullWriteAndReadCompare(),
+            "2_": lambda: self.PartialLBAWrite(),
+            "3_": lambda: self.WriteReadAging(),
+            }
+        if test_intro in test_script_dict:test_script_dict[test_intro]()
 
     def main_function(self,args):
         if args[0].lower() == "read" and len(args)==2:
-            self.read(int(args[1])) #idx
+            self.read(int(args[1]))
         elif args[0].lower() == "write"and len(args)==3:
-            self.write(int(args[1]), args[2]) #idx, value
+            self.write(int(args[1]), args[2])
         elif args[0].lower() == "fullwrite"and len(args)==2:
-            self.fullwrite(args[1]) #value
+            self.fullwrite(args[1])
         elif args[0].lower() == "fullread"and len(args)==1:
             self.fullread()
         elif args[0][0:2] in ['1_','2_','3_']and len(args)==1:
@@ -148,8 +148,7 @@ class shell_ftn():
     def main(self):
         while True:
             command = input("Shell>")
-            if command.split()[0].lower() == "exit":
-                break
+            if command.split()[0].lower() == "exit":break
             self.main_function(command.split())
 
 if __name__ == "__main__":

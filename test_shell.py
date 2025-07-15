@@ -24,23 +24,21 @@ def test_read_fail(mocker):
     with pytest.raises(ValueError, match='ERROR'):
         shell.read(10.1)
 
-def test_write_success(mocker):
+def test_write_success():
     shell = shell_ftn()
-    mk = mocker.patch('shell.shell_ftn.write')
-    shell.write(3, '0x00000000')
-    shell.write(0, '0x00000000')
-    shell.write(3, '0x03300000')
+    shell.write(3, 0x00000000)
+    shell.write(0, 0x00000000)
+    shell.write(3, 0x03300000)
 
-    assert mk.call_count == 3
     pass
 
-def test_write_fail(mocker):
-    mk = mocker.patch.object(SSD(), 'write_ssd')
-    mk.write(-1, '0x00000000')
-    mk.write(100, '0x00000000')
-    mk.write('3', '0x00000000')
-    mk.write(3, '0x0000000011')
-    assert mk.call_count == 3
+def test_write_fail():
+    shell = shell_ftn()
+    with pytest.raises(ValueError):
+        shell.write(-1, '0x00000000')
+        shell.write(100, '0x00000000')
+        shell.write('3', '0x00000000')
+        shell.write(3, '0x0000000011')
 
 def test_fullread(capsys):
     shell = shell_ftn()

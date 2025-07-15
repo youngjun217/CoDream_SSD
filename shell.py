@@ -1,8 +1,6 @@
 import sys
+from ssd import SSD
 import random
-
-from ssd import read_ssd, write
-# from ssd import SSD
 
 class shell_ftn:
     def read(self,idx:int):
@@ -10,7 +8,7 @@ class shell_ftn:
             raise ValueError("ERROR")
         if type(idx)!=int:
             raise ValueError("ERROR")
-        result = read_ssd(idx)
+        result = ssd.read_ssd(idx)
         print(f'[Read] LBA {idx}: {result}')
         return result
 
@@ -34,7 +32,7 @@ class shell_ftn:
         if not all(c in valid_chars for c in hex_part):
             raise ValueError("16진수 숫자만 허용됩니다 (0-9, A-F).")
 
-        if write(num, value):
+        if ssd.write_ssd(num, value):
             print('[Write] Done')
         pass
 
@@ -95,10 +93,24 @@ class shell_ftn:
         return True
 
 
+    def _read_line(self, filepath, line_number):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            for current_line, line in enumerate(f, start=1):
+                if current_line == line_number:
+                    parts = line.strip().split()
+                    return int(parts[1])
+        return None
 
-
-    def WriteReadAging(self):
-        print("3_WriteReadAging")
+    def WriteReadAging(self, filepath):
+        value = random.randint(0, 0xFFFFFFFF)
+        ssd = SSD()
+        for i in range(200):
+            ssd.write_ssd(0, value)
+            ssd.write_ssd(99, value)
+            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
+                print('FAIL')
+                return
+        print('PASS')
 
     def testScript(self,test_intro):
         if test_intro == '1_':

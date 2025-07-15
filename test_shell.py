@@ -122,9 +122,15 @@ def test_FullWriteAndReadCompare(capsys,mocker):
     mk.call_count == 1
 
 
-def test_PartialLBAWrite():
+def test_PartialLBAWrite(mocker):
     shell = shell_ftn()
-    assert shell.PartialLBAWrite()
+    mocker.patch('random.randint', return_value=12345678)
+    mock_write_ssd = mocker.patch.object(shell.ssd, 'write_ssd')
+    mock_read_value = mocker.patch.object(shell, 'get_ssd_nand_value', return_value=42)
+    result = shell.PartialLBAWrite()
+    assert mock_write_ssd.call_count == 150
+    assert mock_read_value.call_count >= 1
+    assert result is True
 
 
 def test_WriteReadAging_pass(mocker:MockerFixture, capsys):

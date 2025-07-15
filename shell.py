@@ -1,6 +1,6 @@
 import random
 
-from ssd import SSD
+from ssd import SSD, SSDOutput
 
 
 class shell_ftn():
@@ -17,7 +17,10 @@ class shell_ftn():
         return result
 
     def write(self, num: int, value: int) -> None:
-        if self.ssd.write_ssd(num, value):
+        my_ssd = SSD()
+        my_ssd.write_ssd(num, int(value,16))
+        my_ssdoutput = SSDOutput()
+        if my_ssdoutput == "":
             print('[Write] Done')
         pass
 

@@ -2,6 +2,7 @@ import random
 
 import pytest
 from ssd import SSD, SSDOutput, SSDNand
+from pytest_mock import MockerFixture
 
 
 def generate_ssd_nand_txt():
@@ -169,3 +170,13 @@ def test_nand_write():
 
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
         assert file.readlines() == ssd_nand_txt
+
+
+def test_ssd_read_output(mocker: MockerFixture):
+    mk = mocker.Mock(spec=SSDOutput)
+    ssd = SSD()
+    ssd._output_txt = mk
+    ssd.read_ssd(3)
+    assert ssd._output_txt.write.call_count == 1
+
+

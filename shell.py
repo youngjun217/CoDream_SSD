@@ -17,6 +17,7 @@ class shell_ftn():
 
 
     def write(self, num:int, value:int)->None:
+        value = int(value, 16)
         if self.ssd.write_ssd(num, value):
             print('[Write] Done')
         pass

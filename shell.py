@@ -46,15 +46,14 @@ class shell_ftn():
               'CoDream Team : our dreaming code\n',
               '팀장 : 조영준\n',
               '팀원 : 민동학, 박승욱, 이재원, 최일묵, 한재원 \n\n',
+              'How to Use???============================================\n',
               'Rule 1. Index in 0~99\n',
-              'Rule 2. Value in 0x00000000~0xFFFFFFFF\n',
-              'How to Use???============================================\n\n',
-              'read Index : read memory[Index] value        ex)[Read] LBA 00 : 0x00000000\n',
-              'write Index Value : write value in memory[Index]     ex)[Write] Done\n',
-              'write Index Value : write value in memory[Index]     ex)[Write] Done\n',
+              'Rule 2. Value in 0x00000000~0xFFFFFFFF\n\n',
+              'read Index : read memory[Index] value                        ex)[Read] LBA 00 : 0x00000000\n',
+              'write Index Value : write value in memory[Index]             ex)[Write] Done\n',
               'exit : exit program\n',
-              'fullwrite Value : write value all memory Index       ex)[Full Write] Done\n',
-              'fullread : read all memory Index value       ex)[Full Read] ...\n',
+              'fullwrite Value : write value all memory Index               ex)[Full Write] Done\n',
+              'fullread : read all memory Index value                       ex)[Full Read] ...\n',
               '1_FullWriteAndReadCompare : compare write and read on every 5 Index \n',
               '2_PartialLBAWrite : Write a random value at the 0~4 index and check if the values are the same 30 times.\n',
               '3_WriteReadAging : Write a random value at index 0.99 and check if the values are the same 200 times.\n',
@@ -160,6 +159,8 @@ class shell_ftn():
         elif args[0][0:2] in ['1_','2_','3_']and len(args)==1:
             test_intro = args[0][0:2]
             self.testScript(test_intro)
+        elif args[0].lower() =='help':
+            self.help()
         else:
             raise ValueError("INVALID COMMAND")
 

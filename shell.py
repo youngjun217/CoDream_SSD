@@ -63,7 +63,6 @@ class shell_ftn():
                 raise e
 
     def FullWriteAndReadCompare(self):
-        check = False
         for start_idx in range(0, 100, 5):
             for x in range(5):
                 rand_num = random.randint(0, 0xFFFFFFFF)
@@ -71,12 +70,8 @@ class shell_ftn():
                 self.ssd.write_ssd(start_idx + x, rand_num)
                 if self.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
-                    check = True
-                    break
-            if check:
-                break
-        if not check:
-            print('PASS')
+                    return
+        print('PASS')
 
     def PartialLBAWrite(self):
         for i in range(30):

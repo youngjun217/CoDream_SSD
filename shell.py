@@ -41,9 +41,24 @@ class shell_ftn():
 
     # help : 프로그램 사용법
     def help(self):
-        print('help')
         # 제작자 명시 (팀장/팀원)
-        # 각 명령어마다 사용법 기입
+        print('[Help]\n',
+              'CoDream Team : our dreaming code\n',
+              '팀장 : 조영준\n',
+              '팀원 : 민동학, 박승욱, 이재원, 최일묵, 한재원 \n\n',
+              'Rule 1. Index in 0~99\n',
+              'Rule 2. Value in 0x00000000~0xFFFFFFFF\n',
+              'How to Use???============================================\n\n',
+              'read Index : read memory[Index] value        ex)[Read] LBA 00 : 0x00000000\n',
+              'write Index Value : write value in memory[Index]     ex)[Write] Done\n',
+              'write Index Value : write value in memory[Index]     ex)[Write] Done\n',
+              'exit : exit program\n',
+              'fullwrite Value : write value all memory Index       ex)[Full Write] Done\n',
+              'fullread : read all memory Index value       ex)[Full Read] ...\n',
+              '1_FullWriteAndReadCompare : compare write and read on every 5 Index \n',
+              '2_PartialLBAWrite : Write a random value at the 0~4 index and check if the values are the same 30 times.\n',
+              '3_WriteReadAging : Write a random value at index 0.99 and check if the values are the same 200 times.\n',
+              )
 
     def fullwrite(self, value):
         if len(str(value)) > 8:

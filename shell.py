@@ -6,9 +6,6 @@ class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
 
-    def __init__(self, ssd):
-        self.ssd = ssd
-
     def read(self,idx:int):
         if idx<0 or idx>99:
             raise ValueError("ERROR")

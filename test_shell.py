@@ -26,7 +26,9 @@ class TestableSSD(SSD):
 @pytest.fixture
 def shell_with_ssd_mock():
     testable_ssd = TestableSSD()
-    return shell_ftn(testable_ssd)
+    shell = shell_ftn()
+    shell.ssd = testable_ssd
+    return shell
 
 
 def test_read_success(mocker):

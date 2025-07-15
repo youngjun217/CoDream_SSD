@@ -15,32 +15,32 @@ class SSD():
 
     def run(self, sys_argv):
         cmd = sys_argv[1]
-        index = int(sys_argv[2])
+        lba = int(sys_argv[2])
         if (cmd == 'W'):
             if len(sys_argv) != 4:
-                print("Usage: python ssd.py <command> <index> <value>")
+                print("Usage: python ssd.py <command> <lba> <value>")
                 sys.exit(1)
             value = int(sys_argv[3], 16)
-            print(f"command({cmd!r}, {index}, {hex(value):010})")
-            self.write_ssd(index, value)
+            print(f"command({cmd!r}, {lba}, {hex(value):010})")
+            self.write_ssd(lba, value)
         elif (cmd == 'R'):
             if len(sys_argv) != 3:
-                print("Usage: python ssd.py <command> <index>")
+                print("Usage: python ssd.py <command> <lba>")
                 sys.exit(1)
-            print(f"command({cmd!r}, {index})")
-            self.read_ssd(index)
+            print(f"command({cmd!r}, {lba})")
+            self.read_ssd(lba)
         else:
-            print("Usage: python ssd.py <command == W or R> <index> <value: if command == W>")
+            print("Usage: python ssd.py <command == W or R> <lba> <value: if command == W>")
             sys.exit(1)
         # 실제 동작 코드 작성
 
-    def read_ssd(self, index):
-        if not self.check_input_validity(index):
+    def read_ssd(self, lba):
+        if not self.check_input_validity(lba):
             self._output_txt.write("ERROR")
             raise ValueError("ERROR")
 
         lines = self._nand_txt.read()
-        target_line = lines[index]
+        target_line = lines[lba]
 
         self._output_txt.write(target_line)
 
@@ -96,9 +96,9 @@ class SSDNand:
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
             return file.readlines()
 
-    def readline(self, index):
+    def readline(self, lba):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-            return file.readlines()[index]
+            return file.readlines()[lba]
 
     def write(self, output):
         with open("ssd_nand.txt", 'w', encoding='utf-8') as file:

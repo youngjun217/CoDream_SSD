@@ -17,7 +17,6 @@ class SSD():
 
     def run(self, sys_argv):
         cmd = sys_argv[1]
-        print(cmd)
         if not self._check_command_validity(cmd, len(sys_argv)):
             self._raise_error()
 

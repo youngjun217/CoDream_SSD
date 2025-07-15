@@ -29,7 +29,6 @@ def test_write_success():
     shell.write(3, 0x00000000)
     shell.write(0, 0x00000000)
     shell.write(3, 0x03300000)
-
     pass
 
 def test_write_fail():

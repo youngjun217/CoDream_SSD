@@ -1,22 +1,22 @@
-import sys
-from ssd import SSD
 import random
+
+from ssd import SSD
+
 
 class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
 
-    def read(self,idx:int):
-        if idx<0 or idx>99:
+    def read(self, idx: int):
+        if idx < 0 or idx > 99:
             raise ValueError("ERROR")
-        if type(idx)!=int:
+        if type(idx) != int:
             raise ValueError("ERROR")
         result = self.ssd.read_ssd(idx)
         print(f'[Read] LBA {idx}: {result}')
         return result
 
-
-    def write(self, num:int, value:int)->None:
+    def write(self, num: int, value: int) -> None:
         if self.ssd.write_ssd(num, value):
             print('[Write] Done')
         pass
@@ -31,7 +31,7 @@ class shell_ftn():
         if len(str(value)) > 8:
             raise ValueError("ERROR")
         for x in range(100):
-            SSD().write_ssd(x,value)
+            SSD().write_ssd(x, value)
         print("[Full Write] Done")
 
     def fullread(self):
@@ -56,36 +56,32 @@ class shell_ftn():
             rand_num = random.randint(0x00000000, 0xFFFFFFFF)
             rand_num_list = [rand_num] * 5
             for x in range(5):
-                SSD().write_ssd(start_idx+x,rand_num_list[x])
-                if SSD().read_ssd(start_idx+x) == rand_num_list[x]:
+                SSD().write_ssd(start_idx + x, rand_num_list[x])
+                if SSD().read_ssd(start_idx + x) == rand_num_list[x]:
                     pass
 
-
     def PartialLBAWrite(self):
-        for i in range(30):
-            r1 = random.randint(0, 0xFFFFFFFF)
-            self.write(4,r1)
-            self.write(0,r1)
-            self.write(3,r1)
-            self.write(1,r1)
-            self.write(2,r1)
+        partialLBA_index_list = [4, 0, 3, 1, 2]
+        for _ in range(30):
+            for write_index in range(5):
+                random_write_value = random.randint(0, 0xFFFFFFFF)
+                self.write(partialLBA_index_list[write_index], random_write_value)
 
-            a = self.read(0)
-            if a!= self.read(1):
+            check_read_value = self.read(0)
+            if check_read_value != self.read(1):
                 print("FAIL")
                 return False
-            if a!= self.read(2):
+            if check_read_value != self.read(2):
                 print("FAIL")
                 return False
-            if a!= self.read(3):
+            if check_read_value != self.read(3):
                 print("FAIL")
                 return False
-            if a!= self.read(4):
+            if check_read_value != self.read(4):
                 print("FAIL")
                 return False
         print("PASS")
         return True
-
 
     def _read_line(self, filepath, line_number):
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -106,7 +102,7 @@ class shell_ftn():
                 return
         print('PASS')
 
-    def testScript(self,test_intro):
+    def testScript(self, test_intro):
         if test_intro == '1_':
             self.FullWriteAndReadCompare()
         elif test_intro == '2_':
@@ -114,32 +110,31 @@ class shell_ftn():
         elif test_intro == '3_':
             self.WriteReadAging()
 
-    def main_function(self,args):
-        if args[0].lower() == "read" and len(args)==2:
-            self.read(int(args[1])) #idx
-        elif args[0].lower() == "write"and len(args)==3:
-            self.write(int(args[1]), args[2]) #idx, value
-        elif args[0].lower() == "fullwrite"and len(args)==2:
-            self.fullwrite(args[1]) #value
-        elif args[0].lower() == "fullread"and len(args)==1:
+    def main_function(self, args):
+        if args[0].lower() == "read" and len(args) == 2:
+            self.read(int(args[1]))  # idx
+        elif args[0].lower() == "write" and len(args) == 3:
+            self.write(int(args[1]), args[2])  # idx, value
+        elif args[0].lower() == "fullwrite" and len(args) == 2:
+            self.fullwrite(args[1])  # value
+        elif args[0].lower() == "fullread" and len(args) == 1:
             self.fullread()
-        elif args[0][0:2] in ['1_','2_','3_']and len(args)==1:
+        elif args[0][0:2] in ['1_', '2_', '3_'] and len(args) == 1:
             test_intro = args[0][0:2]
             self.testScript(test_intro)
         else:
             raise ValueError("INVALID COMMAND")
 
-
     def main(self):
         while True:
             command = input("Shell>")
             args = command.split()
-            if args==[]: raise ValueError("INVALID COMMAND")
+            if args == []: raise ValueError("INVALID COMMAND")
             if args[0].lower() == "exit":
                 # print("Exiting the program...")
                 break
             self.main_function(args)
 
+
 if __name__ == "__main__":
     shell_ftn().main()
-

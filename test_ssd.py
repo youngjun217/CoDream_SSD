@@ -1,11 +1,13 @@
+import random
+
 import pytest
+from ssd import SSD, SSDOutput, SSDNand
 from pytest_mock import MockerFixture
-from ssd import SSD, SSDOutput
 
 
 def generate_ssd_nand_txt():
     ssd_nand_txt = []
-    for i in range(0,100):
+    for i in range(0, 100):
         newline = f"{i:02d} 0x00000000\n"
         ssd_nand_txt.append(newline)
 
@@ -18,8 +20,7 @@ def test_read():
     index = 3
     ssd.read_ssd(index)
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-        ssd_nand_txt = file.read()
-    lines = ssd_nand_txt.splitlines()
+        lines = file.readlines()
 
     with open("ssd_output.txt", 'r', encoding='utf-8') as file:
         ssd_output_txt = file.read()
@@ -45,7 +46,7 @@ def test_write(index):
     assert ssd_output_txt == ""
 
 
-@pytest.mark.parametrize("index", [-1,-10])
+@pytest.mark.parametrize("index", [-1, -10])
 def test_ssd_read_error_minus_index(index):
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
@@ -135,6 +136,40 @@ def test_output_write(output):
 
     with open("ssd_output.txt", 'r', encoding='utf-8') as file:
         assert file.read() == output
+
+
+def test_nand_read():
+    ssd_nand = SSDNand()
+    generate_ssd_nand_txt()
+    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
+        output = file.readlines()
+
+    assert output == ssd_nand.read()
+
+
+@pytest.mark.parametrize("index", [0, 10, 20, 50, 90, 99])
+def test_nand_readline(index):
+    ssd_nand = SSDNand()
+    generate_ssd_nand_txt()
+    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
+        output = file.readlines()
+
+    assert output[index] == ssd_nand.readline(index)
+
+
+def test_nand_write():
+    ssd_nand = SSDNand()
+
+    ssd_nand_txt = []
+    for i in range(0, 100):
+        rand_32bit = random.randint(0, 0xFFFFFFFF)
+        newline = f"{i:02d} 0x{rand_32bit:08X}\n"
+        ssd_nand_txt.append(newline)
+
+    ssd_nand.write(ssd_nand_txt)
+
+    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
+        assert file.readlines() == ssd_nand_txt
 
 
 def test_ssd_read_output(mocker: MockerFixture):

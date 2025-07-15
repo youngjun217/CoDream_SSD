@@ -6,12 +6,13 @@ import random
 class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
+        self.ssd_output=SSDOutput()
 
     def read(self,idx:int):
         self.ssd.read_ssd(idx)
-        result = SSDOutput().read()
+        result = self.ssd_output.read()
         print(f'[Read] LBA {idx}: {result}')
-        return result
+        return
 
     def write(self, num: int, value: int) -> None:
         if self.ssd.write_ssd(num, value):
@@ -74,8 +75,7 @@ class shell_ftn():
                 rand_num = random.randint(0, 0xFFFFFFFF)
                 hex_str = f"0x{rand_num:08X}"
                 SSD().write_ssd(start_idx + x, rand_num)
-                print("result\n",SSDNand().readline(start_idx + x))
-                if SSDNand().readline(start_idx + x).split('x')[1] != hex_str:
+                if SSDNand().readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
                     check=True
                     break

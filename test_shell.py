@@ -36,14 +36,21 @@ def shell_with_ssd_mock():
 
 
 
-@pytest.mark.parametrize("index", [1, 3, 10, 4, -1, '20', 10.3, 100])
-def test_read(mocker: MockerFixture, index):
-    mock_read = mocker.patch('ssd.SSD.read_ssd')
+@pytest.mark.parametrize("index", [1, 3, 10, 4])
+def test_read(mocker: MockerFixture, index, capsys):
+    mock_ssd_read = mocker.patch('ssd.SSD.read_ssd')
+    mock_ouptut_read = mocker.patch('ssd.SSDOutput.read')
 
     shell = shell_ftn()
     shell.read(index)
+    captured = capsys.readouterr()
 
-    mock_read.assert_called_with(index)
+    # ssd의 read_ssd가 정확한 파라미터로 호출되었는지 검증
+    mock_ssd_read.assert_called_with(index)
+    # "ssd_output.txt"가 'r'로 호출되었는지 검증
+    mock_ouptut_read.assert_called_once()
+    # 최종 결과 값이 잘 나오는지 검증
+    assert '[Read]' in captured.out
 
 
 

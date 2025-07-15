@@ -10,11 +10,13 @@ class shell_ftn():
         self.ssd_nand = SSDNand()
 
 
-    def read(self, idx: int):
+    def read(self,idx:int):
         self.ssd.read_ssd(idx)
-        result = self.ssd_output.read()
-        print(f'[Read] LBA {idx}: {result}')
-        return
+        ssdoutput = SSDOutput()
+        result = ssdoutput.read()
+        value = result.split()[1]
+        print(f'[Read] LBA {idx}: {value}')
+
 
     def write(self, num: int, value: int) -> None:
         if self.ssd.write_ssd(num, value):
@@ -115,7 +117,7 @@ class shell_ftn():
         for i in range(200):
             self.ssd.write_ssd(0, value)
             self.ssd.write_ssd(99, value)
-            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
+            if self._read_line(1) != self._read_line(100):
 
                 print('FAIL')
                 return

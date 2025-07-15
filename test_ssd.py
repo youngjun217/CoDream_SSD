@@ -1,123 +1,90 @@
 import random
 from unittest.mock import call
-
 import pytest
-import pytest_mock
 
 from ssd import SSD, SSDOutput, SSDNand
 from pytest_mock import MockerFixture
 
+TEST_LBA = 3
+TEST_WRITE_VALUE = 0x1298CDEF
+ERROR_MESSAGE = "ERROR"
 
-def generate_ssd_nand_txt():
-    ssd_nand_txt = []
-    for i in range(0, 100):
-        newline = f"{i:02d} 0x00000000\n"
-        ssd_nand_txt.append(newline)
+@pytest.fixture
+def ssd():
+    return SSD()
 
-    with open("ssd_nand.txt", 'w', encoding='utf-8') as file:
-        file.writelines(ssd_nand_txt)
+def test_read(ssd):
+    ssd_output = SSDOutput()
+    ssd_nand = SSDNand()
 
-
-def test_read():
-    ssd = SSD()
-    index = 3
-    ssd.read_ssd(index)
-    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-        lines = file.readlines()
-
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        ssd_output_txt = file.read()
-
-    assert lines[index] == ssd_output_txt
+    ssd.read_ssd(TEST_LBA)
+    assert ssd_output.read() == ssd_nand.readline(TEST_LBA)
 
 
-@pytest.mark.parametrize("index", [0, 10, 20, 50, 90, 99])
-def test_write(index):
-    generate_ssd_nand_txt()
-    ssd = SSD()
-    value = 0x1298CDEF
-    ssd.write_ssd(lba=index, value=value)
-    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-        ssd_nand_txt = file.read()
-    lines = ssd_nand_txt.splitlines()
+@pytest.mark.parametrize("lba", [0, 10, 20, 50, 90, 99])
+def test_write(ssd, lba):
+    ssd_nand = SSDNand()
+    ssd_output = SSDOutput()
+    ssd.write_ssd(lba=lba, value=TEST_WRITE_VALUE)
 
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        ssd_output_txt = file.read()
-
-    written_value = lines[index].split(" ")[-1]
-    assert f"0x{value:08X}" == written_value
-    assert ssd_output_txt == ""
+    assert f"{lba:02} 0x{TEST_WRITE_VALUE:08X}\n" == ssd_nand.readline(lba)
+    assert ssd_output.read() == ""
 
 
-@pytest.mark.parametrize("index", [-1, -10])
-def test_ssd_read_error_minus_index(index):
-    ssd = SSD()
+@pytest.mark.parametrize("lba", [-1, -10])
+def test_ssd_read_error_minus_index(ssd, lba):
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.read_ssd(index)
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        assert file.read() == "ERROR"
+        ssd.read_ssd(lba)
+    assert ssd._output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("index", [100, 1000, 10000])
-def test_ssd_read_error_index_above_99(index):
-    ssd = SSD()
-    with pytest.raises(ValueError, match="ERROR"):
+def test_ssd_read_error_index_above_99(ssd, index):
+    with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.read_ssd(index)
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        assert file.read() == "ERROR"
+    assert ssd._output_txt.read() == ERROR_MESSAGE
 
 
-def test_ssd_read_error_not_digit():
-    ssd = SSD()
-    with pytest.raises(ValueError, match="ERROR"):
+def test_ssd_read_error_not_digit(ssd):
+    with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.read_ssd("abc")
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        assert file.read() == "ERROR"
+    assert ssd._output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("index, value", [(-1, 0x00000000), (-10, 0x00000000)])
-def test_ssd_write_error_minus_index(index, value):
-    ssd = SSD()
-    with pytest.raises(ValueError, match="ERROR"):
+def test_ssd_write_error_minus_index(ssd, index, value):
+    with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.write_ssd(index, value)
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        assert file.read() == "ERROR"
+    assert ssd._output_txt.read() == ERROR_MESSAGE
 
 
-@pytest.mark.parametrize("index, value", [(100, 0x00000000), (1000, 0x00000000), (10000, 0x00000000)])
-def test_ssd_write_error_index_above_99(index, value):
-    ssd = SSD()
-    with pytest.raises(ValueError, match="ERROR"):
-        ssd.write_ssd(index, value)
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        assert file.read() == "ERROR"
+@pytest.mark.parametrize("lba, value", [(100, 0x00000000), (1000, 0x00000000), (10000, 0x00000000)])
+def test_ssd_write_error_index_above_99(ssd, lba, value):
+    with pytest.raises(ValueError, match=ERROR_MESSAGE):
+        ssd.write_ssd(lba, value)
+    assert ssd._output_txt.read() == ERROR_MESSAGE
 
 
-@pytest.mark.parametrize("index, value", [("abc", 0x00000000), (3, "0xABCD0000")])
-def test_ssd_write_error_not_digit(index, value):
-    ssd = SSD()
-    with pytest.raises(ValueError, match="ERROR"):
-        ssd.write_ssd(index, value)
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        assert file.read() == "ERROR"
+@pytest.mark.parametrize("lba, value", [("abc", 0x00000000), (3, "0xABCD0000")])
+def test_ssd_write_error_not_digit(ssd, lba, value):
+    with pytest.raises(ValueError, match=ERROR_MESSAGE):
+        ssd.write_ssd(lba, value)
+    assert ssd._output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("index, value", [(10, -1), (10, -10)])
-def test_ssd_write_error_minus_value(index, value):
-    ssd = SSD()
-    with pytest.raises(ValueError, match="ERROR"):
+def test_ssd_write_error_minus_value(ssd, index, value):
+    with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.write_ssd(index, value)
     with open("ssd_output.txt", 'r', encoding='utf-8') as file:
         assert file.read() == "ERROR"
 
 
-@pytest.mark.parametrize("index, value", [(10, 0x100000000), (10, 0x300000000)])
-def test_ssd_write_error_value_above_32bits(index, value):
-    ssd = SSD()
-    with pytest.raises(ValueError, match="ERROR"):
-        ssd.write_ssd(index, value)
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        assert file.read() == "ERROR"
+@pytest.mark.parametrize("lba, value", [(10, 0x100000000), (10, 0x300000000)])
+def test_ssd_write_error_value_above_32bits(ssd, lba, value):
+    with pytest.raises(ValueError, match=ERROR_MESSAGE):
+        ssd.write_ssd(lba, value)
+    assert ssd._output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("output", ["ERROR", "10 0x00000000", "20 0x00000000"])
@@ -143,21 +110,19 @@ def test_output_write(output):
 
 def test_nand_read():
     ssd_nand = SSDNand()
-    generate_ssd_nand_txt()
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
         output = file.readlines()
 
     assert output == ssd_nand.read()
 
 
-@pytest.mark.parametrize("index", [0, 10, 20, 50, 90, 99])
-def test_nand_readline(index):
+@pytest.mark.parametrize("lba", [0, 10, 20, 50, 90, 99])
+def test_nand_readline(lba):
     ssd_nand = SSDNand()
-    generate_ssd_nand_txt()
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
         output = file.readlines()
 
-    assert output[index] == ssd_nand.readline(index)
+    assert output[lba] == ssd_nand.readline(lba)
 
 
 def test_nand_write():
@@ -175,9 +140,8 @@ def test_nand_write():
         assert file.readlines() == ssd_nand_txt
 
 
-def test_ssd_read_output(mocker: MockerFixture):
+def test_ssd_read_output(ssd, mocker: MockerFixture):
     mk = mocker.Mock(spec=SSDOutput)
-    ssd = SSD()
     ssd._output_txt = mk
     ssd.read_ssd(3)
     assert ssd._output_txt.write.call_count == 1
@@ -187,9 +151,8 @@ def test_ssd_read_output(mocker: MockerFixture):
     ssd._output_txt.write.assert_called_with(target_line)
 
 
-def test_ssd_write_output(mocker: MockerFixture):
+def test_ssd_write_output(ssd, mocker: MockerFixture):
     mk = mocker.Mock(spec=SSDOutput)
-    ssd = SSD()
     ssd._output_txt = mk
 
     ssd.write_ssd(3, 0x12312312)
@@ -212,29 +175,24 @@ def test_singletone_ssd_output(output):
 
 
 @pytest.mark.parametrize("input", [[None, 'R', 0], [None, 'R', 10], [None, 'R', 99]])
-def test_ssd_run_read(mocker: MockerFixture, input):
+def test_ssd_run_read(ssd, mocker: MockerFixture, input):
     mock_read = mocker.patch('ssd.SSD.read_ssd')
-
-    ssd = SSD()
     ssd.run(input)
-
     ssd.read_ssd.assert_called_once()
     ssd.read_ssd.assert_has_calls([call(input[2])])
 
 
 @pytest.mark.parametrize("input", [[None, 'W', 0, 0x00000000], [None, 'W', 10, 0x12345678], [None, 'W', 99, 0xABCDEF90]])
-def test_ssd_run(mocker: MockerFixture, input):
+def test_ssd_run(ssd, mocker: MockerFixture, input):
     mock_write = mocker.patch('ssd.SSD.write_ssd')
-
-    ssd = SSD()
     ssd.run(input)
-
     ssd.write_ssd.assert_called_once()
     ssd.write_ssd.assert_has_calls([call(input[2], input[3])])
 
 
 @pytest.mark.parametrize("input", [[None, 'A'], [None, 'W', 10], [None, 'W', 10, 1, 1], [None, 'R'], [None, 'R', 99, 0xABCDEF90]])
-def test_ssd_run_wrong_command(input):
-    ssd = SSD()
+def test_ssd_run_wrong_command(ssd, input):
     with pytest.raises(ValueError, match="ERROR"):
         ssd.run(input)
+
+

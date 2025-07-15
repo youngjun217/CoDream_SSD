@@ -6,7 +6,6 @@ import random
 class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
-        self.ssd_output = SSDOutput()
 
     def read(self,idx:int):
         self.ssd.read_ssd(idx)
@@ -50,7 +49,7 @@ class shell_ftn():
         for idx in range(100):
             try:
                 self.ssd.read_ssd(idx)
-                output = self.ssd_output.read()
+                output = SSDOutput().read()
 
                 if output == "ERROR" or len(output.split()) < 2:
                     print(output)

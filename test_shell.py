@@ -51,11 +51,21 @@ def test_read_fail(mocker):
     with pytest.raises(ValueError, match='ERROR'):
         shell.read(10.1)
 
-def test_write_success():
+
+# @patch('builtins.open', new_callable=mock_open, read_data='')
+def test_write_success(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data=''))
+    mock_func = mocker.patch('shell.SSD.write_ssd')
     shell = shell_ftn()
-    shell.write(3, 0x00000000)
-    shell.write(0, 0x00000000)
-    shell.write(3, 0x03300000)
+    result = shell.write(3, '0x00000000')
+    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+    assert result is True
+    shell.write(0, '0x00000000')
+    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+    assert result is True
+    shell.write(3, '0x03300000')
+    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+    assert result is True
     pass
 
 def test_fullread(shell_with_ssd_mock, capsys):

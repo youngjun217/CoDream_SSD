@@ -20,9 +20,12 @@ class shell_ftn():
         my_ssd = SSD()
         my_ssd.write_ssd(num, int(value,16))
         my_ssdoutput = SSDOutput()
-        if my_ssdoutput == "":
+        if my_ssdoutput.read() == '':
+        # with open('ssd_output.txt', 'r', encoding='utf-8') as file:
             print('[Write] Done')
-        pass
+            return True
+        raise AssertionError()
+        return False
 
     # help : 프로그램 사용법
     def help(self):

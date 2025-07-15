@@ -29,20 +29,18 @@ def test_read():
 
 @pytest.mark.parametrize("index", [0, 10, 20, 50, 90, 99])
 def test_write(index):
+    ssd_nand = SSDNand()
+    ssd_output = SSDOutput()
     generate_ssd_nand_txt()
+
     ssd = SSD()
     value = 0x1298CDEF
     ssd.write_ssd(lba=index, value=value)
-    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-        ssd_nand_txt = file.read()
-    lines = ssd_nand_txt.splitlines()
+    ssd_nand_txt_line = ssd_nand.read(index)
+    ssd_output_line = ssd_output.read()
 
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        ssd_output_txt = file.read()
-
-    written_value = lines[index].split(" ")[-1]
-    assert f"0x{value:08X}" == written_value
-    assert ssd_output_txt == ""
+    assert f"{index:02} 0x{value:08X}" == ssd_nand_txt_line
+    assert ssd_output_line == ""
 
 
 @pytest.mark.parametrize("index", [-1, -10])

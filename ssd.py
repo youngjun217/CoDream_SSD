@@ -17,19 +17,20 @@ class SSD():
 
     def run(self, sys_argv):
         cmd = sys_argv[1]
+        print(cmd)
         if not self._check_command_validity(cmd, len(sys_argv)):
             self._raise_error()
 
         lba = int(sys_argv[2])
         if (cmd == 'W'):
-            value = int(sys_argv[3], 16)
+            value = sys_argv[3]
             self.write_ssd(lba, value)
         elif (cmd == 'R'):
             lba = int(sys_argv[2])
             self.read_ssd(lba)
 
     def _check_command_validity(self, cmd, len_sys_argv):
-        return ((cmd == 'W') and (len_sys_argv == 4)) or ((cmd == 'R') and (len_sys_argv == 4))
+        return ((cmd == 'W') and (len_sys_argv == 4)) or ((cmd == 'R') and (len_sys_argv == 3))
 
     def read_ssd(self, lba):
         if not self._check_input_validity(lba):

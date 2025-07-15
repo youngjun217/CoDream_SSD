@@ -10,11 +10,12 @@ class shell_ftn():
         self.ssd_nand = SSDNand()
 
 
-    def read(self, idx: int):
+    def read(self,idx:int):
         self.ssd.read_ssd(idx)
         result = self.ssd_output.read()
-        print(f'[Read] LBA {idx}: {result}')
-        return
+        value = result.split()[1]
+        print(f'[Read] LBA {idx}: {value}')
+
 
 
     def write(self, num: int, value: str) -> None:
@@ -104,21 +105,12 @@ class shell_ftn():
         print("PASS")
         return True
 
-    def _read_line(self, line_number):
-        with open("ssd_nand.txt", 'r', encoding='utf-8') as f:
-            for current_line, line in enumerate(f, start=1):
-                if current_line == line_number:
-                    parts = line.strip().split()
-                    return int(parts[1])
-        return None
-
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
         for i in range(200):
             self.ssd.write_ssd(0, value)
             self.ssd.write_ssd(99, value)
-            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
-
+            if self.ssd_nand.readline(1) != self.ssd_nand.readline(100):
                 print('FAIL')
                 return
         print('PASS')

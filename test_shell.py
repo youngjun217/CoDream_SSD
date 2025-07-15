@@ -96,7 +96,7 @@ def test_fullread(capsys, mocker):
 
     # assert
     assert captured.out == "[Full Read]\n"
-    mk.call_count == 1
+    assert mk.call_count == 1
 
 
 def test_fullwrite(capsys):

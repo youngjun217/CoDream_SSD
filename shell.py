@@ -101,21 +101,21 @@ class shell_ftn():
         print("PASS")
         return True
 
-    def _read_line(self, filepath, line_number):
-        with open(filepath, 'r', encoding='utf-8') as f:
+    def _read_line(self, line_number):
+        with open("ssd_nand.txt", 'r', encoding='utf-8') as f:
             for current_line, line in enumerate(f, start=1):
                 if current_line == line_number:
                     parts = line.strip().split()
                     return int(parts[1])
         return None
 
-    def WriteReadAging(self, filepath):
+    def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
-        ssd = SSD()
+        ssd = self.ssd
         for i in range(200):
             ssd.write_ssd(0, value)
             ssd.write_ssd(99, value)
-            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
+            if self._read_line(1) != self._read_line(100):
                 print('FAIL')
                 return
         print('PASS')

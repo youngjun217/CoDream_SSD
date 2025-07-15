@@ -2,13 +2,17 @@ import sys
 from ssd import SSD
 import random
 
+
 class shell_ftn:
+    def __init__(self):
+        self.ssd = SSD()
+
     def read(self,idx:int):
         if idx<0 or idx>99:
             raise ValueError("ERROR")
         if type(idx)!=int:
             raise ValueError("ERROR")
-        result = ssd.read_ssd(idx)
+        result = self.ssd.read_ssd(idx)
         print(f'[Read] LBA {idx}: {result}')
         return result
 
@@ -26,13 +30,13 @@ class shell_ftn:
 
         hex_part = value[2:]
 
-
+        
         # 각 문자들이 16진수 범위인지 검사
         valid_chars = "0123456789abcdefABCDEF"
         if not all(c in valid_chars for c in hex_part):
             raise ValueError("16진수 숫자만 허용됩니다 (0-9, A-F).")
 
-        if ssd.write_ssd(num, value):
+        if self.ssd.write_ssd(num, value):
             print('[Write] Done')
         pass
 
@@ -50,13 +54,13 @@ class shell_ftn:
     def fullread(self):
         try:
             ssd_nand = open("ssd_nand.txt", "r")
-            ssd_output = open("ssd_output.txt", "w")
 
             print("[Full Read]")
-            for i in range(100):
-                str = ssd_nand.readline()
-                words = str.split()
-                print(f"LBA {words[0]} : {words[1]}")
+            for idx in range(100):
+                self.ssd.read_ssd(idx)
+                ssd_output = open("ssd_output.txt", "r")
+                str = ssd_output.readline()
+                print(f"LBA {str.split()[0]} : {str.split()[1]}")
 
             ssd_nand.close()
             ssd_output.close()

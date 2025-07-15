@@ -2,6 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from unittest.mock import call
 from shell import shell_ftn
+from ssd import SSD
 
 def test_read_success(mocker):
     mock_read_ssd = mocker.patch('ssd.read_ssd')
@@ -22,11 +23,14 @@ def test_read_fail(mocker):
     with pytest.raises(ValueError, match='ERROR'):
         shell.read(10.1)
 
-def test_fullread(capsys):
+def test_fullread(mocker, capsys):
+    mock_read_ssd = mocker.patch('ssd.SSD.read_ssd')
     shell = shell_ftn()
     shell.fullread()
     captured = capsys.readouterr()
+
     assert captured.out.startswith("[Full Read]")
+    assert mock_read_ssd.call_count == 100
 
 def test_write( mocker):
     shell = shell_ftn()

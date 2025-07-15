@@ -7,8 +7,10 @@ class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
 
-    def read(self, idx: int):
-        result = self.ssd.read_ssd(idx)
+    def read(self,idx:int):
+        self.ssd.read_ssd(idx)
+        ssdoutput = SSDOutput()
+        result = ssdoutput.read()
         print(f'[Read] LBA {idx}: {result}')
 
     def write(self, num: int, value: int) -> None:

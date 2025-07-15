@@ -12,8 +12,7 @@ class shell_ftn():
 
     def read(self,idx:int):
         self.ssd.read_ssd(idx)
-        ssdoutput = SSDOutput()
-        result = ssdoutput.read()
+        result = self.ssd_output.read()
         value = result.split()[1]
         print(f'[Read] LBA {idx}: {value}')
 
@@ -109,8 +108,7 @@ class shell_ftn():
         for i in range(200):
             self.ssd.write_ssd(0, value)
             self.ssd.write_ssd(99, value)
-            ssdnand = SSDNand()
-            if ssdnand.readline(1) != ssdnand.readline(100):
+            if self.ssd_nand.readline(1) != self.ssd_nand.readline(100):
                 print('FAIL')
                 return
         print('PASS')

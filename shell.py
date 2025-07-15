@@ -89,7 +89,7 @@ class shell_ftn():
                     print('FAIL')
                     return
         print("PASS")
-        return True
+
 
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)

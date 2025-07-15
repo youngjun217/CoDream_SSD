@@ -37,12 +37,14 @@ def test_write( mocker):
     # mk.call_count == 7
     pass
 
-def test_fullread(capsys):
+def test_fullread(mocker, capsys):
+    mock_read_ssd = mocker.patch('ssd.SSD.read_ssd')
     shell = shell_ftn()
     shell.fullread()
     captured = capsys.readouterr()
 
     assert captured.out.split('\n')[0]=="[Full Read]"
+    assert mock_read_ssd.call_count == 100
 
 
 def test_fullwrite(capsys):

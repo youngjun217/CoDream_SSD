@@ -1,14 +1,17 @@
 import sys
-from ssd import read_ssd, write
-# from ssd import SSD
+from ssd import SSD
+import random
 
-class shell_ftn:
+class shell_ftn():
+    def __init__(self):
+        self.ssd = SSD()
+
     def read(self,idx:int):
         if idx<0 or idx>99:
             raise ValueError("ERROR")
         if type(idx)!=int:
             raise ValueError("ERROR")
-        result = read_ssd(idx)
+        result = self.ssd.read_ssd(idx)
         print(f'[Read] LBA {idx}: {result}')
         return result
 
@@ -26,15 +29,13 @@ class shell_ftn:
 
         hex_part = value[2:]
 
-        if len(hex_part) != 8:
-            raise ValueError("0x 뒤에 정확히 8자리여야 합니다.")
-
+        
         # 각 문자들이 16진수 범위인지 검사
         valid_chars = "0123456789abcdefABCDEF"
         if not all(c in valid_chars for c in hex_part):
             raise ValueError("16진수 숫자만 허용됩니다 (0-9, A-F).")
 
-        if write(num, value):
+        if self.ssd.write_ssd(num, value):
             print('[Write] Done')
         pass
 
@@ -45,20 +46,23 @@ class shell_ftn:
         # 각 명령어마다 사용법 기입
 
     def fullwrite(self, value):
-        if len(value) > 8:
+        if len(str(value)) > 8:
             raise ValueError("ERROR")
-        print("fullwrite")
+        for x in range(100):
+            SSD().write_ssd(x,value)
+        print("[Full Write] Done")
 
     def fullread(self):
         try:
             ssd_nand = open("ssd_nand.txt", "r")
-            ssd_output = open("ssd_output.txt", "w")
 
             print("[Full Read]")
-            for i in range(100):
-                str = ssd_nand.readline()
-                words = str.split()
-                print(f"LBA {words[0]} : {words[1]}")
+
+            for idx in range(100):
+                self.ssd.read_ssd(idx)
+                ssd_output = open("ssd_output.txt", "r")
+                str = ssd_output.readline()
+                print(f"LBA {str.split()[0]} : {str.split()[1]}")
 
             ssd_nand.close()
             ssd_output.close()
@@ -66,13 +70,60 @@ class shell_ftn:
             raise e
 
     def FullWriteAndReadCompare(self):
-        print("1_FullWriteAndReadCompare")
+        for start_idx in range(0, 100, 5):
+            rand_num = random.randint(0x00000000, 0xFFFFFFFF)
+            rand_num_list = [rand_num] * 5
+            for x in range(5):
+                SSD().write_ssd(start_idx+x,rand_num_list[x])
+                if SSD().read_ssd(start_idx+x) == rand_num_list[x]:
+                    pass
+
 
     def PartialLBAWrite(self):
-        print("2_PartialLBAWrite")
+        for i in range(30):
+            r1 = random.randint(0, 0xFFFFFFFF)
+            r1 = hex(r1)
+            self.write(4,r1)
+            self.write(0,r1)
+            self.write(3,r1)
+            self.write(1,r1)
+            self.write(2,r1)
 
-    def WriteReadAging(self):
-        print("3_WriteReadAging")
+            a = self.read(0)
+            if a!= self.read(1):
+                print("FAIL")
+                return False
+            if a!= self.read(2):
+                print("FAIL")
+                return False
+            if a!= self.read(3):
+                print("FAIL")
+                return False
+            if a!= self.read(4):
+                print("FAIL")
+                return False
+        print("PASS")
+        return True
+
+
+    def _read_line(self, filepath, line_number):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            for current_line, line in enumerate(f, start=1):
+                if current_line == line_number:
+                    parts = line.strip().split()
+                    return int(parts[1])
+        return None
+
+    def WriteReadAging(self, filepath):
+        value = random.randint(0, 0xFFFFFFFF)
+        ssd = SSD()
+        for i in range(200):
+            ssd.write_ssd(0, value)
+            ssd.write_ssd(99, value)
+            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
+                print('FAIL')
+                return
+        print('PASS')
 
     def testScript(self,test_intro):
         if test_intro == '1_':
@@ -81,33 +132,6 @@ class shell_ftn:
             self.PartialLBAWrite()
         elif test_intro == '3_':
             self.WriteReadAging()
-
-    ####추가
-    # 1_FullWriteAndReadCompare
-    #
-    # 1_ 라고만 입력해도 실행 가능
-    # 0 ~ 4번 LBA까지 다섯개의 동일한 랜덤 값으로 write 명령어 수행
-    # 0 ~ 4번 LBA까지 실제 저장된 값과 맞는지 확인
-    # 5 ~ 9번 LBA까지 다섯개의 동일하지만 0 ~ 4번과 다른 랜덤값으로 write 명령어 수행
-    # 5 ~ 9번 LBA까지 실제 저장된 값과 맞는지 확인
-    # 위와 같은 규칙으로 전체 영역에 대해 반복
-    # 2_PartialLBAWrite
-    #
-    # 2_ 라고만 입력해도 실행 가능
-    # 30회 반복
-    # 4번 LBA에 랜덤값을 적는다.
-    # 0번 LBA에 같은 값을 적는다.
-    # 3번 LBA에 같은 값을 적는다.
-    # 1번 LBA에 같은 값을 적는다.
-    # 2번 LBA에 같은 값을 적는다.
-    # LBA 0 ~ 4번 모두 같은지 확인
-    # 3_WriteReadAging
-    #
-    # 3_ 라고만 입력해도 실행 가능
-    # 200회 반복
-    # 0번 LBA에 랜덤 값을 적는다.
-    # 99번 LBA에 같은 값을 적는다.
-    # LBA 0번과 99번이 같은지 확인
 
     def main_function(self,args):
         if args[0].lower() == "read" and len(args)==2:

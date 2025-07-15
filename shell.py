@@ -6,6 +6,7 @@ import random
 class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
+        self.ssd_output = SSDOutput()
 
     def read(self,idx:int):
         self.ssd.read_ssd(idx)
@@ -44,15 +45,12 @@ class shell_ftn():
 
     def fullread(self):
         ssd_nand = open("ssd_nand.txt", "r")
-        ssd_output = None
-
         print("[Full Read]")
 
         for idx in range(100):
             try:
                 self.ssd.read_ssd(idx)
-                ssd_output = open("ssd_output.txt", "r")
-                output = ssd_output.readline()
+                output = self.ssd_output.read()
 
                 if output == "ERROR" or len(output.split()) < 2:
                     print(output)
@@ -62,8 +60,6 @@ class shell_ftn():
 
             except Exception as e:
                 raise e
-            finally:
-                ssd_output.close()
 
         ssd_nand.close()
 

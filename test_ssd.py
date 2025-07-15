@@ -124,3 +124,14 @@ def test_output_read(output):
     with open("ssd_output.txt", 'r', encoding='utf-8') as file:
         assert file.read() == ssd_output.read()
 
+
+@pytest.mark.parametrize("output", ["ERROR", "10 0x00000000", "20 0x00000000"])
+def test_output_write(output):
+    ssd_output = SSDOutput()
+    with open("ssd_output.txt", 'w', encoding='utf-8') as file:
+        file.write("")
+
+    ssd_output.write(output)
+
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == output

@@ -1,6 +1,8 @@
 class SSD():
     def read_ssd(self, index):
         if not self.check_input_validity(index):
+            with open("ssd_output.txt", "w") as file:
+                file.write("ERROR")
             raise ValueError("ERROR")
 
         ssd_nand_txt = ""
@@ -15,6 +17,8 @@ class SSD():
     # write 함수
     def write_ssd(self, lba, value):
         if not self.check_input_validity(lba, value):
+            with open("ssd_output.txt", "w") as file:
+                file.write("ERROR")
             raise ValueError("ERROR")
 
         # ssd_nand.txt 파일 읽기

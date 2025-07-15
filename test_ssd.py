@@ -50,6 +50,8 @@ def test_ssd_read_error_minus_index():
         ssd.read_ssd(-1)
     with pytest.raises(ValueError, match="ERROR"):
         ssd.read_ssd(-10)
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"
 
 
 def test_ssd_read_error_index_above_99():
@@ -60,12 +62,16 @@ def test_ssd_read_error_index_above_99():
         ssd.read_ssd(1000)
     with pytest.raises(ValueError, match="ERROR"):
         ssd.read_ssd(10000)
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"
 
 
 def test_ssd_read_error_not_digit():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
         ssd.read_ssd("abc")
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"
 
 
 def test_ssd_write_error_minus_index():
@@ -74,6 +80,8 @@ def test_ssd_write_error_minus_index():
         ssd.write_ssd(-1, 0x00000000)
     with pytest.raises(ValueError, match="ERROR"):
         ssd.write_ssd(-10, 0x00000000)
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"
 
 
 def test_ssd_write_error_index_above_99():
@@ -84,6 +92,8 @@ def test_ssd_write_error_index_above_99():
         ssd.write_ssd(1000, 0x00000000)
     with pytest.raises(ValueError, match="ERROR"):
         ssd.write_ssd(10000, 0x00000000)
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"
 
 
 def test_ssd_write_error_not_digit():
@@ -92,12 +102,16 @@ def test_ssd_write_error_not_digit():
         ssd.write_ssd("abc", 0x00000000)
     with pytest.raises(ValueError, match="ERROR"):
         ssd.write_ssd(3, "0xABCD0000")
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"
 
 
 def test_ssd_write_error_minus_value():
     ssd = SSD()
     with pytest.raises(ValueError, match="ERROR"):
         ssd.write_ssd(10, -1)
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"
 
 
 def test_ssd_write_error_value_above_32bits():
@@ -106,3 +120,5 @@ def test_ssd_write_error_value_above_32bits():
         ssd.write_ssd(10, 0x100000000)
     with pytest.raises(ValueError, match="ERROR"):
         ssd.write_ssd(10, 0x300000000)
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"

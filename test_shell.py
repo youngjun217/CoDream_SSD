@@ -12,6 +12,7 @@ def test_read_success(mocker):
     assert shell.read(1) == 2
     assert shell.read(2) == 3
 
+
 def test_read_fail(mocker):
     mock_read_ssd = mocker.patch('shell.shell_ftn.read')
     mock_read_ssd.side_effect = ValueError('ERROR')
@@ -21,6 +22,7 @@ def test_read_fail(mocker):
         shell.read(100)
     with pytest.raises(ValueError, match='ERROR'):
         shell.read(10.1)
+
 
 def test_write( mocker):
     shell = shell_ftn()
@@ -59,5 +61,3 @@ def test_FullWriteAndReadCompare():
     test_shell = shell_ftn()
     # act
     test_shell.FullWriteAndReadCompare()
-
-    assert test_shell

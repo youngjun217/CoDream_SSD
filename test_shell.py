@@ -85,10 +85,15 @@ def test_fullwrite(capsys):
     assert captured.out == "[Full Write] Done\n"
 
 
-def test_FullWriteAndReadCompare():
+def test_FullWriteAndReadCompare(capsys,mocker):
+    mk = mocker.patch('shell.shell_ftn.FullWriteAndReadCompare')
+    mk.return_value = "PASS"
     test_shell = shell_ftn()
+    print(test_shell.FullWriteAndReadCompare())
+    captured = capsys.readouterr()
     # act
-    assert test_shell.FullWriteAndReadCompare() == None
+    assert captured.out == "PASS\n"
+    mk.call_count == 1
 
 
 def test_PartialLBAWrite():

@@ -2,7 +2,7 @@ import sys
 from ssd import SSD
 import random
 
-class shell_ftn:
+class shell_ftn():
     def read(self,idx:int):
         if idx<0 or idx>99:
             raise ValueError("ERROR")
@@ -26,8 +26,6 @@ class shell_ftn:
 
         hex_part = value[2:]
 
-        if len(hex_part) != 8:
-            raise ValueError("0x 뒤에 정확히 8자리여야 합니다.")
 
         # 각 문자들이 16진수 범위인지 검사
         valid_chars = "0123456789abcdefABCDEF"
@@ -79,10 +77,50 @@ class shell_ftn:
 
 
     def PartialLBAWrite(self):
-        print("2_PartialLBAWrite")
+        for i in range(30):
+            r1 = random.randint(0, 0xFFFFFFFF)
+            r1 = hex(r1)
+            self.write(4,r1)
+            self.write(0,r1)
+            self.write(3,r1)
+            self.write(1,r1)
+            self.write(2,r1)
 
-    def WriteReadAging(self):
-        print("3_WriteReadAging")
+            a = self.read(0)
+            if a!= self.read(1):
+                print("FAIL")
+                return False
+            if a!= self.read(2):
+                print("FAIL")
+                return False
+            if a!= self.read(3):
+                print("FAIL")
+                return False
+            if a!= self.read(4):
+                print("FAIL")
+                return False
+        print("PASS")
+        return True
+
+
+    def _read_line(self, filepath, line_number):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            for current_line, line in enumerate(f, start=1):
+                if current_line == line_number:
+                    parts = line.strip().split()
+                    return int(parts[1])
+        return None
+
+    def WriteReadAging(self, filepath):
+        value = random.randint(0, 0xFFFFFFFF)
+        ssd = SSD()
+        for i in range(200):
+            ssd.write_ssd(0, value)
+            ssd.write_ssd(99, value)
+            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
+                print('FAIL')
+                return
+        print('PASS')
 
     def testScript(self,test_intro):
         if test_intro == '1_':

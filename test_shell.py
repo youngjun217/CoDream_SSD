@@ -4,162 +4,176 @@ from unittest.mock import call
 
 import ssd
 from shell import shell_ftn
-from ssd import SSD, SSDOutput
-
-
-class TestableSSD(SSD):
-    def __init__(self):
-        self._write_ssd_call_count = 0
-        self._read_ssd_call_count = 0
-
-    def read_ssd(self, index):
-        self._read_ssd_call_count += 1
-
-    def write_ssd(self, lba, value):
-        self._write_ssd_call_count += 1
-
-    @property
-    def read_ssd_call_count(self):
-        return self._read_ssd_call_count
-
-    @property
-    def write_ssd_call_count(self):
-        return self._write_ssd_call_count
 
 
 @pytest.fixture
-def shell_with_ssd_mock():
-    testable_ssd = TestableSSD()
-    shell = shell_ftn()
-    shell.ssd = testable_ssd
-    return shell
+def shell():
+    return shell_ftn()
 
 
+@pytest.mark.parametrize("index", ['1 10', '2 20'])
+def test_read(shell, mocker: MockerFixture, index):
+    mock_read_ssd = mocker.patch.object(shell.ssd, 'read_ssd')
+    mock_read_output = mocker.patch.object(shell.ssd_output, 'read', return_value=index)
+    mock_print = mocker.patch('builtins.print')
 
-@pytest.mark.parametrize("index", [1, 3, 10, 4])
-def test_read(mocker: MockerFixture, index, capsys):
-    mock_ssd_read = mocker.patch('ssd.SSD.read_ssd')
-    mock_ouptut_read = mocker.patch('ssd.SSDOutput.read')
-
-    shell = shell_ftn()
     shell.read(index)
-    captured = capsys.readouterr()
 
-    mock_ssd_read.assert_called_with(index)
-    mock_ouptut_read.assert_called_once()
-    assert '[Read]' in captured.out
-
+    mock_read_ssd.assert_called_with(index)
+    mock_read_output.assert_called_once()
+    mock_print.assert_called_once()
 
 
+def test_write_success(shell, mocker):
+    mocker.patch.object(ssd.SSD, 'write_ssd')
+    mocker.patch.object(ssd.SSDOutput, 'read', return_value='')
+    mock_print = mocker.patch('builtins.print')
 
-# @patch('builtins.open', new_callable=mock_open, read_data='')
-def test_write_success(mocker):
-    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data=''))
-    mock_func = mocker.patch('shell.SSD.write_ssd')
-    shell = shell_ftn()
     result = shell.write(3, '0x00000000')
-    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+
+    mock_print.assert_called_once()
     assert result is True
-    shell.write(0, '0x00000000')
-    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
-    assert result is True
-    shell.write(3, '0x03300000')
-    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
-    assert result is True
-    pass
-
-def test_write_fail(mocker):
-    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='ERROR'))
-    mock_func = mocker.patch('shell.SSD.write_ssd', side_effect=AssertionError("SSD write failed"))
-    shell = shell_ftn()
-    with pytest.raises(AssertionError):
-        result = shell.write(-1, '0x00000000')
-        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
-        assert result is not True
-    with pytest.raises(AssertionError):
-        result = shell.write(100, '0x00000000')
-        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
-        assert result is not True
-    with pytest.raises(AssertionError):
-        result = shell.write(3, '0x0000000000')
-        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
-        assert result is not True
 
 
+def test_write_fail(shell, mocker):
+    mocker.patch.object(ssd.SSD, 'write_ssd')
+    mocker.patch.object(ssd.SSDOutput, 'read', return_value='ERROR')
+    mock_print = mocker.patch('builtins.print')
+    result = shell.write(10, '0xABCDEF12')
 
-def test_fullread(capsys, mocker):
-    mk = mocker.patch('shell.shell_ftn.fullread')
-    mk.return_value = "[Full Read]"
-    shell = shell_ftn()
-    print(shell.fullread())
-    captured = capsys.readouterr()
-
-    # assert
-    assert captured.out == "[Full Read]\n"
-    assert mk.call_count == 1
+    mock_print.assert_not_called()
+    assert result is False
 
 
-def test_fullwrite(capsys):
-    test_shell = shell_ftn()
-    # act
-    test_shell.fullwrite(12341234)
-    captured = capsys.readouterr()
-    # mock_read_ssd = mocker.patch('shell.shell_ftn.fullwrite')
-    # mock_read_ssd.side_effect = "[Full Write] Done"
-    expected = "[Full Write] Done"
+def test_help_output(shell, mocker):
+    mock_print = mocker.patch('builtins.print')
 
-    assert captured.out == "[Full Write] Done\n"
+    shell.help()
+    printed_args = mock_print.call_args[0][0]
+
+    mock_print.assert_called_once()
+    assert '[Help]\n' in printed_args
 
 
-def test_FullWriteAndReadCompare(capsys,mocker):
-    mk = mocker.patch('shell.shell_ftn.FullWriteAndReadCompare')
-    mk.return_value = "PASS"
-    test_shell = shell_ftn()
-    print(test_shell.FullWriteAndReadCompare())
-    captured = capsys.readouterr()
-    # act
-    assert captured.out == "PASS\n"
-    mk.call_count == 1
+def test_fullread_success(shell, mocker):
+    mock_read_ssd = mocker.patch.object(shell.ssd, 'read_ssd')
+    mock_read_output = mocker.patch.object(shell.ssd_output, 'read')
+    mock_print = mocker.patch('builtins.print')
+
+    shell.fullread()
+
+    assert mock_read_ssd.call_count == 100
+    assert mock_read_output.call_count == 100
+    mock_print.assert_any_call("[Full Read]")
 
 
-def test_PartialLBAWrite():
-    shell = shell_ftn()
-    assert shell.PartialLBAWrite()
+@pytest.mark.parametrize('values', ['ERROR', '1 10'])
+def test_fullread_with_errors(shell, mocker, values):
+    mocker.patch.object(shell.ssd, 'read_ssd')
+    mock_read_output = mocker.patch.object(shell.ssd_output, 'read', return_value=values)
+    mocker.patch('builtins.print')
+
+    shell.fullread()
+
+    assert mock_read_output.call_count == 100
 
 
-def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
-    mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
+def test_fullread_raises_exception(shell, mocker):
+    mocker.patch.object(shell.ssd, 'read_ssd', side_effect=ValueError("ERROR"))
+    mocker.patch('builtins.print')
 
-    shell = shell_ftn()
+    with pytest.raises(ValueError, match="ERROR"):
+        shell.fullread()
+
+
+def test_fullwrite(shell, mocker):
+    mock_write = mocker.patch.object(shell.ssd, 'write_ssd')
+    mock_print = mocker.patch('builtins.print')
+    shell.fullwrite(12341234)
+
+    # expected = "[Full Write] Done\n"
+    assert mock_write.call_count == 100
+    mock_print.assert_called_once_with("[Full Write] Done")
+
+
+def test_FullWriteAndReadCompare_pass(shell, mocker):
+    mocker.patch('random.randint', return_value=0x1A2B3C4D)
+    mock_print = mocker.patch('builtins.print')
+
+    shell.FullWriteAndReadCompare()
+
+    mock_print.assert_called_with('PASS')
+
+
+@pytest.mark.parametrize('values', ['00 0x12345688', '02 0x00000000'])
+def test_FullWriteAndReadCompare_fail(shell, mocker, values):
+    mocker.patch('random.randint', return_value=0x12345678)
+    mocker.patch.object(shell.ssd, 'write_ssd')
+    mocker.patch.object(ssd.SSDNand, 'readline', return_value=values)
+    mock_print = mocker.patch('builtins.print')
+
+    shell.FullWriteAndReadCompare()
+
+    mock_print.assert_called_with('FAIL')
+
+
+def test_PartialLBAWrite_pass(shell, mocker):
+    mocker.patch('random.randint', return_value=12345678)
+    mock_write_ssd = mocker.patch.object(shell.ssd, 'write_ssd')
+    mock_print = mocker.patch('builtins.print')
+    shell.PartialLBAWrite()
+    assert mock_write_ssd.call_count == 150
+    mock_print.assert_called_with('PASS')
+
+def test_PartialLBAWrite_fail(shell, mocker):
+    mocker.patch('random.randint', return_value=12345678)
+    mocker.patch.object(shell.ssd, 'write_ssd')
+    mocker.patch.object(shell.ssd_nand, 'readline', side_effect=['00 0x12345678', '02 0x00000000'])
+    mock_print = mocker.patch('builtins.print')
+    result = shell.PartialLBAWrite()
+
+    mock_print.assert_called_with('FAIL')
+    assert result is None
+
+
+def test_WriteReadAging_pass(shell, mocker: MockerFixture):
+    mock_read_line = mocker.patch.object(shell.ssd_nand, 'readline')
+    mock_write_ssd = mocker.patch.object(shell.ssd, 'write_ssd')
+    mock_print = mocker.patch('builtins.print')
+
     shell.WriteReadAging()
-    captured = capsys.readouterr()
 
-    # PASS 출력 검사
-    assert 'PASS' in captured.out
-    # 총 400번 호출되었는지
+    assert mock_read_line.call_count == 400
     assert mock_write_ssd.call_count == 400
+    mock_print.assert_called_with('PASS')
 
 
-def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
-    mock_read_line = mocker.patch('ssd.SSDNand.readline')
-    mock_read_line.return_value = 10
-    mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
+def test_WriteReadAging_fail(shell, mocker):
+    mock_read_line = mocker.patch.object(shell.ssd_nand, 'readline', side_effect=['1 10', '2 20'])
+    mock_print = mocker.patch('builtins.print')
 
-    shell = shell_ftn()
     shell.WriteReadAging()
-    captured = capsys.readouterr()
 
-    assert mock_write_ssd.call_count == 400
-    assert 'PASS' in captured.out
+    mock_print.assert_called_with('FAIL')
 
 
-def test_WriteReadAging_fail(mocker, capsys):
-    mock_read_line = mocker.patch('ssd.SSDNand.readline')
-    mock_read_line.side_effect = [10, 20]
-    mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
+def test_main_function_invaild_case(shell):
+    with pytest.raises(ValueError, match="INVALID COMMAND"):
+        shell.main_function(['unknown', 'arg'])
 
-    shell = shell_ftn()
-    shell.WriteReadAging()
-    captured = capsys.readouterr()
 
-    assert 'FAIL' in captured.out
+def test_main_function_pass(shell, mocker):
+    mock_read = mocker.patch.object(shell, 'read')
+
+    shell.main_function(['read', '10'])
+
+    mock_read.assert_called_once_with(10)
+
+
+def test_main(shell, mocker):
+    mocker.patch('builtins.input', side_effect=['read 10', 'exit'])
+    mock_main_func = mocker.patch.object(shell, 'main_function')
+
+    shell.main()
+
+    mock_main_func.assert_called_once_with(['read', '10'])

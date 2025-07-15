@@ -2,6 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from unittest.mock import call
 from shell import shell_ftn
+from ssd import SSD
 
 def test_read_success(mocker):
     mock_read_ssd = mocker.patch('shell.shell_ftn.read')

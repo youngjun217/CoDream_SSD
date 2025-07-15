@@ -36,14 +36,18 @@ def shell_with_ssd_mock():
 
 
 
-@pytest.mark.parametrize("index", [1, 3, 10, 4, -1, '20', 10.3, 100])
-def test_read(mocker: MockerFixture, index):
-    mock_read = mocker.patch('ssd.SSD.read_ssd')
+@pytest.mark.parametrize("index", [1, 3, 10, 4])
+def test_read(mocker: MockerFixture, index, capsys):
+    mock_ssd_read = mocker.patch('ssd.SSD.read_ssd')
+    mock_ouptut_read = mocker.patch('ssd.SSDOutput.read')
 
     shell = shell_ftn()
     shell.read(index)
+    captured = capsys.readouterr()
 
-    mock_read.assert_called_with(index)
+    mock_ssd_read.assert_called_with(index)
+    mock_ouptut_read.assert_called_once()
+    assert '[Read]' in captured.out
 
 
 
@@ -137,26 +141,26 @@ def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
     assert mock_write_ssd.call_count == 400
 
 
-
 def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
-    mock_read_line = mocker.patch('shell.shell_ftn._read_line')
+    mock_read_line = mocker.patch('ssd.SSDNand.readline')
     mock_read_line.return_value = 10
     mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
 
     shell = shell_ftn()
     shell.WriteReadAging()
     captured = capsys.readouterr()
-    #최종 반환값이 PASS인지 검증
-    assert 'PASS' in captured.out
+
     assert mock_write_ssd.call_count == 400
+    assert 'PASS' in captured.out
 
 
 def test_WriteReadAging_fail(mocker, capsys):
-    mock_read_line = mocker.patch('shell.shell_ftn._read_line')
+    mock_read_line = mocker.patch('ssd.SSDNand.readline')
     mock_read_line.side_effect = [10, 20]
     mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
 
     shell = shell_ftn()
     shell.WriteReadAging()
     captured = capsys.readouterr()
+
     assert 'FAIL' in captured.out

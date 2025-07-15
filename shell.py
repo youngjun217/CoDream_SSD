@@ -1,5 +1,5 @@
 import sys
-from ssd import SSD, SSDOutput
+from ssd import SSD, SSDOutput, SSDNand
 import random
 
 
@@ -73,18 +73,19 @@ class shell_ftn():
     def FullWriteAndReadCompare(self):
         check=False
         for start_idx in range(0, 100, 5):
-            rand_num = random.randint(0x00000000, 0xFFFFFFFF)
-            rand_num_list = [rand_num] * 5
             for x in range(5):
-                SSD().write_ssd(start_idx + x, rand_num_list[x])
-                print("result\n",SSDOutput().read())
-                if SSDOutput().read(start_idx + x) != rand_num_list[x]:
+                rand_num = random.randint(0, 0xFFFFFFFF)
+                hex_str = f"0x{rand_num:08X}"
+                SSD().write_ssd(start_idx + x, rand_num)
+                print("result\n",SSDNand().readline(start_idx + x))
+                if SSDNand().readline(start_idx + x).split('x')[1] != hex_str:
                     print('FAIL')
                     check=True
                     break
             if check:
                 break
-        print('PASS')
+        if not check:
+            print('PASS')
 
     def PartialLBAWrite(self):
         for i in range(30):

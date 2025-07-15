@@ -36,8 +36,8 @@ def shell_with_ssd_mock():
 
 
 
-@pytest.mark.parametrize("index", [1, 3, 10, 4])
-def test_read_success(mocker: MockerFixture, index):
+@pytest.mark.parametrize("index", [1, 3, 10, 4, -1, '20', 10.3, 100])
+def test_read(mocker: MockerFixture, index):
     mock_read = mocker.patch('ssd.SSD.read_ssd')
 
     shell = shell_ftn()
@@ -45,13 +45,6 @@ def test_read_success(mocker: MockerFixture, index):
 
     mock_read.assert_called_with(index)
 
-
-@pytest.mark.parametrize("index", [100, 10.3, '20'])
-def test_read_fail(index):
-    shell = shell_ftn()
-
-    with pytest.raises(ValueError, match="ERROR"):
-        shell.read(index)
 
 
 def test_write(mocker):

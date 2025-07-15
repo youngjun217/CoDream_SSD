@@ -1,5 +1,9 @@
 import random
+from unittest.mock import call
+
 import pytest
+import pytest_mock
+
 from ssd import SSD, SSDOutput, SSDNand
 from pytest_mock import MockerFixture
 
@@ -86,8 +90,8 @@ def test_ssd_write_error_minus_value(index, value):
     ssd = SSD()
     with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.write_ssd(index, value)
-    ssd_output = SSDOutput()
-    assert ssd_output.read() == ERROR_MESSAGE
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == "ERROR"
 
 
 @pytest.mark.parametrize("lba, value", [(10, 0x100000000), (10, 0x300000000)])
@@ -187,3 +191,31 @@ def test_singletone_ssd_output(output):
     ssd_new_output = SSDOutput()
     assert ssd_output.read() == ssd_new_output.read()
 
+
+@pytest.mark.parametrize("input", [[None, 'R', 0], [None, 'R', 10], [None, 'R', 99]])
+def test_ssd_run_read(mocker: MockerFixture, input):
+    mock_read = mocker.patch('ssd.SSD.read_ssd')
+
+    ssd = SSD()
+    ssd.run(input)
+
+    ssd.read_ssd.assert_called_once()
+    ssd.read_ssd.assert_has_calls([call(input[2])])
+
+
+@pytest.mark.parametrize("input", [[None, 'W', 0, 0x00000000], [None, 'W', 10, 0x12345678], [None, 'W', 99, 0xABCDEF90]])
+def test_ssd_run(mocker: MockerFixture, input):
+    mock_write = mocker.patch('ssd.SSD.write_ssd')
+
+    ssd = SSD()
+    ssd.run(input)
+
+    ssd.write_ssd.assert_called_once()
+    ssd.write_ssd.assert_has_calls([call(input[2], input[3])])
+
+
+@pytest.mark.parametrize("input", [[None, 'A'], [None, 'W', 10], [None, 'W', 10, 1, 1], [None, 'R'], [None, 'R', 99, 0xABCDEF90]])
+def test_ssd_run_wrong_command(input):
+    ssd = SSD()
+    with pytest.raises(ValueError, match="ERROR"):
+        ssd.run(input)

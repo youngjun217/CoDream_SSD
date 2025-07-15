@@ -110,7 +110,7 @@ class shell_ftn():
         for i in range(200):
             self.ssd.write_ssd(0, value)
             self.ssd.write_ssd(99, value)
-            if self.ssd_nand.readline(1) != self.ssd_nand.readline(100):
+            if self.ssd_nand.readline(0) != self.ssd_nand.readline(99):
                 print('FAIL')
                 return
         print('PASS')

@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 from ssd import SSD, SSDOutput
 
 
@@ -121,8 +122,7 @@ def test_output_read(output):
     with open("ssd_output.txt", 'w', encoding='utf-8') as file:
         file.write(output)
 
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        assert file.read() == ssd_output.read()
+    assert output == ssd_output.read()
 
 
 @pytest.mark.parametrize("output", ["ERROR", "10 0x00000000", "20 0x00000000"])
@@ -135,3 +135,13 @@ def test_output_write(output):
 
     with open("ssd_output.txt", 'r', encoding='utf-8') as file:
         assert file.read() == output
+
+
+def test_ssd_read_output(mocker: MockerFixture):
+    mk = mocker.Mock(spec=SSDOutput)
+    ssd = SSD()
+    ssd._output_txt = mk
+    ssd.read_ssd(3)
+    assert ssd._output_txt.write.call_count == 1
+
+

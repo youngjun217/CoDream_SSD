@@ -4,6 +4,33 @@ from unittest.mock import call
 from shell import shell_ftn
 from ssd import SSD
 
+class TestableSSD(SSD):
+    def __init__(self):
+        self._write_ssd_call_count = 0
+        self._read_ssd_call_count = 0
+
+    def read_ssd(self, index):
+        self._read_ssd_call_count += 1
+
+    def write_ssd(self, lba, value):
+        self._write_ssd_call_count += 1
+
+    @property
+    def read_ssd_call_count(self):
+        return self._read_ssd_call_count
+
+    @property
+    def write_ssd_call_count(self):
+        return self._write_ssd_call_count
+
+@pytest.fixture
+def shell_with_ssd_mock():
+    testable_ssd = TestableSSD()
+    shell = shell_ftn()
+    shell.ssd = testable_ssd
+    return shell
+
+
 def test_read_success(mocker):
     mock_read_ssd = mocker.patch('shell.shell_ftn.read')
     mock_read_ssd.side_effect = [1,2,3]
@@ -46,7 +73,6 @@ def test_fullread(capsys,mocker):
     #assert
     assert captured.out =="[Full Read]\n"
     mk.call_count == 1
-
 
 def test_fullwrite(capsys):
     test_shell=shell_ftn()

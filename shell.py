@@ -67,7 +67,6 @@ class shell_ftn():
                 raise e
 
     def FullWriteAndReadCompare(self):
-        check = False
         for start_idx in range(0, 100, 5):
             for x in range(5):
                 rand_num = random.randint(0, 0xFFFFFFFF)
@@ -75,12 +74,8 @@ class shell_ftn():
                 self.ssd.write_ssd(start_idx + x, rand_num)
                 if self.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
-                    check = True
-                    break
-            if check:
-                break
-        if not check:
-            print('PASS')
+                    return
+        print('PASS')
 
     def PartialLBAWrite(self):
         partialLBA_index_list = [4, 0, 3, 1, 2]
@@ -110,12 +105,17 @@ class shell_ftn():
         for i in range(200):
             self.ssd.write_ssd(0, value)
             self.ssd.write_ssd(99, value)
-            if self.ssd_nand.readline(0) != self.ssd_nand.readline(99):
+            if self.ssd_nand.readline(0).split()[1] != self.ssd_nand.readline(99).split()[1]:
                 print('FAIL')
                 return
         print('PASS')
 
     def main_function(self, args):
+        if not (args[0].lower(), len(args)) in self.command_dictionary(args):
+            raise ValueError("INVALID COMMAND")
+        self.command_dictionary(args)[(args[0].lower(), len(args))]()
+
+    def command_dictionary(self,args):
         command_dict = {
             ("read", 2): lambda: self.read(int(args[1])),
             ("write", 3): lambda: self.write(int(args[1]), int(args[2], 16)),
@@ -126,9 +126,7 @@ class shell_ftn():
             ('3_', 1): lambda: self.WriteReadAging(),
             ('help', 1): lambda: self.help()
         }
-        if not (args[0].lower(), len(args)) in command_dict:
-            raise ValueError("INVALID COMMAND")
-        command_dict[(args[0].lower(), len(args))]()
+        return command_dict
 
     def main(self):
         while True:

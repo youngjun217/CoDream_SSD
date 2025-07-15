@@ -116,9 +116,10 @@ class shell_ftn():
                     return int(parts[1])
         return None
 
-    def WriteReadAging(self, filepath):
+    def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
-        ssd = SSD()
+        ssd = self.ssd
+        filepath = "ssd_nand.txt"
         for i in range(200):
             ssd.write_ssd(0, value)
             ssd.write_ssd(99, value)

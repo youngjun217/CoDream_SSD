@@ -179,6 +179,19 @@ def test_ssd_read_output(mocker: MockerFixture):
     ssd.read_ssd(3)
     assert ssd._output_txt.write.call_count == 1
 
+    lines = ssd._nand_txt.read()
+    target_line = lines[3]
+    ssd._output_txt.write.assert_called_with(target_line)
+
+
+def test_ssd_write_output(mocker: MockerFixture):
+    mk = mocker.Mock(spec=SSDOutput)
+    ssd = SSD()
+    ssd._output_txt = mk
+
+    ssd.write_ssd(3, 0x12312312)
+    assert ssd._output_txt.write.call_count == 1
+    ssd._output_txt.write.assert_called_with("")
 
 @pytest.mark.parametrize("output", [["ERROR"], ["10 0x00000000"], ["20 0x00000000"]])
 def test_singletone_ssd_nand(output):
@@ -193,3 +206,4 @@ def test_singletone_ssd_output(output):
     ssd_output.write(output)
     ssd_new_output = SSDOutput()
     assert ssd_output.read() == ssd_new_output.read()
+

@@ -182,6 +182,15 @@ def test_ssd_run_read(ssd, mocker: MockerFixture, input):
     ssd.read_ssd.assert_has_calls([call(input[2])])
 
 
+
+@pytest.mark.parametrize("input", [[None, 'E', 1, 2], [None, 'E', 5, 5], [None, 'E', 10, 10]])
+def test_ssd_run_erase(ssd, mocker: MockerFixture, input):
+    mock_read = mocker.patch('ssd.SSD.erase_ssd')
+    ssd.run(input)
+    ssd.erase_ssd.assert_called_once()
+    ssd.erase_ssd.assert_has_calls([call(input[2], input[3])])
+
+
 @pytest.mark.parametrize("input", [[None, 'W', 0, 0x00000000], [None, 'W', 10, 0x12345678], [None, 'W', 99, 0xABCDEF90]])
 def test_ssd_run(ssd, mocker: MockerFixture, input):
     mock_write = mocker.patch('ssd.SSD.write_ssd')
@@ -190,7 +199,7 @@ def test_ssd_run(ssd, mocker: MockerFixture, input):
     ssd.write_ssd.assert_has_calls([call(input[2], input[3])])
 
 
-@pytest.mark.parametrize("input", [[None, 'A'], [None, 'W', 10], [None, 'W', 10, 1, 1], [None, 'R'], [None, 'R', 99, 0xABCDEF90]])
+@pytest.mark.parametrize("input", [[None, 'A'], [None, 'W', 10], [None, 'W', 10, 1, 1], [None, 'R'], [None, 'R', 99, 0xABCDEF90], [None, 'E', 10], [None, 'E', 10, 1, 1]])
 def test_ssd_run_wrong_command(ssd, input):
     with pytest.raises(ValueError, match="ERROR"):
         ssd.run(input)

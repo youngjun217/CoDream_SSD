@@ -13,15 +13,13 @@ class shell_ftn():
         print(f'[Read] LBA {idx}: {result}')
 
 
-    def write(self, num: int, value: int) -> None:
+    def write(self, num: int, value: str) -> None:
         my_ssd = SSD()
         my_ssd.write_ssd(num, int(value,16))
         my_ssdoutput = SSDOutput()
         if my_ssdoutput.read() == '':
-        # with open('ssd_output.txt', 'r', encoding='utf-8') as file:
             print('[Write] Done')
             return True
-        raise AssertionError()
         return False
 
     # help : 프로그램 사용법
@@ -94,7 +92,7 @@ class shell_ftn():
         for _ in range(30):
             for write_index in range(5):
                 random_write_value = random.randint(0, 0xFFFFFFFF)
-                self.write(partialLBA_index_list[write_index], random_write_value)
+                self.write(partialLBA_index_list[write_index], hex(random_write_value))
 
             check_read_value = self.read(0)
             if check_read_value != self.read(1):

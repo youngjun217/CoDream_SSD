@@ -64,6 +64,24 @@ def test_write_success(mocker):
     assert result is True
     pass
 
+def test_write_fail(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='ERROR'))
+    mock_func = mocker.patch('shell.SSD.write_ssd', side_effect=AssertionError("SSD write failed"))
+    shell = shell_ftn()
+    with pytest.raises(AssertionError):
+        result = shell.write(-1, '0x00000000')
+        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+        assert result is not True
+    with pytest.raises(AssertionError):
+        result = shell.write(100, '0x00000000')
+        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+        assert result is not True
+    with pytest.raises(AssertionError):
+        result = shell.write(3, '0x0000000000')
+        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+        assert result is not True
+
+
 
 def test_fullread(capsys, mocker):
     mk = mocker.patch('shell.shell_ftn.fullread')

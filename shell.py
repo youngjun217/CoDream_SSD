@@ -6,9 +6,10 @@ import random
 class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
-        self.ssd_output=SSDOutput()
+        self.ssd_output = SSDOutput()
+        self.ssd_nand = SSDNand()
 
-    def read(self,idx:int):
+    def read(self, idx: int):
         self.ssd.read_ssd(idx)
         result = self.ssd_output.read()
         print(f'[Read] LBA {idx}: {result}')
@@ -40,7 +41,7 @@ class shell_ftn():
 
     def fullwrite(self, value):
         for x in range(100):
-            SSD().write_ssd(x, value)
+            self.ssd.write_ssd(x, value)
         print("[Full Write] Done")
 
     def fullread(self):
@@ -69,15 +70,15 @@ class shell_ftn():
         ssd_nand.close()
 
     def FullWriteAndReadCompare(self):
-        check=False
+        check = False
         for start_idx in range(0, 100, 5):
             for x in range(5):
                 rand_num = random.randint(0, 0xFFFFFFFF)
                 hex_str = f"0x{rand_num:08X}"
-                SSD().write_ssd(start_idx + x, rand_num)
-                if SSDNand().readline(start_idx + x).split()[1] != hex_str:
+                self.ssd.write_ssd(start_idx + x, rand_num)
+                if self.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
-                    check=True
+                    check = True
                     break
             if check:
                 break
@@ -118,10 +119,9 @@ class shell_ftn():
 
     def WriteReadAging(self, filepath):
         value = random.randint(0, 0xFFFFFFFF)
-        ssd = SSD()
         for i in range(200):
-            ssd.write_ssd(0, value)
-            ssd.write_ssd(99, value)
+            self.ssd.write_ssd(0, value)
+            self.ssd.write_ssd(99, value)
             if self._read_line(filepath, 1) != self._read_line(filepath, 100):
                 print('FAIL')
                 return

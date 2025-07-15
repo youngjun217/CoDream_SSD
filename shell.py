@@ -6,7 +6,7 @@ import random
 class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
-        self.ssd_output=SSDOutput()
+        self.ssd_output = SSDOutput()
 
     def read(self,idx:int):
         self.ssd.read_ssd(idx)
@@ -44,16 +44,12 @@ class shell_ftn():
         print("[Full Write] Done")
 
     def fullread(self):
-        ssd_nand = open("ssd_nand.txt", "r")
-        ssd_output = None
-
         print("[Full Read]")
 
         for idx in range(100):
             try:
                 self.ssd.read_ssd(idx)
-                ssd_output = open("ssd_output.txt", "r")
-                output = ssd_output.readline()
+                output = self.ssd_output.read()
 
                 if output == "ERROR" or len(output.split()) < 2:
                     print(output)
@@ -63,10 +59,6 @@ class shell_ftn():
 
             except Exception as e:
                 raise e
-            finally:
-                ssd_output.close()
-
-        ssd_nand.close()
 
     def FullWriteAndReadCompare(self):
         check=False
@@ -109,21 +101,21 @@ class shell_ftn():
         print("PASS")
         return True
 
-    def _read_line(self, filepath, line_number):
-        with open(filepath, 'r', encoding='utf-8') as f:
+    def _read_line(self, line_number):
+        with open("ssd_nand.txt", 'r', encoding='utf-8') as f:
             for current_line, line in enumerate(f, start=1):
                 if current_line == line_number:
                     parts = line.strip().split()
                     return int(parts[1])
         return None
 
-    def WriteReadAging(self, filepath):
+    def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
-        ssd = SSD()
+        ssd = self.ssd
         for i in range(200):
             ssd.write_ssd(0, value)
             ssd.write_ssd(99, value)
-            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
+            if self._read_line(1) != self._read_line(100):
                 print('FAIL')
                 return
         print('PASS')

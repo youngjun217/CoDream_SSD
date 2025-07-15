@@ -1,5 +1,4 @@
 import random
-
 import pytest
 from ssd import SSD, SSDOutput, SSDNand
 from pytest_mock import MockerFixture
@@ -17,15 +16,15 @@ def generate_ssd_nand_txt():
 
 def test_read():
     ssd = SSD()
+    ssd_output = SSDOutput()
+    ssd_nand = SSDNand()
+
     index = 3
     ssd.read_ssd(index)
-    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-        lines = file.readlines()
+    ssd_output_line = ssd_output.read()
+    ssd_nand_txt_line = ssd_nand.readline(index)
 
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        ssd_output_txt = file.read()
-
-    assert lines[index] == ssd_output_txt
+    assert ssd_output_line == ssd_nand_txt_line
 
 
 @pytest.mark.parametrize("index", [0, 10, 20, 50, 90, 99])

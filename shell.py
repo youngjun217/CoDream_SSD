@@ -7,12 +7,10 @@ class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
 
-    def read(self, idx: int):
-        if idx < 0 or idx > 99:
-            raise ValueError("ERROR")
-        if type(idx) != int:
-            raise ValueError("ERROR")
-        result = self.ssd.read_ssd(idx)
+    def read(self,idx:int):
+        self.ssd.read_ssd(idx)
+        ssdoutput = SSDOutput()
+        result = ssdoutput.read()
         print(f'[Read] LBA {idx}: {result}')
         return result
 
@@ -132,17 +130,17 @@ class shell_ftn():
         print('PASS')
 
     def main_function(self, args):
-        command_dict={
-            ("read",2) : lambda :self.read(int(args[1])),
-            ("write",3) : lambda :self.write(int(args[1]), int(args[2], 16)),
+        command_dict = {
+            ("read", 2): lambda: self.read(int(args[1])),
+            ("write", 3): lambda: self.write(int(args[1]), int(args[2], 16)),
             ("fullwrite", 2): lambda: self.fullwrite(int(args[1], 16)),
             ("fullread", 1): lambda: self.fullread(),
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
-            ('help',None): lambda:self.help()
+            ('help', None): lambda: self.help()
         }
-        if not (args[0].lower(), len(args))in command_dict:
+        if not (args[0].lower(), len(args)) in command_dict:
             raise ValueError("INVALID COMMAND")
         command_dict[(args[0].lower(), len(args))]()
 

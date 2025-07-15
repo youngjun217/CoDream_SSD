@@ -10,7 +10,7 @@ class shell_ftn():
         self.ssd_nand = SSDNand()
 
 
-    def read(self,idx:int):
+    def read(self, idx: int) -> None:
         self.ssd.read_ssd(idx)
         result = self.ssd_output.read()
         value = result.split()[1]

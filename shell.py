@@ -90,21 +90,22 @@ class shell_ftn():
     def PartialLBAWrite(self):
         partialLBA_index_list = [4, 0, 3, 1, 2]
         for _ in range(30):
+            random_write_value = random.randint(0, 0xFFFFFFFF)
             for write_index in range(5):
-                random_write_value = random.randint(0, 0xFFFFFFFF)
                 self.write(partialLBA_index_list[write_index], hex(random_write_value))
+                my_ssdoutput = SSDOutput()
+            check_read_value = my_ssdoutput.read_value_index(0)
+            if check_read_value != my_ssdoutput.read_value_index(1):
 
-            check_read_value = self.read(0)
-            if check_read_value != self.read(1):
                 print("FAIL")
                 return False
-            if check_read_value != self.read(2):
+            if check_read_value != my_ssdoutput.read_value_index(2):
                 print("FAIL")
                 return False
-            if check_read_value != self.read(3):
+            if check_read_value != my_ssdoutput.read_value_index(3):
                 print("FAIL")
                 return False
-            if check_read_value != self.read(4):
+            if check_read_value != my_ssdoutput.read_value_index(4):
                 print("FAIL")
                 return False
         print("PASS")

@@ -1,5 +1,6 @@
 import pytest
-from ssd import SSD
+from ssd import SSD, SSDOutput
+
 
 def generate_ssd_nand_txt():
     ssd_nand_txt = []
@@ -112,4 +113,14 @@ def test_ssd_write_error_value_above_32bits(index, value):
         ssd.write_ssd(index, value)
     with open("ssd_output.txt", 'r', encoding='utf-8') as file:
         assert file.read() == "ERROR"
+
+
+@pytest.mark.parametrize("output", ["ERROR", "10 0x00000000", "20 0x00000000"])
+def test_output_read(output):
+    ssd_output = SSDOutput()
+    with open("ssd_output.txt", 'w', encoding='utf-8') as file:
+        file.write(output)
+
+    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+        assert file.read() == ssd_output.read()
 

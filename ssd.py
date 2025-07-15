@@ -46,3 +46,9 @@ class SSD():
         if not 0 <= value <= 0xFFFFFFFF:
             return False
         return True
+
+
+class SSDOutput:
+    def read(self):
+        with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+            return file.read()

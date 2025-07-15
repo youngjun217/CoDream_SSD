@@ -1,5 +1,7 @@
+import random
+
 import pytest
-from ssd import SSD, SSDOutput
+from ssd import SSD, SSDOutput, SSDNand
 
 
 def generate_ssd_nand_txt():
@@ -134,3 +136,27 @@ def test_output_write(output):
 
     with open("ssd_output.txt", 'r', encoding='utf-8') as file:
         assert file.read() == output
+
+
+def test_nand_read():
+    ssd_nand = SSDNand()
+    generate_ssd_nand_txt()
+    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
+        output = file.readlines()
+
+    assert output == ssd_nand.read()
+
+
+def test_nand_write():
+    ssd_nand = SSDNand()
+
+    ssd_nand_txt = []
+    for i in range(0,100):
+        rand_32bit = random.randint(0, 0xFFFFFFFF)
+        newline = f"{i:02d} 0x{rand_32bit:08X}\n"
+        ssd_nand_txt.append(newline)
+
+    ssd_nand.write(ssd_nand_txt)
+
+    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
+        assert file.readlines() == ssd_nand_txt

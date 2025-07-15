@@ -52,6 +52,23 @@ class SSD():
         return True
 
 
+class SSDNand:
+    def __init__(self):
+        ssd_nand_txt = []
+        for i in range(0, 100):
+            newline = f"{i:02d} 0x00000000\n"
+            ssd_nand_txt.append(newline)
+
+        self.write(ssd_nand_txt)
+
+    def read(self):
+        with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
+            return file.readlines()
+
+    def write(self, output):
+        with open("ssd_nand.txt", 'w', encoding='utf-8') as file:
+            file.writelines(output)
+
 class SSDOutput:
     def __init__(self):
         self.write("")

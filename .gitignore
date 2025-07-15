@@ -53,3 +53,8 @@ coverage.xml
 .pytest_cache/
 ssd_nand.txt
 ssd_output.txt
+
+__pycache__/
+*.py[cod]
+*$py.class
+.txt

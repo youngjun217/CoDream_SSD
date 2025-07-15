@@ -10,16 +10,20 @@ class shell_ftn():
         self.ssd_nand = SSDNand()
 
 
-    def read(self, idx: int):
+    def read(self,idx:int):
         self.ssd.read_ssd(idx)
         result = self.ssd_output.read()
-        print(f'[Read] LBA {idx}: {result}')
-        return
+        value = result.split()[1]
+        print(f'[Read] LBA {idx}: {value}')
 
-    def write(self, num: int, value: int) -> None:
-        if self.ssd.write_ssd(num, value):
+
+
+    def write(self, num: int, value: str) -> None:
+        self.ssd.write_ssd(num, int(value,16))
+        if self.ssd_output.read() == '':
             print('[Write] Done')
-        pass
+            return True
+        return False
 
     # help : 프로그램 사용법
     def help(self):
@@ -74,44 +78,34 @@ class shell_ftn():
         print('PASS')
 
     def PartialLBAWrite(self):
-        for i in range(30):
-            r1 = random.randint(0, 0xFFFFFFFF)
-            self.write(4, r1)
-            self.write(0, r1)
-            self.write(3, r1)
-            self.write(1, r1)
-            self.write(2, r1)
+        partialLBA_index_list = [4, 0, 3, 1, 2]
+        for _ in range(30):
+            random_write_value = random.randint(0, 0xFFFFFFFF)
+            for write_index in range(5):
+                self.ssd.write_ssd(partialLBA_index_list[write_index], random_write_value)
+            check_read_value = self.ssd_output.read_value_index(0)
+            if check_read_value != self.ssd_output.read_value_index(1):
 
-            if r1 != self.ssd_output.read(1):
                 print("FAIL")
                 return False
-            if r1 != self.read(2):
+            if check_read_value != self.ssd_output.read_value_index(2):
                 print("FAIL")
                 return False
-            if r1 != self.read(3):
+            if check_read_value != self.ssd_output.read_value_index(3):
                 print("FAIL")
                 return False
-            if r1 != self.read(4):
+            if check_read_value != self.ssd_output.read_value_index(4):
                 print("FAIL")
                 return False
         print("PASS")
         return True
-
-    def _read_line(self, line_number):
-        with open("ssd_nand.txt", 'r', encoding='utf-8') as f:
-            for current_line, line in enumerate(f, start=1):
-                if current_line == line_number:
-                    parts = line.strip().split()
-                    return int(parts[1])
-        return None
 
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
         for i in range(200):
             self.ssd.write_ssd(0, value)
             self.ssd.write_ssd(99, value)
-            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
-
+            if self.ssd_nand.readline(1) != self.ssd_nand.readline(100):
                 print('FAIL')
                 return
         print('PASS')

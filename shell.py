@@ -41,9 +41,8 @@ class shell_ftn():
               )
 
     def fullwrite(self, value):
-        if len(str(value)) > 8:
-            raise ValueError("ERROR")
         for x in range(100):
+            value = int(value, 16)
             SSD().write_ssd(x,value)
         print("[Full Write] Done")
 
@@ -70,8 +69,10 @@ class shell_ftn():
             rand_num_list = [rand_num] * 5
             for x in range(5):
                 SSD().write_ssd(start_idx+x,rand_num_list[x])
-                if SSD().read_ssd(start_idx+x) == rand_num_list[x]:
-                    pass
+                if SSD().read_ssd(start_idx+x) != rand_num_list[x]:
+                    print('FAIL')
+                    break
+        print('PASS')
 
 
     def PartialLBAWrite(self):

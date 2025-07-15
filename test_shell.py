@@ -41,11 +41,10 @@ def test_write( mocker):
         shell.write(3, '0x0000000011')
     mk.call_count == 7
     pass
-  
+
 def test_PartialLBAWrite():
     shell = shell_ftn()
     assert shell.PartialLBAWrite()
-
 
 def test_WriteReadAging_pass(mocker, capsys):
     mock_read_line = mocker.patch('shell.shell_ftn._read_line')

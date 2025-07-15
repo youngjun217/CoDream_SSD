@@ -8,7 +8,7 @@ class shell_ftn:
             raise ValueError("ERROR")
         if type(idx)!=int:
             raise ValueError("ERROR")
-        result = read_ssd(idx)
+        result = ssd.read_ssd(idx)
         print(f'[Read] LBA {idx}: {result}')
         return result
 

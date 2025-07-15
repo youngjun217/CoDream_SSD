@@ -1,4 +1,11 @@
 class SSD():
+    def __init__(self):
+        self._output_txt = SSDOutput()
+
+    @property
+    def output_txt(self):
+        return self._output_txt
+
     def read_ssd(self, index):
         if not self.check_input_validity(index):
             with open("ssd_output.txt", "w") as file:
@@ -11,14 +18,12 @@ class SSD():
         lines = ssd_nand_txt.splitlines()
         target_line = lines[index]
 
-        with open("ssd_output.txt", "w") as file:
-            file.write(target_line)
+        self._output_txt.write(target_line)
 
     # write 함수
     def write_ssd(self, lba, value):
         if not self.check_input_validity(lba, value):
-            with open("ssd_output.txt", "w") as file:
-                file.write("ERROR")
+            self._output_txt.write("ERROR")
             raise ValueError("ERROR")
 
         # ssd_nand.txt 파일 읽기
@@ -33,8 +38,7 @@ class SSD():
             file.writelines(ssd_nand_txt)
 
         # sse_output.txt 파일 초기화
-        with open("ssd_output.txt", 'w', encoding='utf-8') as file:
-            file.write("")
+        self._output_txt.write("")
 
     def check_input_validity(self, lba, value = 0x00000000):
         if type(lba) is not int:
@@ -49,6 +53,9 @@ class SSD():
 
 
 class SSDOutput:
+    def __init__(self):
+        self.write("")
+
     def read(self):
         with open("ssd_output.txt", 'r', encoding='utf-8') as file:
             return file.read()

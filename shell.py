@@ -93,17 +93,16 @@ class shell_ftn():
             self.write(1, r1)
             self.write(2, r1)
 
-            a = self.read(0)
-            if a != self.read(1):
+            if r1 != self.ssd_output.read(1):
                 print("FAIL")
                 return False
-            if a != self.read(2):
+            if r1 != self.read(2):
                 print("FAIL")
                 return False
-            if a != self.read(3):
+            if r1 != self.read(3):
                 print("FAIL")
                 return False
-            if a != self.read(4):
+            if r1 != self.read(4):
                 print("FAIL")
                 return False
         print("PASS")
@@ -137,7 +136,7 @@ class shell_ftn():
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
-            ('help', None): lambda: self.help()
+            ('help', 1): lambda: self.help()
         }
         if not (args[0].lower(), len(args)) in command_dict:
             raise ValueError("INVALID COMMAND")

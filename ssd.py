@@ -19,6 +19,7 @@ class SSD():
         target_line = lines[index]
 
         self._output_txt.write(target_line)
+        return target_line
 
     # write 함수
     def write_ssd(self, lba, value):

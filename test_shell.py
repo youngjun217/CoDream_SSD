@@ -1,8 +1,10 @@
 import pytest
 from pytest_mock import MockerFixture
 from unittest.mock import call
+
+import ssd
 from shell import shell_ftn
-from ssd import SSD
+from ssd import SSD, SSDOutput
 
 
 class TestableSSD(SSD):
@@ -33,34 +35,19 @@ def shell_with_ssd_mock():
     return shell
 
 
-def test_read_success(mocker):
-    mock_read_ssd = mocker.patch('shell.shell_ftn.read')
-    mock_read_ssd.side_effect = [1, 2, 3]
 
+@pytest.mark.parametrize("index", [1, 3, 10, 4])
+def test_read_success(mocker: MockerFixture, index):
+    mock_read = mocker.patch('ssd.SSD.read_ssd')
 
-def test_read(mocker):
     shell = shell_ftn()
-    index = 0
-    fake_data = "10"
-    m = mocker.mock_open(read_data=fake_data)
-
-    # open("ssd_nand.txt") 를 호출할 때 가짜 파일이 열리게 함
-    mocker.patch("builtins.open", m)
     shell.read(index)
 
-    with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-        ssd_nand_txt = file.read()
-    lines = ssd_nand_txt.splitlines()
-
-    with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-        ssd_output_txt = file.read()
-
-    assert lines[index] == ssd_output_txt
+    mock_read.assert_called_with(index)
 
 
-@pytest.mark.parametrize("lst", [100, 10.3, '20'])
-def test_read_fail(lst):
-    index = lst
+@pytest.mark.parametrize("index", [100, 10.3, '20'])
+def test_read_fail(index):
     shell = shell_ftn()
 
     with pytest.raises(ValueError, match="ERROR"):

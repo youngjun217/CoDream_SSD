@@ -17,8 +17,7 @@ class shell_ftn():
 
 
     def write(self, num:int, value:int)->None:
-        value = int(value, 16)
-        if self.ssd.write_ssd(num, value):
+        if self.ssd.write_ssd(num, int(value, 16)):
             print('[Write] Done')
         pass
 
@@ -43,8 +42,7 @@ class shell_ftn():
 
     def fullwrite(self, value):
         for x in range(100):
-            value = int(value, 16)
-            SSD().write_ssd(x,value)
+            SSD().write_ssd(x,int(value, 16))
         print("[Full Write] Done")
 
     def fullread(self):

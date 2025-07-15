@@ -1,16 +1,20 @@
 import sys
-from ssd import SSD, SSDOutput
+from ssd import SSD, SSDOutput, SSDNand
 import random
+
 
 class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
+        self.ssd_output = SSDOutput()
+        self.ssd_nand = SSDNand()
 
-    def read(self,idx:int):
+
+    def read(self, idx: int):
         self.ssd.read_ssd(idx)
-        ssdoutput = SSDOutput()
-        result = ssdoutput.read()
+        result = self.ssd_output.read()
         print(f'[Read] LBA {idx}: {result}')
+        return
 
 
     def write(self, num: int, value: str) -> None:
@@ -43,20 +47,16 @@ class shell_ftn():
 
     def fullwrite(self, value):
         for x in range(100):
-            SSD().write_ssd(x, value)
+            self.ssd.write_ssd(x, value)
         print("[Full Write] Done")
 
     def fullread(self):
-        ssd_nand = open("ssd_nand.txt", "r")
-        ssd_output = None
-
         print("[Full Read]")
 
         for idx in range(100):
             try:
                 self.ssd.read_ssd(idx)
-                ssd_output = open("ssd_output.txt", "r")
-                output = ssd_output.readline()
+                output = self.ssd_output.read()
 
                 if output == "ERROR" or len(output.split()) < 2:
                     print(output)
@@ -66,26 +66,22 @@ class shell_ftn():
 
             except Exception as e:
                 raise e
-            finally:
-                ssd_output.close()
-
-        ssd_nand.close()
 
     def FullWriteAndReadCompare(self):
         check = False
         for start_idx in range(0, 100, 5):
-            rand_num = random.randint(0x00000000, 0xFFFFFFFF)
-            rand_num_list = [rand_num] * 5
             for x in range(5):
-                SSD().write_ssd(start_idx + x, rand_num_list[x])
-                print("result\n", SSDOutput().read())
-                if SSDOutput().read(start_idx + x) != rand_num_list[x]:
+                rand_num = random.randint(0, 0xFFFFFFFF)
+                hex_str = f"0x{rand_num:08X}"
+                self.ssd.write_ssd(start_idx + x, rand_num)
+                if self.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
                     check = True
                     break
             if check:
                 break
-        print('PASS')
+        if not check:
+            print('PASS')
 
     def PartialLBAWrite(self):
         partialLBA_index_list = [4, 0, 3, 1, 2]
@@ -111,21 +107,21 @@ class shell_ftn():
         print("PASS")
         return True
 
-    def _read_line(self, filepath, line_number):
-        with open(filepath, 'r', encoding='utf-8') as f:
+    def _read_line(self, line_number):
+        with open("ssd_nand.txt", 'r', encoding='utf-8') as f:
             for current_line, line in enumerate(f, start=1):
                 if current_line == line_number:
                     parts = line.strip().split()
                     return int(parts[1])
         return None
 
-    def WriteReadAging(self, filepath):
+    def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
-        ssd = SSD()
         for i in range(200):
-            ssd.write_ssd(0, value)
-            ssd.write_ssd(99, value)
+            self.ssd.write_ssd(0, value)
+            self.ssd.write_ssd(99, value)
             if self._read_line(filepath, 1) != self._read_line(filepath, 100):
+
                 print('FAIL')
                 return
         print('PASS')
@@ -139,7 +135,7 @@ class shell_ftn():
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
-            ('help', None): lambda: self.help()
+            ('help', 1): lambda: self.help()
         }
         if not (args[0].lower(), len(args)) in command_dict:
             raise ValueError("INVALID COMMAND")

@@ -1,3 +1,5 @@
+import sys
+
 class SSD():
     def __init__(self):
         self._nand_txt = SSDNand()
@@ -10,6 +12,27 @@ class SSD():
     @property
     def output_txt(self):
         return self._output_txt
+
+    def run(self, sys_argv):
+        cmd = sys_argv[1]
+        index = int(sys_argv[2])
+        if (cmd == 'W'):
+            if len(sys_argv) != 4:
+                print("Usage: python ssd.py <command> <index> <value>")
+                sys.exit(1)
+            value = int(sys_argv[3], 16)
+            print(f"command({cmd!r}, {index}, {hex(value):010})")
+            self.write_ssd(index, value)
+        elif (cmd == 'R'):
+            if len(sys_argv) != 3:
+                print("Usage: python ssd.py <command> <index>")
+                sys.exit(1)
+            print(f"command({cmd!r}, {index})")
+            self.read_ssd(index)
+        else:
+            print("Usage: python ssd.py <command == W or R> <index> <value: if command == W>")
+            sys.exit(1)
+        # 실제 동작 코드 작성
 
     def read_ssd(self, index):
         if not self.check_input_validity(index):
@@ -110,3 +133,12 @@ class SSDOutput:
     def write(self, output):
         with open("ssd_output.txt", 'w', encoding='utf-8') as file:
             file.write(output)
+
+
+if __name__ == "__main__":
+    # sys.argv[0] = 'ssd.py'
+    # sys.argv[1] = 'W'
+    # sys.argv[2] = '3'
+
+    ssd = SSD()
+    ssd.run(sys.argv)

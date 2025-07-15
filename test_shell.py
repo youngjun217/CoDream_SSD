@@ -118,15 +118,31 @@ def test_PartialLBAWrite():
     assert shell.PartialLBAWrite()
 
 
-def test_WriteReadAging_pass(mocker, capsys):
+def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
+    mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
+
+    shell = shell_ftn()
+    shell.WriteReadAging()
+    captured = capsys.readouterr()
+
+    # PASS 출력 검사
+    assert 'PASS' in captured.out
+    # 총 400번 호출되었는지
+    assert mock_write_ssd.call_count == 400
+
+
+
+def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
     mock_read_line = mocker.patch('shell.shell_ftn._read_line')
     mock_read_line.return_value = 10
     mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
 
     shell = shell_ftn()
-    shell.WriteReadAging('ssd_nand.txt')
+    shell.WriteReadAging()
     captured = capsys.readouterr()
+    #최종 반환값이 PASS인지 검증
     assert 'PASS' in captured.out
+    assert mock_write_ssd.call_count == 400
 
 
 def test_WriteReadAging_fail(mocker, capsys):
@@ -135,6 +151,6 @@ def test_WriteReadAging_fail(mocker, capsys):
     mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
 
     shell = shell_ftn()
-    shell.WriteReadAging('ssd_nand.txt')
+    shell.WriteReadAging()
     captured = capsys.readouterr()
     assert 'FAIL' in captured.out

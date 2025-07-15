@@ -9,8 +9,7 @@ class shell_ftn():
 
     def read(self,idx:int):
         self.ssd.read_ssd(idx)
-        ssdoutput = SSDOutput()
-        result = ssdoutput.read()
+        result = SSDOutput().read()
         print(f'[Read] LBA {idx}: {result}')
         return result
 

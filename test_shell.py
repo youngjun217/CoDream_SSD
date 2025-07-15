@@ -116,9 +116,8 @@ def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
     assert mock_write_ssd.call_count == 400
 
 
-
 def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
-    mock_read_line = mocker.patch('shell.shell_ftn._read_line')
+    mock_read_line = mocker.patch('ssd.SSDNand.readline')
     mock_read_line.return_value = 10
     mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
 
@@ -131,7 +130,7 @@ def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
 
 
 def test_WriteReadAging_fail(mocker, capsys):
-    mock_read_line = mocker.patch('shell.shell_ftn._read_line')
+    mock_read_line = mocker.patch('ssd.SSDNand.readline')
     mock_read_line.side_effect = [10, 20]
     mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
 

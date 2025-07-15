@@ -17,24 +17,6 @@ class shell_ftn():
 
 
     def write(self, num:int, value:int)->None:
-        if num<0:
-            raise AssertionError()
-        if num > 99:
-            raise AssertionError()
-        if not isinstance(value, str):
-            raise TypeError("입력은 문자열이어야 합니다. 예: '0x00000000'")
-
-        if not value.startswith("0x"):
-            raise ValueError("입력은 '0x'로 시작해야 합니다.")
-
-        hex_part = value[2:]
-
-        
-        # 각 문자들이 16진수 범위인지 검사
-        valid_chars = "0123456789abcdefABCDEF"
-        if not all(c in valid_chars for c in hex_part):
-            raise ValueError("16진수 숫자만 허용됩니다 (0-9, A-F).")
-
         if self.ssd.write_ssd(num, value):
             print('[Write] Done')
         pass
@@ -82,7 +64,6 @@ class shell_ftn():
     def PartialLBAWrite(self):
         for i in range(30):
             r1 = random.randint(0, 0xFFFFFFFF)
-            r1 = hex(r1)
             self.write(4,r1)
             self.write(0,r1)
             self.write(3,r1)

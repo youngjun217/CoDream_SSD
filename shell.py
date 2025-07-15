@@ -117,6 +117,11 @@ class shell_ftn():
         print('PASS')
 
     def main_function(self, args):
+        if not (args[0].lower(), len(args)) in self.command_dictionary(args):
+            raise ValueError("INVALID COMMAND")
+        self.command_dictionary(args)[(args[0].lower(), len(args))]()
+
+    def command_dictionary(self,args):
         command_dict = {
             ("read", 2): lambda: self.read(int(args[1])),
             ("write", 3): lambda: self.write(int(args[1]), int(args[2], 16)),
@@ -127,9 +132,7 @@ class shell_ftn():
             ('3_', 1): lambda: self.WriteReadAging(),
             ('help', 1): lambda: self.help()
         }
-        if not (args[0].lower(), len(args)) in command_dict:
-            raise ValueError("INVALID COMMAND")
-        command_dict[(args[0].lower(), len(args))]()
+        return command_dict
 
     def main(self):
         while True:

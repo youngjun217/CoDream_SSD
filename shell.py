@@ -19,7 +19,7 @@ class shell_ftn():
 
 
     def write(self, num: int, value: str) -> None:
-        self.ssd.write_ssd(num, int(value,16))
+        self.ssd.write_ssd(num, value)
         if self.ssd_output.read() == '':
             print('[Write] Done')
             return True
@@ -81,22 +81,13 @@ class shell_ftn():
         partialLBA_index_list = [4, 0, 3, 1, 2]
         for _ in range(30):
             random_write_value = random.randint(0, 0xFFFFFFFF)
-            for write_index in range(5):
-                self.ssd.write_ssd(partialLBA_index_list[write_index], random_write_value)
-            check_read_value = self.ssd_output.read_value_index(0)
-            if check_read_value != self.ssd_output.read_value_index(1):
-
-                print("FAIL")
-                return False
-            if check_read_value != self.ssd_output.read_value_index(2):
-                print("FAIL")
-                return False
-            if check_read_value != self.ssd_output.read_value_index(3):
-                print("FAIL")
-                return False
-            if check_read_value != self.ssd_output.read_value_index(4):
-                print("FAIL")
-                return False
+            for x in range(5):
+                self.ssd.write_ssd(partialLBA_index_list[x], random_write_value)
+            check_ref = self.ssd_nand.readline(0).split()[1]
+            for x in range(1,5):
+                if check_ref != self.ssd_nand.readline(x).split()[1]:
+                    print('FAIL')
+                    return
         print("PASS")
         return True
 

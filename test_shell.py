@@ -126,10 +126,8 @@ def test_PartialLBAWrite(mocker):
     shell = shell_ftn()
     mocker.patch('random.randint', return_value=12345678)
     mock_write_ssd = mocker.patch.object(shell.ssd, 'write_ssd')
-    mock_read_value = mocker.patch.object(shell, 'get_ssd_nand_value', return_value=42)
     result = shell.PartialLBAWrite()
     assert mock_write_ssd.call_count == 150
-    assert mock_read_value.call_count >= 1
     assert result is True
 
 
@@ -148,7 +146,6 @@ def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
 
 def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
     mock_read_line = mocker.patch('ssd.SSDNand.readline')
-    mock_read_line.return_value = 10
     mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
 
     shell = shell_ftn()
@@ -161,7 +158,7 @@ def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
 
 def test_WriteReadAging_fail(mocker, capsys):
     mock_read_line = mocker.patch('ssd.SSDNand.readline')
-    mock_read_line.side_effect = [10, 20]
+    mock_read_line.side_effect = ['1 10', '2 20']
     mock_write_ssd = mocker.patch('ssd.SSD.write_ssd')
 
     shell = shell_ftn()

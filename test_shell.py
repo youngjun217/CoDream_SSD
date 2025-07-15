@@ -45,11 +45,8 @@ def test_read(mocker: MockerFixture, index, capsys):
     shell.read(index)
     captured = capsys.readouterr()
 
-    # ssd의 read_ssd가 정확한 파라미터로 호출되었는지 검증
     mock_ssd_read.assert_called_with(index)
-    # "ssd_output.txt"가 'r'로 호출되었는지 검증
     mock_ouptut_read.assert_called_once()
-    # 최종 결과 값이 잘 나오는지 검증
     assert '[Read]' in captured.out
 
 

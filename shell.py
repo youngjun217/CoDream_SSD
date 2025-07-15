@@ -16,10 +16,13 @@ class shell_ftn():
         print(f'[Read] LBA {idx}: {result}')
         return
 
-    def write(self, num: int, value: int) -> None:
-        if self.ssd.write_ssd(num, value):
+
+    def write(self, num: int, value: str) -> None:
+        self.ssd.write_ssd(num, int(value,16))
+        if self.ssd_output.read() == '':
             print('[Write] Done')
-        pass
+            return True
+        return False
 
     # help : 프로그램 사용법
     def help(self):
@@ -79,24 +82,23 @@ class shell_ftn():
             print('PASS')
 
     def PartialLBAWrite(self):
-        for i in range(30):
-            r1 = random.randint(0, 0xFFFFFFFF)
-            self.write(4, r1)
-            self.write(0, r1)
-            self.write(3, r1)
-            self.write(1, r1)
-            self.write(2, r1)
+        partialLBA_index_list = [4, 0, 3, 1, 2]
+        for _ in range(30):
+            random_write_value = random.randint(0, 0xFFFFFFFF)
+            for write_index in range(5):
+                self.ssd.write_ssd(partialLBA_index_list[write_index], random_write_value)
+            check_read_value = self.ssd_output.read_value_index(0)
+            if check_read_value != self.ssd_output.read_value_index(1):
 
-            if r1 != self.ssd_output.read(1):
                 print("FAIL")
                 return False
-            if r1 != self.read(2):
+            if check_read_value != self.ssd_output.read_value_index(2):
                 print("FAIL")
                 return False
-            if r1 != self.read(3):
+            if check_read_value != self.ssd_output.read_value_index(3):
                 print("FAIL")
                 return False
-            if r1 != self.read(4):
+            if check_read_value != self.ssd_output.read_value_index(4):
                 print("FAIL")
                 return False
         print("PASS")

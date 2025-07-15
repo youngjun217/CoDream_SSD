@@ -120,6 +120,15 @@ class SSDOutput:
     def read(self):
         with open("ssd_output.txt", 'r', encoding='utf-8') as file:
             return file.read()
+    def read_value_index(self, idx):
+        ssd_read = self.read()
+        for line in ssd_read:
+            split_idx, value = line.split()
+            split_idx = int(split_idx)
+            value = int(split_idx)
+            if split_idx == idx:
+                return value
+
 
     def write(self, output):
         with open("ssd_output.txt", 'w', encoding='utf-8') as file:

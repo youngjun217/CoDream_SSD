@@ -125,7 +125,6 @@ def test_PartialLBAWrite_pass(shell, mocker):
     assert mock_write_ssd.call_count == 150
     mock_print.assert_called_with('PASS')
 
-
 def test_PartialLBAWrite_fail(shell, mocker):
     mocker.patch('random.randint', return_value=12345678)
     mocker.patch.object(shell.ssd, 'write_ssd')

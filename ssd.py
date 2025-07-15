@@ -1,40 +1,43 @@
 class SSD():
+    def __init__(self):
+        self._nand_txt = SSDNand()
+        self._output_txt = SSDOutput()
+
+    @property
+    def nand_txt(self):
+        return self._nand_txt
+
+    @property
+    def output_txt(self):
+        return self._output_txt
+
     def read_ssd(self, index):
         if not self.check_input_validity(index):
-            with open("ssd_output.txt", "w") as file:
-                file.write("ERROR")
+            self._output_txt.write("ERROR")
             raise ValueError("ERROR")
 
-        ssd_nand_txt = ""
-        with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-            ssd_nand_txt = file.read()
-        lines = ssd_nand_txt.splitlines()
+        lines = self._nand_txt.read()
         target_line = lines[index]
 
-        with open("ssd_output.txt", "w") as file:
-            file.write(target_line)
+        self._output_txt.write(target_line)
 
     # write 함수
     def write_ssd(self, lba, value):
         if not self.check_input_validity(lba, value):
-            with open("ssd_output.txt", "w") as file:
-                file.write("ERROR")
+            self._output_txt.write("ERROR")
             raise ValueError("ERROR")
 
         # ssd_nand.txt 파일 읽기
-        with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-            ssd_nand_txt = file.readlines()
+        ssd_nand_txt = self._nand_txt.read()
 
         newline = f"{lba:02d} 0x{value:08X}\n"
         ssd_nand_txt[lba] = newline
 
         # 파일 다시 쓰기
-        with open("ssd_nand.txt", "w") as file:
-            file.writelines(ssd_nand_txt)
+        self._nand_txt.write(ssd_nand_txt)
 
         # sse_output.txt 파일 초기화
-        with open("ssd_output.txt", 'w', encoding='utf-8') as file:
-            file.write("")
+        self._output_txt.write("")
 
     def check_input_validity(self, lba, value = 0x00000000):
         if type(lba) is not int:
@@ -46,3 +49,37 @@ class SSD():
         if not 0 <= value <= 0xFFFFFFFF:
             return False
         return True
+
+
+class SSDNand:
+    def __init__(self):
+        ssd_nand_txt = []
+        for i in range(0, 100):
+            newline = f"{i:02d} 0x00000000\n"
+            ssd_nand_txt.append(newline)
+
+        self.write(ssd_nand_txt)
+
+    def read(self):
+        with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
+            return file.readlines()
+
+    def readline(self, index):
+        with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
+            return file.readlines()[index]
+
+    def write(self, output):
+        with open("ssd_nand.txt", 'w', encoding='utf-8') as file:
+            file.writelines(output)
+
+class SSDOutput:
+    def __init__(self):
+        self.write("")
+
+    def read(self):
+        with open("ssd_output.txt", 'r', encoding='utf-8') as file:
+            return file.read()
+
+    def write(self, output):
+        with open("ssd_output.txt", 'w', encoding='utf-8') as file:
+            file.write(output)

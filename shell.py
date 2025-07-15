@@ -7,17 +7,22 @@ class shell_ftn():
     def __init__(self):
         self.ssd = SSD()
         self.ssd_output = SSDOutput()
+        self.ssd_nand = SSDNand()
 
-    def read(self,idx:int):
+
+    def read(self, idx: int):
         self.ssd.read_ssd(idx)
-        ssdoutput = SSDOutput()
-        result = ssdoutput.read()
+        result = self.ssd_output.read()
         print(f'[Read] LBA {idx}: {result}')
+        return
 
-    def write(self, num: int, value: int) -> None:
-        if self.ssd.write_ssd(num, value):
+
+    def write(self, num: int, value: str) -> None:
+        self.ssd.write_ssd(num, int(value,16))
+        if self.ssd_output.read() == '':
             print('[Write] Done')
-        pass
+            return True
+        return False
 
     # help : 프로그램 사용법
     def help(self):
@@ -40,7 +45,7 @@ class shell_ftn():
 
     def fullwrite(self, value):
         for x in range(100):
-            SSD().write_ssd(x, value)
+            self.ssd.write_ssd(x, value)
         print("[Full Write] Done")
 
     def fullread(self):
@@ -63,39 +68,37 @@ class shell_ftn():
     def FullWriteAndReadCompare(self):
         check = False
         for start_idx in range(0, 100, 5):
-            rand_num = random.randint(0x00000000, 0xFFFFFFFF)
-            rand_num_list = [rand_num] * 5
             for x in range(5):
-                SSD().write_ssd(start_idx + x, rand_num_list[x])
-                print("result\n", SSDOutput().read())
-                if SSDOutput().read(start_idx + x) != rand_num_list[x]:
+                rand_num = random.randint(0, 0xFFFFFFFF)
+                hex_str = f"0x{rand_num:08X}"
+                self.ssd.write_ssd(start_idx + x, rand_num)
+                if self.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
                     check = True
                     break
             if check:
                 break
-        print('PASS')
+        if not check:
+            print('PASS')
 
     def PartialLBAWrite(self):
-        for i in range(30):
-            r1 = random.randint(0, 0xFFFFFFFF)
-            self.write(4, r1)
-            self.write(0, r1)
-            self.write(3, r1)
-            self.write(1, r1)
-            self.write(2, r1)
+        partialLBA_index_list = [4, 0, 3, 1, 2]
+        for _ in range(30):
+            random_write_value = random.randint(0, 0xFFFFFFFF)
+            for write_index in range(5):
+                self.ssd.write_ssd(partialLBA_index_list[write_index], random_write_value)
+            check_read_value = self.ssd_output.read_value_index(0)
+            if check_read_value != self.ssd_output.read_value_index(1):
 
-            a = self.read(0)
-            if a != self.read(1):
                 print("FAIL")
                 return False
-            if a != self.read(2):
+            if check_read_value != self.ssd_output.read_value_index(2):
                 print("FAIL")
                 return False
-            if a != self.read(3):
+            if check_read_value != self.ssd_output.read_value_index(3):
                 print("FAIL")
                 return False
-            if a != self.read(4):
+            if check_read_value != self.ssd_output.read_value_index(4):
                 print("FAIL")
                 return False
         print("PASS")
@@ -111,11 +114,11 @@ class shell_ftn():
 
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
-        ssd = self.ssd
         for i in range(200):
-            ssd.write_ssd(0, value)
-            ssd.write_ssd(99, value)
-            if self._read_line(1) != self._read_line(100):
+            self.ssd.write_ssd(0, value)
+            self.ssd.write_ssd(99, value)
+            if self._read_line(filepath, 1) != self._read_line(filepath, 100):
+
                 print('FAIL')
                 return
         print('PASS')
@@ -129,7 +132,7 @@ class shell_ftn():
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
-            ('help', None): lambda: self.help()
+            ('help', 1): lambda: self.help()
         }
         if not (args[0].lower(), len(args)) in command_dict:
             raise ValueError("INVALID COMMAND")

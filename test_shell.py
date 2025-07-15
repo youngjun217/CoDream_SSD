@@ -47,18 +47,40 @@ def test_read(mocker: MockerFixture, index):
 
 
 
-def test_write(mocker):
-    # mk = shell_ftn()
-    mk = mocker.patch.object(SSD(), 'write_ssd')
-    mk.write(3, '0x00000000')
-    mk.write(0, '0x00000000')
-    mk.write(3, '0x03300000')
-    mk.write(-1, '0x00000000')
-    mk.write(100, '0x00000000')
-    mk.write('3', '0x00000000')
-    mk.write(3, '0x0000000011')
-    mk.call_count == 7
+
+# @patch('builtins.open', new_callable=mock_open, read_data='')
+def test_write_success(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data=''))
+    mock_func = mocker.patch('shell.SSD.write_ssd')
+    shell = shell_ftn()
+    result = shell.write(3, '0x00000000')
+    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+    assert result is True
+    shell.write(0, '0x00000000')
+    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+    assert result is True
+    shell.write(3, '0x03300000')
+    mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+    assert result is True
     pass
+
+def test_write_fail(mocker):
+    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='ERROR'))
+    mock_func = mocker.patch('shell.SSD.write_ssd', side_effect=AssertionError("SSD write failed"))
+    shell = shell_ftn()
+    with pytest.raises(AssertionError):
+        result = shell.write(-1, '0x00000000')
+        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+        assert result is not True
+    with pytest.raises(AssertionError):
+        result = shell.write(100, '0x00000000')
+        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+        assert result is not True
+    with pytest.raises(AssertionError):
+        result = shell.write(3, '0x0000000000')
+        mock_open.assert_any_call('ssd_output.txt', 'r', encoding='utf-8')
+        assert result is not True
+
 
 
 def test_fullread(capsys, mocker):

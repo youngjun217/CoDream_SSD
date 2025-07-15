@@ -1,6 +1,7 @@
 import sys
 from abc import ABC, abstractmethod
 
+
 class SSD():
     def __init__(self):
         self._nand_txt = SSDNand()
@@ -16,29 +17,23 @@ class SSD():
 
     def run(self, sys_argv):
         cmd = sys_argv[1]
+        if not self._check_command_validity(cmd, len(sys_argv)):
+            self._raise_error()
+
         lba = int(sys_argv[2])
         if (cmd == 'W'):
-            if len(sys_argv) != 4:
-                print("Usage: python ssd.py <command> <lba> <value>")
-                sys.exit(1)
             value = int(sys_argv[3], 16)
-            print(f"command({cmd!r}, {lba}, {hex(value):010})")
             self.write_ssd(lba, value)
         elif (cmd == 'R'):
-            if len(sys_argv) != 3:
-                print("Usage: python ssd.py <command> <lba>")
-                sys.exit(1)
-            print(f"command({cmd!r}, {lba})")
+            lba = int(sys_argv[2])
             self.read_ssd(lba)
-        else:
-            print("Usage: python ssd.py <command == W or R> <lba> <value: if command == W>")
-            sys.exit(1)
-        # 실제 동작 코드 작성
+
+    def _check_command_validity(self, cmd, len_sys_argv):
+        return ((cmd == 'W') and (len_sys_argv == 4)) or ((cmd == 'R') and (len_sys_argv == 4))
 
     def read_ssd(self, lba):
-        if not self.check_input_validity(lba):
-            self._output_txt.write("ERROR")
-            raise ValueError("ERROR")
+        if not self._check_input_validity(lba):
+            self._raise_error()
 
         lines = self._nand_txt.read()
         target_line = lines[lba]
@@ -47,9 +42,8 @@ class SSD():
 
     # write 함수
     def write_ssd(self, lba, value):
-        if not self.check_input_validity(lba, value):
-            self._output_txt.write("ERROR")
-            raise ValueError("ERROR")
+        if not self._check_input_validity(lba, value):
+            self._raise_error()
 
         # ssd_nand.txt 파일 읽기
         ssd_nand_txt = self._nand_txt.read()
@@ -63,7 +57,11 @@ class SSD():
         # sse_output.txt 파일 초기화
         self._output_txt.write("")
 
-    def check_input_validity(self, lba, value = 0x00000000):
+    def _raise_error(self):
+        self._output_txt.write("ERROR")
+        raise ValueError("ERROR")
+
+    def _check_input_validity(self, lba, value=0x00000000):
         if type(lba) is not int:
             return False
         if type(value) is not int:
@@ -73,6 +71,7 @@ class SSD():
         if not 0 <= value <= 0xFFFFFFFF:
             return False
         return True
+
 
 class SSDText(ABC):
     _instance = None
@@ -115,6 +114,7 @@ class SSDNand(SSDText):
     def write(self, output):
         with open("ssd_nand.txt", 'w', encoding='utf-8') as file:
             file.writelines(output)
+
 
 class SSDOutput(SSDText):
     def __init__(self):

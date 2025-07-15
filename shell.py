@@ -1,5 +1,5 @@
 import sys
-from ssd import SSD
+from ssd import SSD, SSDOutput
 import random
 
 
@@ -13,7 +13,6 @@ class shell_ftn():
         if type(idx) != int:
             raise ValueError("ERROR")
         result = self.ssd.read_ssd(idx)
-        print("Result",result)
         print(f'[Read] LBA {idx}: {result}')
         return result
 
@@ -62,14 +61,19 @@ class shell_ftn():
             raise e
 
     def FullWriteAndReadCompare(self):
+        check=False
         for start_idx in range(0, 100, 5):
             rand_num = random.randint(0x00000000, 0xFFFFFFFF)
             rand_num_list = [rand_num] * 5
             for x in range(5):
                 SSD().write_ssd(start_idx + x, rand_num_list[x])
-                if SSD().read_ssd(start_idx + x) != rand_num_list[x]:
+                print("result\n",SSDOutput().read())
+                if SSDOutput().read(start_idx + x) != rand_num_list[x]:
                     print('FAIL')
+                    check=True
                     break
+            if check:
+                break
         print('PASS')
 
     def PartialLBAWrite(self):

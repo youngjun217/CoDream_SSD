@@ -36,12 +36,16 @@ def test_write( mocker):
     mk.call_count == 7
     pass
 
-def test_fullread(capsys):
+def test_fullread(capsys,mocker):
+    mk = mocker.patch('shell.shell_ftn.fullread')
+    mk.return_value="[Full Read]"
     shell = shell_ftn()
-    shell.fullread()
+    print(shell.fullread())
     captured = capsys.readouterr()
 
-    assert captured.out.split('\n')[0]=="[Full Read]"
+    #assert
+    assert captured.out =="[Full Read]\n"
+    mk.call_count == 1
 
 
 def test_fullwrite(capsys):

@@ -23,7 +23,6 @@ class shell_ftn():
 
     # help : 프로그램 사용법
     def help(self):
-        # 제작자 명시 (팀장/팀원)
         print('[Help]\n',
               'CoDream Team : our dreaming code\n',
               '팀장 : 조영준\n',
@@ -149,12 +148,9 @@ class shell_ftn():
     def main(self):
         while True:
             command = input("Shell>")
-            args = command.split()
-            if args==[]: raise ValueError("INVALID COMMAND")
-            if args[0].lower() == "exit":
-                # print("Exiting the program...")
+            if command.split()[0].lower() == "exit":
                 break
-            self.main_function(args)
+            self.main_function(command.split())
 
 if __name__ == "__main__":
     shell_ftn().main()

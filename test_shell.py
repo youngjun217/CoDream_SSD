@@ -148,9 +148,9 @@ def test_WriteReadAging_pass(mocker:MockerFixture, capsys):
     shell = shell_ftn()
     shell.WriteReadAging()
     captured = capsys.readouterr()
-    #최종 반환값이 PASS인지 검증
-    assert 'PASS' in captured.out
+
     assert mock_write_ssd.call_count == 400
+    assert 'PASS' in captured.out
 
 
 def test_WriteReadAging_fail(mocker, capsys):
@@ -161,4 +161,5 @@ def test_WriteReadAging_fail(mocker, capsys):
     shell = shell_ftn()
     shell.WriteReadAging()
     captured = capsys.readouterr()
+
     assert 'FAIL' in captured.out

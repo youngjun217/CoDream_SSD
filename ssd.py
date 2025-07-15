@@ -1,4 +1,6 @@
 import sys
+from abc import ABC, abstractmethod
+
 
 class SSD():
     def __init__(self):
@@ -15,40 +17,33 @@ class SSD():
 
     def run(self, sys_argv):
         cmd = sys_argv[1]
-        index = int(sys_argv[2])
-        if (cmd == 'W'):
-            if len(sys_argv) != 4:
-                print("Usage: python ssd.py <command> <index> <value>")
-                sys.exit(1)
-            value = int(sys_argv[3], 16)
-            print(f"command({cmd!r}, {index}, {hex(value):010})")
-            self.write_ssd(index, value)
-        elif (cmd == 'R'):
-            if len(sys_argv) != 3:
-                print("Usage: python ssd.py <command> <index>")
-                sys.exit(1)
-            print(f"command({cmd!r}, {index})")
-            self.read_ssd(index)
-        else:
-            print("Usage: python ssd.py <command == W or R> <index> <value: if command == W>")
-            sys.exit(1)
-        # 실제 동작 코드 작성
+        if not self._check_command_validity(cmd, len(sys_argv)):
+            self._raise_error()
 
-    def read_ssd(self, index):
-        if not self.check_input_validity(index):
-            self._output_txt.write("ERROR")
-            raise ValueError("ERROR")
+        lba = int(sys_argv[2])
+        if (cmd == 'W'):
+            value = sys_argv[3]
+            self.write_ssd(lba, value)
+        elif (cmd == 'R'):
+            lba = int(sys_argv[2])
+            self.read_ssd(lba)
+
+    def _check_command_validity(self, cmd, len_sys_argv):
+        return ((cmd == 'W') and (len_sys_argv == 4)) or ((cmd == 'R') and (len_sys_argv == 3))
+
+    def read_ssd(self, lba):
+        if not self._check_input_validity(lba):
+            self._raise_error()
 
         lines = self._nand_txt.read()
-        target_line = lines[index]
+        target_line = lines[lba]
 
         self._output_txt.write(target_line)
 
     # write 함수
     def write_ssd(self, lba, value):
-        if not self.check_input_validity(lba, value):
-            self._output_txt.write("ERROR")
-            raise ValueError("ERROR")
+        if not self._check_input_validity(lba, value):
+            self._raise_error()
 
         # ssd_nand.txt 파일 읽기
         ssd_nand_txt = self._nand_txt.read()
@@ -62,7 +57,11 @@ class SSD():
         # sse_output.txt 파일 초기화
         self._output_txt.write("")
 
-    def check_input_validity(self, lba, value = 0x00000000):
+    def _raise_error(self):
+        self._output_txt.write("ERROR")
+        raise ValueError("ERROR")
+
+    def _check_input_validity(self, lba, value=0x00000000):
         if type(lba) is not int:
             return False
         if type(value) is not int:
@@ -74,7 +73,7 @@ class SSD():
         return True
 
 
-class SSDNand:
+class SSDText(ABC):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -84,51 +83,47 @@ class SSDNand:
 
     def __init__(self):
         if not hasattr(self, 'initialized'):
-            ssd_nand_txt = []
-            for i in range(0, 100):
-                newline = f"{i:02d} 0x00000000\n"
-                ssd_nand_txt.append(newline)
-
-            self.write(ssd_nand_txt)
             self.initialized = True
+
+    @abstractmethod
+    def read(self):
+        pass
+
+    @abstractmethod
+    def write(self, output):
+        pass
+
+
+class SSDNand(SSDText):
+    def __init__(self):
+        super().__init__()
+        ssd_nand_txt = []
+        for i in range(0, 100):
+            newline = f"{i:02d} 0x00000000\n"
+            ssd_nand_txt.append(newline)
+        self.write(ssd_nand_txt)
 
     def read(self):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
             return file.readlines()
 
-    def readline(self, index):
+    def readline(self, lba):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-            return file.readlines()[index]
+            return file.readlines()[lba]
 
     def write(self, output):
         with open("ssd_nand.txt", 'w', encoding='utf-8') as file:
             file.writelines(output)
 
-class SSDOutput:
-    _instance = None
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
+class SSDOutput(SSDText):
     def __init__(self):
-        if not hasattr(self, 'initialized'):
-            self.write("")
-            self.initialized = True
+        super().__init__()
+        self.write("")
 
     def read(self):
         with open("ssd_output.txt", 'r', encoding='utf-8') as file:
             return file.read()
-    def read_value_index(self, idx):
-        ssd_read = self.read()
-        for line in ssd_read:
-            split_idx, value = line.split()
-            split_idx = int(split_idx)
-            value = int(split_idx)
-            if split_idx == idx:
-                return value
-
 
     def write(self, output):
         with open("ssd_output.txt", 'w', encoding='utf-8') as file:

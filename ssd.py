@@ -52,13 +52,22 @@ class SSD():
 
 
 class SSDNand:
-    def __init__(self):
-        ssd_nand_txt = []
-        for i in range(0, 100):
-            newline = f"{i:02d} 0x00000000\n"
-            ssd_nand_txt.append(newline)
+    _instance = None
 
-        self.write(ssd_nand_txt)
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if not hasattr(self, 'initialized'):
+            ssd_nand_txt = []
+            for i in range(0, 100):
+                newline = f"{i:02d} 0x00000000\n"
+                ssd_nand_txt.append(newline)
+
+            self.write(ssd_nand_txt)
+            self.initialized = True
 
     def read(self):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
@@ -73,8 +82,17 @@ class SSDNand:
             file.writelines(output)
 
 class SSDOutput:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self):
-        self.write("")
+        if not hasattr(self, 'initialized'):
+            self.write("")
+            self.initialized = True
 
     def read(self):
         with open("ssd_output.txt", 'r', encoding='utf-8') as file:

@@ -23,14 +23,14 @@ class SSD():
         lba = int(sys_argv[2])
         if (cmd == 'W'):
             value = int(sys_argv[3], 16)
-            self.write_ssd(lba, value)
+            self._write_ssd(lba, value)
         elif (cmd == 'R'):
-            self.read_ssd(lba)
+            self._read_ssd(lba)
         elif (cmd == 'E'):
             size = int(sys_argv[3])
-            self.erase_ssd(lba, size)
+            self._erase_ssd(lba, size)
 
-    def read_ssd(self, lba):
+    def _read_ssd(self, lba):
         if not self._check_input_validity(lba):
             self._raise_error()
 
@@ -40,7 +40,7 @@ class SSD():
         self._output_txt.write(target_line)
 
     # write 함수
-    def write_ssd(self, lba, value):
+    def _write_ssd(self, lba, value):
         if not self._check_input_validity(lba, value):
             self._raise_error()
 
@@ -58,7 +58,7 @@ class SSD():
 
 
     # erase 함수
-    def erase_ssd(self, lba, size):
+    def _erase_ssd(self, lba, size):
         if not self._check_input_validity(lba, size=size):
             self._raise_error()
 

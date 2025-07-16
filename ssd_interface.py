@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class SSDDriver(ABC):
+class SSDInterface(ABC):
     @abstractmethod
     def run(self, args):
         ...

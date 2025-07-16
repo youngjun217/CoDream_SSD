@@ -47,7 +47,7 @@ class SSD():
                     break
 
             if combine_idx >= 0:
-                value = int(sys_argv[3], 16)  # sys_argv는 인자로 받아야 함
+                value = int(sys_argv[3], 16)
                 old_name = f"./buffer/{buffer_lst[combine_idx]}"
                 new_name = f"./buffer/{combine_idx}_{cmd}_{lba}_{value}"
                 os.rename(old_name, new_name)

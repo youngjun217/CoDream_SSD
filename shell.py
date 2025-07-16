@@ -52,16 +52,25 @@ class Shell():
         self.ssd_nand = SSDNand()
         self.logger = Logger()
 
+    def _send_command(self, command, lba, value = None):
+        if (command == 'W'):
+            if type(value) is int:
+                value = hex(value).upper()
+            return self.ssd.run([None, 'W', lba, value])
+        if (command == 'R'):
+            return self.ssd.run([None, 'R', lba])
+        if (command == 'E'):
+            return self.ssd.run([None, 'E', lba, value])
+
     def read(self, idx: int) -> None:
-        self.ssd.read_ssd(idx)
+        self._send_command('R', idx)
         result = self.ssd_output.read()
         value = result.split()[1]
         print(f'[Read] LBA {idx}: {value}')
         self.logger.print(f"{self.read.__qualname__}()", f"LBA {idx}: {value}")
 
-
     def write(self, num: int, value: str) -> bool:
-        self.ssd.write_ssd(num, value)
+        self._send_command('W', num, value)
         if self.ssd_output.read() == '':
             print('[Write] Done')
             self.logger.print(f"{self.read.__qualname__}()", "DONE")
@@ -77,7 +86,7 @@ class Shell():
         offset = 0
         while size > 0:
             erase_size = min(size, 10)
-            SSD.erase_ssd(lba + offset, erase_size)
+            self._send_command('E', lba + offset, erase_size)
             offset += 10
             size -= erase_size
         self.logger.print(f"{self.read.__qualname__}()", "DONE")
@@ -111,7 +120,7 @@ class Shell():
 
     def fullwrite(self, value):
         for x in range(100):
-            self.ssd.write_ssd(x, value)
+            self._send_command('W', x, value)
         print("[Full Write] Done")
         self.logger.print(f"{self.read.__qualname__}()", "DONE")
 
@@ -120,7 +129,7 @@ class Shell():
 
         for idx in range(100):
             try:
-                self.ssd.read_ssd(idx)
+                self._send_command('R', idx)
                 output = self.ssd_output.read()
 
                 if output == "ERROR" or len(output.split()) < 2:
@@ -140,7 +149,7 @@ class Shell():
             for x in range(5):
                 rand_num = random.randint(0, 0xFFFFFFFF)
                 hex_str = f"0x{rand_num:08X}"
-                self.ssd.write_ssd(start_idx + x, rand_num)
+                self._send_command('W', start_idx + x, rand_num)
                 if self.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
                     self.logger.print(f"{self.read.__qualname__}()", "FAIL")
@@ -153,7 +162,7 @@ class Shell():
         for _ in range(30):
             random_write_value = random.randint(0, 0xFFFFFFFF)
             for x in range(5):
-                self.ssd.write_ssd(partialLBA_index_list[x], random_write_value)
+                self._send_command('W', partialLBA_index_list[x], random_write_value)
             check_ref = self.ssd_nand.readline(0).split()[1]
             for x in range(1, 5):
                 if check_ref != self.ssd_nand.readline(x).split()[1]:
@@ -166,8 +175,8 @@ class Shell():
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
         for i in range(200):
-            self.ssd.write_ssd(0, value)
-            self.ssd.write_ssd(99, value)
+            self._send_command('W', 0, value)
+            self._send_command('W', 99, value)
             if self.ssd_nand.readline(0).split()[1] != self.ssd_nand.readline(99).split()[1]:
                 print('FAIL')
                 self.logger.print(f"{self.read.__qualname__}()", "FAIL")

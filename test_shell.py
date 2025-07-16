@@ -254,4 +254,19 @@ def test_init_removes_log_file_if_exists(mocker):
     mock_exists.assert_called_once_with(Logger.LOG_FILE)
     mock_remove.assert_called_once_with(Logger.LOG_FILE)
 
+def test_print_calls_rotate_and_writes(mocker, logger):
+    mock_rotate = mocker.patch.object(logger, "rotate_log_if_needed")
+    mock_open = mocker.patch("builtins.open", mocker.mock_open())
+    logger.print("HEADER", "message")
+    mock_rotate.assert_called_once()
+    mock_open.assert_called_once_with("latest.log", 'a', encoding='utf-8')
+    handle = mock_open()
+    written_text = handle.write.call_args[0][0]
+
+    # 날짜, 시간 정보는 변화가 많으니 제외하고 확인
+    assert "HEADER" in written_text
+    assert "message" in written_text
+    assert written_text.endswith("\n")
+
+
 

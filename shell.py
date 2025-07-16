@@ -1,4 +1,9 @@
+import contextlib
+import io
+import os
 import sys
+from time import sleep
+
 from ssd import SSD, SSDOutput, SSDNand
 import random
 
@@ -125,6 +130,33 @@ class shell_ftn():
             if command.split()[0].lower() == "exit": break
             self.main_function(command.split())
 
+    def option_dict(self):
+        option_dict = {
+            ('1_'): 5,
+            ('2_'): 13,
+            ('3_'): 15,
+            ('4_'): 11
+        }
+        return option_dict
+
+    def option_main(self,path):
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as file:
+                command_lines = file.readlines()
+            for command in command_lines:
+                print(command[0:-1]+' '*self.option_dict()[command[0:2]]+ '___   Run...', end=' ',flush=True)
+                output_capture = io.StringIO()
+                with contextlib.redirect_stdout(output_capture):
+                    self.command_dictionary(command[0:2])[(command[0:2], 1)]()
+                print(output_capture.getvalue().strip())
+                if(output_capture.getvalue().strip())=='FAIL':return
+        else:print("ERROR")
+
 
 if __name__ == "__main__":
-    shell_ftn().main()
+    if len(sys.argv)==1:
+        shell_ftn().main()
+    elif len(sys.argv)==2:
+        shell_ftn().option_main(sys.argv[1])
+
+

@@ -13,9 +13,6 @@ class Test_shell():
     @pytest.fixture
     def setup_shell(self, mocker):
         self.shell=Shell()
-        self.read_ssd = mocker.patch.object(self.shell.ssd, 'read_ssd')
-        self.write_ssd = mocker.patch.object(self.shell.ssd, 'write_ssd')
-        self.erase_ssd = mocker.patch.object(self.shell.ssd, 'erase_ssd')
         self.read_output = mocker.patch.object(self.shell.ssd_output, 'read')
         self.nand_readline = mocker.patch.object(self.shell.ssd_nand, 'readline')
         self.mock_print = mocker.patch('builtins.print')

@@ -54,3 +54,4 @@ coverage.xml
 ssd_nand.txt
 ssd_output.txt
 *.txt
+*.ini

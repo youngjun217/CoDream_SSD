@@ -66,6 +66,21 @@ class ReadCommand(Command):
         print(f'[Read] LBA {self.idx}: {value}')
         self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
+class WriteCommand(Command):
+    def __init__(self, shell, idx : int, value:int)->bool:
+        super().__init__(shell)
+        self.idx = idx
+        self.value = value
+
+    def execute(self) -> None:
+        self.shell._send_command('W', self.idx, self.value)
+        if self.shell.ssd_output.read() == '':
+            print('[Write] Done')
+            self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
+            return True
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
+        return False
+
 
 
 
@@ -86,16 +101,6 @@ class Shell():
         if (command == 'E'):
             return self.ssd.run([None, 'E', lba, value])
 
-
-
-    def write(self, num: int, value: str) -> bool:
-        self._send_command('W', num, value)
-        if self.ssd_output.read() == '':
-            print('[Write] Done')
-            self.logger.print(f"{self.write.__qualname__}()", "DONE")
-            return True
-        self.logger.print(f"{self.write.__qualname__}()", "FAIL")
-        return False
 
     def erase(self, lba: int, size: int):
         if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 100):
@@ -226,7 +231,7 @@ class Shell():
         command_dict = {
             # ("read", 2): lambda: self.read(int(args[1])),
             ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
-            ("write", 3): lambda: self.write(int(args[1]), int(args[2], 16)),
+            ("write", 3): lambda: WriteCommand(self,int(args[1]), int(args[2], 16)).execute(),
             ("fullwrite", 2): lambda: self.fullwrite(int(args[1], 16)),
             ("fullread", 1): lambda: self.fullread(),
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),

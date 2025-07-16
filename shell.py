@@ -1,20 +1,21 @@
 import contextlib
+import datetime
+import glob
 import io
+import os
+import random
 import sys
-from time import sleep
+import time
+from abc import ABC, abstractmethod
 
 from ssd import SSD, SSDOutput, SSDNand
-import random
-import datetime
-import os
-import time
-import glob
-from abc import ABC, abstractmethod
+
 
 class Logger:
     _instance = None
     LOG_FILE = 'latest.log'
     MAX_SIZE = 10 * 1024  # 10KB
+
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -35,6 +36,7 @@ class Logger:
             log = f"[{now.strftime('%y.%m.%d %H:%M')}] {header}\t: {message}\n"
             log = log.expandtabs(tabsize=48)
             file.write(log)
+
     def rotate_log_if_needed(self):
         if os.path.exists(self.LOG_FILE) and os.path.getsize(self.LOG_FILE) > self.MAX_SIZE:
             for existing in glob.glob("until_*.log"):
@@ -66,8 +68,9 @@ class ReadCommand(Command):
         print(f'[Read] LBA {self.idx}: {value}')
         self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
+
 class WriteCommand(Command):
-    def __init__(self, shell, idx : int, value:int):
+    def __init__(self, shell, idx: int, value: int):
         super().__init__(shell)
         self.idx = idx
         self.value = value
@@ -81,8 +84,9 @@ class WriteCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
         return False
 
+
 class EraseCommand(Command):
-    def __init__(self, shell, lba : int, size:int):
+    def __init__(self, shell, lba: int, size: int):
         super().__init__(shell)
         self.lba = lba
         self.size = size
@@ -101,6 +105,21 @@ class EraseCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 
+class EraseRangeCommand(Command):
+    def __init__(self, shell, st_lba: int, en_lba: int):
+        super().__init__(shell)
+        self.st_lba = st_lba
+        self.en_lba = en_lba
+
+    def execute(self) -> None:
+        if self.st_lba > self.en_lba or self.st_lba < 0 or self.en_lba > 99:
+            raise ValueError("Invalid LBA range")
+
+        size = self.en_lba - self.st_lba + 1  # inclusive range
+        erase_cmd = EraseCommand(self.shell, self.st_lba, size)
+        erase_cmd.execute()
+
+
 class Shell():
     def __init__(self):
         self.ssd = SSD()
@@ -108,7 +127,7 @@ class Shell():
         self.ssd_nand = SSDNand()
         self.logger = Logger()
 
-    def _send_command(self, command, lba, value = None):
+    def _send_command(self, command, lba, value=None):
         if (command == 'W'):
             if type(value) is int:
                 value = hex(value).upper()
@@ -117,16 +136,6 @@ class Shell():
             return self.ssd.run([None, 'R', lba])
         if (command == 'E'):
             return self.ssd.run([None, 'E', lba, value])
-
-
-
-
-    def erase_range(self, st_lba: int, en_lba: int):
-        if st_lba > en_lba or st_lba < 0 or en_lba > 99:
-            raise ValueError("Invalid LBA range")
-
-        size = en_lba - st_lba + 1  # inclusive range
-        self.erase(st_lba, size)
 
     # help : 프로그램 사용법
     def help(self):
@@ -219,14 +228,13 @@ class Shell():
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
         self.write(idx, value1)
         self.write(idx, value2)
-        self.erase_range(idx, min(idx+2,99))
+        self.erase_range(idx, min(idx + 2, 99))
 
     def EraseAndWriteAging(self):
-        self.erase_range(0,2)
+        self.erase_range(0, 2)
         for i in range(30):
             for idx in range(2, 100, 2):
                 self._aging(idx)
-
 
     def main_function(self, args):
         if not (args[0].lower(), len(args)) in self.command_dictionary(args):
@@ -237,7 +245,7 @@ class Shell():
         command_dict = {
             # ("read", 2): lambda: self.read(int(args[1])),
             ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
-            ("write", 3): lambda: WriteCommand(self,int(args[1]), int(args[2], 16)).execute(),
+            ("write", 3): lambda: WriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
             ("fullwrite", 2): lambda: self.fullwrite(int(args[1], 16)),
             ("fullread", 1): lambda: self.fullread(),
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
@@ -245,8 +253,8 @@ class Shell():
             ('3_', 1): lambda: self.WriteReadAging(),
             ('4_', 1): lambda: self.EraseAndWriteAging(),
             ('help', 1): lambda: self.help(),
-            ('erase', 3): lambda: EraseCommand(self,int(args[1]), int(args[2])).execute(),
-            ('erase_range', 3): lambda: self.erase(int(args[1]), int(args[2]))
+            ('erase', 3): lambda: EraseCommand(self, int(args[1]), int(args[2])).execute(),
+            ('erase_range', 3): lambda: EraseRangeCommand(self,int(args[1]), int(args[2])).execute()
         }
         return command_dict
 
@@ -265,24 +273,23 @@ class Shell():
         }
         return option_dict
 
-    def option_main(self,path):
+    def option_main(self, path):
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as file:
                 command_lines = file.readlines()
             for command in command_lines:
-                print(command[0:-1]+' '*self.option_dict()[command[0:2]]+ '___   Run...', end=' ',flush=True)
+                print(command[0:-1] + ' ' * self.option_dict()[command[0:2]] + '___   Run...', end=' ', flush=True)
                 output_capture = io.StringIO()
                 with contextlib.redirect_stdout(output_capture):
                     self.command_dictionary(command[0:2])[(command[0:2], 1)]()
                 print(output_capture.getvalue().strip())
-                if(output_capture.getvalue().strip())=='FAIL':return
-        else:print("ERROR")
+                if (output_capture.getvalue().strip()) == 'FAIL': return
+        else:
+            print("ERROR")
 
 
 if __name__ == "__main__":
-    if len(sys.argv)==1:
+    if len(sys.argv) == 1:
         Shell().main()
-    elif len(sys.argv)==2:
+    elif len(sys.argv) == 2:
         Shell().option_main(sys.argv[1])
-
-

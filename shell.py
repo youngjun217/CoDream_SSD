@@ -24,6 +24,7 @@ class shell_ftn():
         self.ssd_nand = SSDNand()
         self.logger = Logger()
 
+
     def read(self, idx: int) -> None:
         self.ssd.read_ssd(idx)
         result = self.ssd_output.read()

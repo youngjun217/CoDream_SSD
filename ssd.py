@@ -57,6 +57,9 @@ class SSD():
         # sse_output.txt 파일 초기화
         self._output_txt.write("")
 
+    def erase_ssd(self):
+        pass
+
     def _raise_error(self):
         self._output_txt.write("ERROR")
         raise ValueError("ERROR")

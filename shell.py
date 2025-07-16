@@ -187,6 +187,20 @@ class PartialLBAWriteCommand(Command):
         print("PASS")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
+class WriteReadAgingCommand(Command):
+    def __init__(self, shell):
+        super().__init__(shell)
+    def execute(self):
+        value = random.randint(0, 0xFFFFFFFF)
+        for i in range(200):
+            self.shell._send_command('W', 0, value)
+            self.shell._send_command('W', 99, value)
+            if self.shell.ssd_nand.readline(0).split()[1] != self.shell.ssd_nand.readline(99).split()[1]:
+                print('FAIL')
+                self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
+                return
+        print('PASS')
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
 class Shell():
@@ -229,17 +243,6 @@ class Shell():
 
 
 
-    def WriteReadAging(self):
-        value = random.randint(0, 0xFFFFFFFF)
-        for i in range(200):
-            self._send_command('W', 0, value)
-            self._send_command('W', 99, value)
-            if self.ssd_nand.readline(0).split()[1] != self.ssd_nand.readline(99).split()[1]:
-                print('FAIL')
-                self.logger.print(f"{self.WriteReadAging.__qualname__}()", "FAIL")
-                return
-        print('PASS')
-        self.logger.print(f"{self.WriteReadAging.__qualname__}()", "PASS")
 
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
@@ -267,7 +270,7 @@ class Shell():
             ("fullread", 1): lambda: FullReadCommand(self).execute(),
             ('1_', 1): lambda: FullWriteAndReadCompareCommand(self).execute(),
             ('2_', 1): lambda: PartialLBAWriteCommand(self).execute(),
-            ('3_', 1): lambda: self.WriteReadAging(),
+            ('3_', 1): lambda: WriteReadAgingCommand(self).execute(),
             ('4_', 1): lambda: self.EraseAndWriteAging(),
             ('help', 1): lambda: self.help(),
             ('erase', 3): lambda: EraseCommand(self, int(args[1]), int(args[2])).execute(),

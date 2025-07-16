@@ -268,5 +268,23 @@ def test_print_calls_rotate_and_writes(mocker, logger):
     assert "message" in written_text
     assert written_text.endswith("\n")
 
+def test_rotate_log_if_needed_renames(mocker, logger):
+    mocker.patch("os.path.exists", return_value=True)
+    mocker.patch("os.path.getsize", return_value=Logger.MAX_SIZE + 1)
+    mocker.patch("glob.glob", return_value=["until_250708_17h_12m_52s.log"])
+    mock_rename = mocker.patch("os.rename")
+    mocker.patch("time.strftime", return_value="until_250710_09h_00m_00s")
+
+    logger.rotate_log_if_needed()
+
+    assert mock_rename.call_count == 2
+    calls = mock_rename.call_args_list
+    # 첫 호출: 기존 until 파일 .log -> .zip
+    assert calls[0][0][0].endswith(".log")
+    assert calls[0][0][1].endswith(".zip")
+    # 두번째 호출: latest.log -> 새로운 until 파일명
+    assert calls[1][0][0] == Logger.LOG_FILE
+    assert calls[1][0][1].startswith("until_")
+    assert calls[1][0][1].endswith(".log")
 
 

@@ -1,6 +1,7 @@
 import contextlib
 import datetime
 import glob
+import inspect
 import io
 import os
 import random
@@ -102,15 +103,12 @@ class EraseCommand(Command):
             self.shell._send_command('E', self.lba + offset, erase_size)
             offset += 10
             self.size -= erase_size
-        self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
-
-            size -= erase_size
         caller_frame = inspect.stack()[3]
         caller_name = caller_frame.function
         if caller_name=='EraseAndWriteAging':
             pass
         else:
-            self.logger.print(f"{self.erase.__qualname__}()", "DONE")
+            self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 class EraseRangeCommand(Command):
     def __init__(self, shell, st_lba: int, en_lba: int):
@@ -197,16 +195,25 @@ class PartialLBAWriteCommand(Command):
 class EraseAndWriteAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
-    def execute(self):
-        EraseRangeCommand(self.shell,0, 2).execute()
-        for i in range(30):
-            for idx in range(2, 100, 2):
-                self._aging(idx)
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
-        WriteCommand(self.shell,idx, value1).execute()
-        WriteCommand(self.shell,idx, value2).execute()
-        EraseRangeCommand(self.shell,idx, min(idx + 2, 99)).execute()
+        self.shell._send_command('W', idx, value1)
+        self.shell._send_command('W', idx, value2)
+        EraseRangeCommand(self.shell, idx, min(idx+2,99)).execute()
+
+    def execute(self):
+        self.shell._send_command('E', 0, 3)
+        for i in range(30):
+            for idx in range(2, 100, 2):
+                try:
+                    self._aging(idx)
+                except Exception as e:
+                    print('FAIL')
+                    self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
+                    raise e
+        print('PASS')
+        self.shell.logger.print(f"{self.execute().__qualname__}()", "PASS")
+
 
 class WriteReadAgingCommand(Command):
     def __init__(self, shell):
@@ -262,26 +269,6 @@ class Shell():
               )
         self.logger.print(f"{self.help.__qualname__}()", "DONE")
 
-    def _aging(self, idx):
-        value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
-        self._send_command('W', idx, value1)
-        self._send_command('W', idx, value2)
-        self.erase_range(idx, min(idx+2,99))
-
-
-
-    def EraseAndWriteAging(self):
-        self._send_command('E', 0, 3)
-        for i in range(30):
-            for idx in range(2, 100, 2):
-                try:
-                    self._aging(idx)
-                except Exception as e:
-                    print('FAIL')
-                    self.logger.print(f"{self.EraseAndWriteAging.__qualname__}()", "FAIL")
-                    raise e
-        print('PASS')
-        self.logger.print(f"{self.EraseAndWriteAging.__qualname__}()", "PASS")
 
 
     def main_function(self, args):

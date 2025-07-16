@@ -1,9 +1,12 @@
+import contextlib
+from io import StringIO
+
 import pytest
 from pytest_mock import MockerFixture
 from unittest.mock import call
 
 import ssd
-from shell import shell_ftn
+from shell import Shell
 
 import os
 import time
@@ -28,7 +31,7 @@ class Logger:
 
 @pytest.fixture
 def shell():
-    return shell_ftn()
+    return Shell()
 
 
 @pytest.mark.parametrize("index", ['1 10', '2 20'])
@@ -223,3 +226,37 @@ def test_main(shell, mocker):
     shell.main()
 
     mock_main_func.assert_called_once_with(['read', '10'])
+
+def test_option_main_file_not_found(shell,mocker):
+    mock_print = mocker.patch("builtins.print")
+
+    shell.option_main("non_existing_file.txt")
+
+    mock_print.assert_called_with('ERROR')
+
+
+def test_option_main_pass_with_mocked_print(shell,mocker, tmp_path):
+    test_file = tmp_path / "commands.txt"
+    test_file.write_text("1_testCommand\n")
+
+    mock_command_dict = {('1_', 1): lambda: print("PASS")}
+    mocker.patch.object(shell, "command_dictionary", return_value=mock_command_dict)
+    mock_print = mocker.patch("builtins.print")
+
+    shell.option_main(str(test_file))
+
+    printed_args = [" ".join(str(arg) for arg in call.args) for call in mock_print.call_args_list]
+
+    assert any("___   Run..." in line for line in printed_args)
+    assert any("PASS" in line for line in printed_args)
+
+def test_option_main_fail(shell,mocker, tmp_path):
+    path = tmp_path / "test.txt"
+    path.write_text("02_failcase\n")
+
+    mock_print = mocker.patch("builtins.print")
+
+    shell.option_main("non_existing_file.txt")
+
+    mock_print.assert_called_with('ERROR')
+

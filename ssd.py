@@ -61,6 +61,9 @@ class SSD():
         if not self._check_input_validity(lba, size=size):
             self._raise_error()
 
+
+
+
     def _raise_error(self):
         self._output_txt.write("ERROR")
         raise ValueError("ERROR")
@@ -79,6 +82,8 @@ class SSD():
         if not 0 <= value <= 0xFFFFFFFF:
             return False
         if not 1 <= size <= 10:
+            return False
+        if not (1 <= lba + size < 100):
             return False
         return True
 

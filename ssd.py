@@ -56,7 +56,7 @@ class SSD():
         # sse_output.txt 파일 초기화
         self._output_txt.write("")
 
-    # write 함수
+    # erase 함수
     def erase_ssd(self, lba, size):
         pass
 

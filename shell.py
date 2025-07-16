@@ -175,6 +175,19 @@ class Shell():
         print('PASS')
         self.logger.print(f"{self.read.__qualname__}()", "PASS")
 
+    def _aging(self, idx):
+        value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
+        self.write(idx, value1)
+        self.write(idx, value2)
+        self.erase_range(idx, min(idx+2,99))
+
+    def EraseAndWriteAging(self):
+        self.erase_range(0,2)
+        for i in range(30):
+            for idx in range(2, 100, 2):
+                self._aging(idx)
+
+
     def main_function(self, args):
         if not (args[0].lower(), len(args)) in self.command_dictionary(args):
             raise ValueError("INVALID COMMAND")
@@ -189,6 +202,7 @@ class Shell():
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
+            ('4_', 1): lambda: self.EraseAndWriteAging(),
             ('help', 1): lambda: self.help(),
             ('erase', 2): lambda: self.erase(int(args[1]), int(args[2])),
             ('erase_range', 2): lambda: self.erase(int(args[1]), int(args[2]))

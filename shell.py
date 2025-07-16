@@ -93,7 +93,7 @@ class EraseCommand(Command):
 
     def execute(self):
         if (0 > self.lba or self.lba > 99) or (1 > self.size or self.size > 100) or (self.lba + self.size > 100):
-            self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
+            self.shell.logger.print(f"{self.execute.__qualname__}()", f"FAIL")
             raise Exception()
 
         offset = 0
@@ -187,6 +187,20 @@ class PartialLBAWriteCommand(Command):
         print("PASS")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
+class EraseAndWriteAgingCommand(Command):
+    def __init__(self, shell):
+        super().__init__(shell)
+    def execute(self):
+        EraseRangeCommand(self.shell,0, 2).execute()
+        for i in range(30):
+            for idx in range(2, 100, 2):
+                self._aging(idx)
+    def _aging(self, idx):
+        value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
+        WriteCommand(self.shell,idx, value1).execute()
+        WriteCommand(self.shell,idx, value2).execute()
+        EraseRangeCommand(self.shell,idx, min(idx + 2, 99)).execute()
+
 class WriteReadAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
@@ -244,17 +258,7 @@ class Shell():
 
 
 
-    def _aging(self, idx):
-        value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
-        self.write(idx, value1)
-        self.write(idx, value2)
-        self.erase_range(idx, min(idx + 2, 99))
 
-    def EraseAndWriteAging(self):
-        self.erase_range(0, 2)
-        for i in range(30):
-            for idx in range(2, 100, 2):
-                self._aging(idx)
 
     def main_function(self, args):
         if not (args[0].lower(), len(args)) in self.command_dictionary(args):
@@ -271,7 +275,7 @@ class Shell():
             ('1_', 1): lambda: FullWriteAndReadCompareCommand(self).execute(),
             ('2_', 1): lambda: PartialLBAWriteCommand(self).execute(),
             ('3_', 1): lambda: WriteReadAgingCommand(self).execute(),
-            ('4_', 1): lambda: self.EraseAndWriteAging(),
+            ('4_', 1): lambda: EraseAndWriteAgingCommand(self).execute(),
             ('help', 1): lambda: self.help(),
             ('erase', 3): lambda: EraseCommand(self, int(args[1]), int(args[2])).execute(),
             ('erase_range', 3): lambda: EraseRangeCommand(self,int(args[1]), int(args[2])).execute()

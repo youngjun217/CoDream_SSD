@@ -46,6 +46,9 @@ class Logger:
 
 
 class Command(ABC):
+    def __init__(self, shell):
+        self.shell = shell
+
     @abstractmethod
     def execute(self):
         pass
@@ -53,7 +56,7 @@ class Command(ABC):
 
 class ReadCommand(Command):
     def __init__(self, shell, idx):
-        self.shell = shell
+        super().__init__(shell)
         self.idx = idx
 
     def execute(self) -> None:
@@ -63,10 +66,7 @@ class ReadCommand(Command):
         print(f'[Read] LBA {self.idx}: {value}')
         self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
-class WriteCommand(Command):
-    def __init__(self, shell, idx):
-        self.shell = shell
-        self.idx = idx
+
 
 
 class Shell():

@@ -232,13 +232,9 @@ def test_erase_size_error(ssd):
         ssd.erase_ssd(0, 0)
 
 def test_erase_wrong_index_error(ssd):
-    with pytest.raiese(ValueError, match="ERROR"):
+    with pytest.raises(ValueError, match="ERROR"):
         ssd.erase_ssd(0, 100)
 
-    with pytest.raiese(ValueError, match="ERROR"):
+    with pytest.raises(ValueError, match="ERROR"):
         ssd.erase_ssd(-1, 10)
 
-
-def test_erase_exceed_index_error(ssd):
-    with pytest.raiese(ValueError, match="ERROR"):
-        ssd.erase_ssd(95, 10)

@@ -56,9 +56,21 @@ class SSD():
         # sse_output.txt 파일 초기화
         self._output_txt.write("")
 
+
     # erase 함수
     def erase_ssd(self, lba, size):
-        pass
+        if not self._check_input_validity(lba, size=size):
+            self._raise_error()
+
+        end_index = lba + size
+        if end_index > 100:
+            end_index = 100
+
+        ssd_nand_txt = self._nand_txt.read()
+        for i in range(lba, end_index):
+            ssd_nand_txt[i] = f"{i:02d} 0x00000000\n"
+        self._nand_txt.write(ssd_nand_txt)
+
 
     def _raise_error(self):
         self._output_txt.write("ERROR")
@@ -68,7 +80,7 @@ class SSD():
         return ((cmd == 'W') and (len_sys_argv == 4)) or ((cmd == 'R') and (len_sys_argv == 3)) or (
                     (cmd == 'E') and (len_sys_argv == 4))
 
-    def _check_input_validity(self, lba, value=0x00000000):
+    def _check_input_validity(self, lba, value=0x00000000, size=10):
         if type(lba) is not int:
             return False
         if type(value) is not int:
@@ -76,6 +88,8 @@ class SSD():
         if not 0 <= lba < 100:
             return False
         if not 0 <= value <= 0xFFFFFFFF:
+            return False
+        if not 1 <= size <= 10:
             return False
         return True
 

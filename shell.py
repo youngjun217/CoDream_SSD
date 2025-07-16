@@ -1,5 +1,4 @@
 import contextlib
-import inspect
 import io
 import os
 import sys
@@ -90,12 +89,7 @@ class Shell():
             self._send_command('E', lba + offset, erase_size)
             offset += 10
             size -= erase_size
-        caller_frame = inspect.stack()[3]
-        caller_name = caller_frame.function
-        if caller_name=='EraseAndWriteAging':
-            pass
-        else:
-            self.logger.print(f"{self.erase.__qualname__}()", "DONE")
+        self.logger.print(f"{self.erase.__qualname__}()", "DONE")
 
     def erase_range(self, st_lba: int, en_lba: int):
         if st_lba > en_lba or st_lba < 0 or en_lba > 99:
@@ -193,22 +187,15 @@ class Shell():
 
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
-        self._send_command('W', idx, value1)
-        self._send_command('W', idx, value2)
+        self.write(idx, value1)
+        self.write(idx, value2)
         self.erase_range(idx, min(idx+2,99))
 
     def EraseAndWriteAging(self):
-        self._send_command('E', 0, 3)
+        self.erase_range(0,2)
         for i in range(30):
             for idx in range(2, 100, 2):
-                try:
-                    self._aging(idx)
-                except Exception as e:
-                    print('FAIL')
-                    self.logger.print(f"{self.EraseAndWriteAging.__qualname__}()", "FAIL")
-                    raise e
-        print('PASS')
-        self.logger.print(f"{self.EraseAndWriteAging.__qualname__}()", "PASS")
+                self._aging(idx)
 
 
     def main_function(self, args):
@@ -242,7 +229,7 @@ class Shell():
         option_dict = {
             ('1_'): 5,
             ('2_'): 13,
-            ('3_'): 14,
+            ('3_'): 15,
             ('4_'): 11
         }
         return option_dict

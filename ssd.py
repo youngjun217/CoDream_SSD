@@ -31,6 +31,17 @@ class SSD():
         else:
             return ErrorCommand()
 
+    def _read_ssd(self, lba):
+        self._command = self.get_command('R')
+        self._command.run_command([lba])
+
+    def _write_ssd(self, lba, value):
+        self._command = self.get_command('W')
+        self._command.run_command([lba, hex(value).upper])
+
+    def _erase_ssd(self, lba, size):
+        self._command = self.get_command('E')
+        self._command.run_command([lba, size])
 
 class SSDCommand(ABC):
     def __init__(self):

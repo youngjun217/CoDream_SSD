@@ -67,12 +67,12 @@ class ReadCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
 class WriteCommand(Command):
-    def __init__(self, shell, idx : int, value:int)->bool:
+    def __init__(self, shell, idx : int, value:int):
         super().__init__(shell)
         self.idx = idx
         self.value = value
 
-    def execute(self) -> None:
+    def execute(self) -> bool:
         self.shell._send_command('W', self.idx, self.value)
         if self.shell.ssd_output.read() == '':
             print('[Write] Done')
@@ -81,7 +81,24 @@ class WriteCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
         return False
 
+class EraseCommand(Command):
+    def __init__(self, shell, lba : int, size:int):
+        super().__init__(shell)
+        self.lba = lba
+        self.size = size
 
+    def execute(self):
+        if (0 > self.lba or self.lba > 99) or (1 > self.size or self.size > 100) or (self.lba + self.size > 100):
+            self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
+            raise Exception()
+
+        offset = 0
+        while self.size > 0:
+            erase_size = min(self.size, 10)
+            self.shell._send_command('E', self.lba + offset, erase_size)
+            offset += 10
+            self.size -= erase_size
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 
 class Shell():
@@ -102,18 +119,7 @@ class Shell():
             return self.ssd.run([None, 'E', lba, value])
 
 
-    def erase(self, lba: int, size: int):
-        if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 100):
-            self.logger.print(f"{self.erase.__qualname__}()", "FAIL")
-            raise Exception()
 
-        offset = 0
-        while size > 0:
-            erase_size = min(size, 10)
-            self._send_command('E', lba + offset, erase_size)
-            offset += 10
-            size -= erase_size
-        self.logger.print(f"{self.erase.__qualname__}()", "DONE")
 
     def erase_range(self, st_lba: int, en_lba: int):
         if st_lba > en_lba or st_lba < 0 or en_lba > 99:
@@ -239,8 +245,8 @@ class Shell():
             ('3_', 1): lambda: self.WriteReadAging(),
             ('4_', 1): lambda: self.EraseAndWriteAging(),
             ('help', 1): lambda: self.help(),
-            ('erase', 2): lambda: self.erase(int(args[1]), int(args[2])),
-            ('erase_range', 2): lambda: self.erase(int(args[1]), int(args[2]))
+            ('erase', 3): lambda: EraseCommand(self,int(args[1]), int(args[2])).execute(),
+            ('erase_range', 3): lambda: self.erase(int(args[1]), int(args[2]))
         }
         return command_dict
 

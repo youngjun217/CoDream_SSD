@@ -39,7 +39,7 @@ class shell_ftn():
         offset = 0
         while size > 0:
             erase_size = min(size, 10)
-            SSD.erase_ssd(lba + offset, erase_size)
+            self._send_command(lba + offset, erase_size)
             offset += 10
             size -= erase_size
 

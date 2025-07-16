@@ -6,8 +6,7 @@ from pytest_mock import MockerFixture
 from unittest.mock import call
 
 import ssd
-from shell import Shell
-
+from shell import Shell, Logger
 
 
 @pytest.fixture
@@ -59,10 +58,18 @@ def test_erase_success(shell, mocker):
     assert mock_erase_ssd.call_count==3
 
 
-def test_erase_fail(shell):
-    with pytest.raises(ValueError, match="Invalid LBA range or SIZE"):
-        shell.erase(-1,25)
+def test_erase_fail(shell,mocker):
+    shell.logger = mocker.Mock()
 
+    with pytest.raises(Exception):
+        shell.erase(95, 10)
+
+    shell.logger.print.assert_called_once()
+    assert shell.logger.print.call_args[0][1] == "FAIL"
+
+def test_erase_fail(shell):
+    with pytest.raises(ValueError):
+        shell.erase_range(-1,25)
 
 def test_erase_range_success(shell, mocker):
     mock_erase_ssd = mocker.patch.object(ssd.SSD, 'erase_ssd')
@@ -240,4 +247,52 @@ def test_option_main_fail(shell,mocker, tmp_path):
     shell.option_main("non_existing_file.txt")
 
     mock_print.assert_called_with('ERROR')
+
+
+@pytest.fixture
+def logger():
+    Logger._instance = None  # 싱글톤 초기화
+    return Logger()
+
+def test_init_removes_log_file_if_exists(mocker):
+    mock_exists = mocker.patch("os.path.exists", return_value=True)
+    mock_remove = mocker.patch("os.remove")
+    Logger._instance = None
+    logger = Logger()
+    mock_exists.assert_called_once_with(Logger.LOG_FILE)
+    mock_remove.assert_called_once_with(Logger.LOG_FILE)
+
+def test_print_calls_rotate_and_writes(mocker, logger):
+    mock_rotate = mocker.patch.object(logger, "rotate_log_if_needed")
+    mock_open = mocker.patch("builtins.open", mocker.mock_open())
+    logger.print("HEADER", "message")
+    mock_rotate.assert_called_once()
+    mock_open.assert_called_once_with("latest.log", 'a', encoding='utf-8')
+    handle = mock_open()
+    written_text = handle.write.call_args[0][0]
+
+    # 날짜, 시간 정보는 변화가 많으니 제외하고 확인
+    assert "HEADER" in written_text
+    assert "message" in written_text
+    assert written_text.endswith("\n")
+
+def test_rotate_log_if_needed_renames(mocker, logger):
+    mocker.patch("os.path.exists", return_value=True)
+    mocker.patch("os.path.getsize", return_value=Logger.MAX_SIZE + 1)
+    mocker.patch("glob.glob", return_value=["until_250708_17h_12m_52s.log"])
+    mock_rename = mocker.patch("os.rename")
+    mocker.patch("time.strftime", return_value="until_250710_09h_00m_00s")
+
+    logger.rotate_log_if_needed()
+
+    assert mock_rename.call_count == 2
+    calls = mock_rename.call_args_list
+    # 첫 호출: 기존 until 파일 .log -> .zip
+    assert calls[0][0][0].endswith(".log")
+    assert calls[0][0][1].endswith(".zip")
+    # 두번째 호출: latest.log -> 새로운 until 파일명
+    assert calls[1][0][0] == Logger.LOG_FILE
+    assert calls[1][0][1].startswith("until_")
+    assert calls[1][0][1].endswith(".log")
+
 

@@ -72,7 +72,7 @@ def test_erase_success(shell, mocker):
     expected_calls = [call(2, 10), call(12, 10), call(22, 5)]
 
     assert mock_erase_ssd.call_args_list == expected_calls
-    mock_erase_ssd.call_count==3
+    assert mock_erase_ssd.call_count==3
 
 
 def test_erase_fail(shell):
@@ -88,7 +88,7 @@ def test_erase_range_success(shell, mocker):
     expected_calls = [call(3, 10), call(13, 8)]
 
     assert mock_erase_ssd.call_args_list == expected_calls
-    mock_erase_ssd.call_count==2
+    assert mock_erase_ssd.call_count==2
 
 
 def test_help_output(shell, mocker):

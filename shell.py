@@ -8,7 +8,7 @@ from ssd import SSD, SSDOutput, SSDNand
 import random
 
 
-class shell_ftn():
+class Shell():
     def __init__(self):
         self.ssd = SSD()
         self.ssd_output = SSDOutput()
@@ -155,8 +155,8 @@ class shell_ftn():
 
 if __name__ == "__main__":
     if len(sys.argv)==1:
-        shell_ftn().main()
+        Shell().main()
     elif len(sys.argv)==2:
-        shell_ftn().option_main(sys.argv[1])
+        Shell().option_main(sys.argv[1])
 
 

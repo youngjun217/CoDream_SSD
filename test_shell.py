@@ -6,12 +6,12 @@ from pytest_mock import MockerFixture
 from unittest.mock import call
 
 import ssd
-from shell import shell_ftn
+from shell import Shell
 
 
 @pytest.fixture
 def shell():
-    return shell_ftn()
+    return Shell()
 
 
 @pytest.mark.parametrize("index", ['1 10', '2 20'])

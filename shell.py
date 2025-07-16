@@ -25,10 +25,13 @@ class shell_ftn():
     def erase(self, lba: int, size: int):
         if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 99):
             raise Exception()
-        cycle = int(size/10)+1
-        for i in range(cycle):
-            SSD.erase_ssd(lba+i*10, min(size, 10))
-            size = size-10*(i+1)
+
+        offset = 0
+        while size > 0:
+            erase_size = min(size, 10)
+            SSD.erase_ssd(lba + offset, erase_size)
+            offset += 10
+            size -= erase_size
 
     # help : 프로그램 사용법
     def help(self):

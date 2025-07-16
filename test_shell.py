@@ -45,6 +45,11 @@ def test_write_fail(shell, mocker):
     assert result is False
 
 
+def test_erase(shell, mocker):
+
+    shell.erase(3, 23)
+
+
 def test_help_output(shell, mocker):
     mock_print = mocker.patch('builtins.print')
 

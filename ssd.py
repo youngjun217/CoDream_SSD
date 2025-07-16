@@ -26,15 +26,21 @@ class SSD():
         if (cmd == 'W'):
             value = int(sys_argv[3], 16)
             self.write_ssd(lba, value)
+
         elif (cmd == 'R'):
             buffer_lst = self.buffer.buf_lst
 
             for buffer_cmd in buffer_lst:
                 cmd_lst = buffer_cmd.split('_')
-                if cmd_lst[1]=='W' and cmd_lst[2]==lba:
+
+                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
                     return cmd_lst[3]
-                if cmd_lst[1]=='E' and int(cmd_lst[2])<=lba<int(cmd_lst[2])+int(cmd_lst[3]):
-                    return 0x00000000
+                if cmd_lst[1] == 'E':
+                    start_lba = int(cmd_lst[2])
+                    size = int(cmd_lst[3])
+                    if start_lba <= lba < start_lba + size:
+                        return 0x00000000
+
             self.read_ssd(lba)
 
         elif (cmd == 'E'):

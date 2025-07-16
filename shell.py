@@ -9,7 +9,8 @@ import sys
 import time
 from abc import ABC, abstractmethod
 
-from ssd import SSD, SSDOutput, SSDNand
+from ssd import SSDOutput, SSDNand
+from ssd_interface import SSDInterface, SSDConcreteInterface
 
 
 class Logger:
@@ -233,20 +234,20 @@ class WriteReadAgingCommand(Command):
 
 class Shell():
     def __init__(self):
-        self.ssd = SSD()
         self.ssd_output = SSDOutput()
         self.ssd_nand = SSDNand()
         self.logger = Logger()
+        self.ssd_interface: SSDInterface = SSDConcreteInterface()
 
     def _send_command(self, command, lba, value=None):
         if (command == 'W'):
             if type(value) is int:
                 value = hex(value).upper()
-            return self.ssd.run([None, 'W', lba, value])
+            return self.ssd_interface.run([None, 'W', lba, value])
         if (command == 'R'):
-            return self.ssd.run([None, 'R', lba])
+            return self.ssd_interface.run([None, 'R', lba])
         if (command == 'E'):
-            return self.ssd.run([None, 'E', lba, value])
+            return self.ssd_interface.run([None, 'E', lba, value])
 
     # help : 프로그램 사용법
     def help(self):

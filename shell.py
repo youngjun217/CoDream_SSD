@@ -57,7 +57,7 @@ class shell_ftn():
         offset = 0
         while size > 0:
             erase_size = min(size, 10)
-            self._send_command(lba + offset, erase_size)
+            self._send_command('E', lba + offset, erase_size)
             offset += 10
             size -= erase_size
         self.logger.print(f"{self.read.__qualname__}()", "DONE")

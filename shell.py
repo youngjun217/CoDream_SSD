@@ -106,6 +106,7 @@ class Shell():
               '1_FullWriteAndReadCompare : compare write and read on every 5 Index \n',
               '2_PartialLBAWrite : Write a random value at the 0~4 index and check if the values are the same 30 times.\n',
               '3_WriteReadAging : Write a random value at index 0.99 and check if the values are the same 200 times.\n',
+              '4_EraseAndWriteAging :Performs 30 cycles of writing two random values to each even LBA (2–98), followed by erasing the next two LBA blocks to simulate aging behavior.\n',
               )
         self.logger.print(f"{self.read.__qualname__}()", "DONE")
 

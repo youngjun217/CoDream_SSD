@@ -92,10 +92,9 @@ class Shell():
             size -= erase_size
         caller_frame = inspect.stack()[3]
         caller_name = caller_frame.function
-        if caller_name=='EraseAndWriteAging':
-            pass
-        else:
+        if caller_name!='EraseAndWriteAging':
             self.logger.print(f"{self.erase.__qualname__}()", "DONE")
+
 
     def erase_range(self, st_lba: int, en_lba: int):
         if st_lba > en_lba or st_lba < 0 or en_lba > 99:

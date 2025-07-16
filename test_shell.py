@@ -48,7 +48,7 @@ def test_write_fail(shell, mocker):
     assert result is False
 
 def test_erase_success(shell, mocker):
-    mock_erase_ssd = mocker.patch.object(ssd.SSD, 'erase_ssd')
+    mock_erase_ssd = mocker.patch.object(shell.ssd, 'erase_ssd')
 
     shell.erase(2,25)
 
@@ -193,6 +193,26 @@ def test_WriteReadAging_fail(shell, mocker):
 
     mock_print.assert_called_with('FAIL')
 
+def test_EraseAndWriteAging_pass(shell,mocker):
+    mock_erase_line = mocker.patch.object(shell, 'erase_range')
+    mock_write_ssd = mocker.patch.object(shell.ssd, 'write_ssd')
+    mock_print = mocker.patch('builtins.print')
+
+    shell.EraseAndWriteAging()
+
+    assert mock_erase_line.call_count == 1470
+    assert mock_write_ssd.call_count == 2940
+    mock_print.assert_called_with('PASS')
+
+
+def test_EraseAndWriteAging_fail(shell,mocker):
+    mocker.patch.object(shell, '_send_command')
+
+    mocker.patch.object(shell, '_aging', side_effect=lambda idx: (_ for _ in ()).throw(
+        Exception("Forced failure")) if idx == 4 else None)
+
+    with pytest.raises(Exception):
+        shell.EraseAndWriteAging()
 
 def test_main_function_invaild_case(shell):
     with pytest.raises(ValueError, match="INVALID COMMAND"):
@@ -249,6 +269,8 @@ def test_option_main_fail(shell,mocker, tmp_path):
     mock_print.assert_called_with('ERROR')
 
 
+
+
 @pytest.fixture
 def logger():
     Logger._instance = None  # 싱글톤 초기화
@@ -294,5 +316,6 @@ def test_rotate_log_if_needed_renames(mocker, logger):
     assert calls[1][0][0] == Logger.LOG_FILE
     assert calls[1][0][1].startswith("until_")
     assert calls[1][0][1].endswith(".log")
+
 
 

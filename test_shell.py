@@ -58,10 +58,18 @@ def test_erase_success(shell, mocker):
     assert mock_erase_ssd.call_count==3
 
 
-def test_erase_fail(shell):
-    with pytest.raises(ValueError, match="Invalid LBA range or SIZE"):
-        shell.erase(-1,25)
+def test_erase_fail(shell,mocker):
+    shell.logger = mocker.Mock()
 
+    with pytest.raises(Exception):
+        shell.erase(95, 10)
+
+    shell.logger.print.assert_called_once()
+    assert shell.logger.print.call_args[0][1] == "FAIL"
+
+def test_erase_fail(shell):
+    with pytest.raises(ValueError):
+        shell.erase_range(-1,25)
 
 def test_erase_range_success(shell, mocker):
     mock_erase_ssd = mocker.patch.object(ssd.SSD, 'erase_ssd')

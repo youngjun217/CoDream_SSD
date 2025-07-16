@@ -104,6 +104,13 @@ class EraseCommand(Command):
             self.size -= erase_size
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
+            size -= erase_size
+        caller_frame = inspect.stack()[3]
+        caller_name = caller_frame.function
+        if caller_name=='EraseAndWriteAging':
+            pass
+        else:
+            self.logger.print(f"{self.erase.__qualname__}()", "DONE")
 
 class EraseRangeCommand(Command):
     def __init__(self, shell, st_lba: int, en_lba: int):
@@ -255,9 +262,26 @@ class Shell():
               )
         self.logger.print(f"{self.help.__qualname__}()", "DONE")
 
+    def _aging(self, idx):
+        value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
+        self._send_command('W', idx, value1)
+        self._send_command('W', idx, value2)
+        self.erase_range(idx, min(idx+2,99))
 
 
 
+    def EraseAndWriteAging(self):
+        self._send_command('E', 0, 3)
+        for i in range(30):
+            for idx in range(2, 100, 2):
+                try:
+                    self._aging(idx)
+                except Exception as e:
+                    print('FAIL')
+                    self.logger.print(f"{self.EraseAndWriteAging.__qualname__}()", "FAIL")
+                    raise e
+        print('PASS')
+        self.logger.print(f"{self.EraseAndWriteAging.__qualname__}()", "PASS")
 
 
     def main_function(self, args):
@@ -292,7 +316,7 @@ class Shell():
         option_dict = {
             ('1_'): 5,
             ('2_'): 13,
-            ('3_'): 15,
+            ('3_'): 14,
             ('4_'): 11
         }
         return option_dict

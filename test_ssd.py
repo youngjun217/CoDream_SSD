@@ -9,9 +9,11 @@ TEST_LBA = 3
 TEST_WRITE_VALUE = 0x1298CDEF
 ERROR_MESSAGE = "ERROR"
 
+
 @pytest.fixture
 def ssd():
     return SSD()
+
 
 def test_read(ssd):
     ssd_output = SSDOutput()
@@ -160,14 +162,15 @@ def test_ssd_write_output(ssd, mocker: MockerFixture):
     ssd._output_txt.write.assert_called_with("")
 
 @pytest.mark.parametrize("output", [["ERROR"], ["10 0x00000000"], ["20 0x00000000"]])
-def test_singletone_ssd_nand(output):
+def test_singleton_ssd_nand(output):
     ssd_output = SSDNand()
     ssd_output.write(output)
     ssd_new_output = SSDNand()
     assert ssd_output.read() == ssd_new_output.read()
 
+
 @pytest.mark.parametrize("output", ["ERROR", "10 0x00000000", "20 0x00000000"])
-def test_singletone_ssd_output(output):
+def test_singleton_ssd_output(output):
     ssd_output = SSDOutput()
     ssd_output.write(output)
     ssd_new_output = SSDOutput()
@@ -182,17 +185,60 @@ def test_ssd_run_read(ssd, mocker: MockerFixture, input):
     ssd.read_ssd.assert_has_calls([call(input[2])])
 
 
-@pytest.mark.parametrize("input", [[None, 'W', 0, 0x00000000], [None, 'W', 10, 0x12345678], [None, 'W', 99, 0xABCDEF90]])
-def test_ssd_run(ssd, mocker: MockerFixture, input):
+@pytest.mark.parametrize("input",
+                         [[None, 'W', 0, '0x00000000'], [None, 'W', 10, '0x12345678'], [None, 'W', 99, '0xABCDEF90']])
+def test_ssd_run_write(ssd, mocker: MockerFixture, input):
     mock_write = mocker.patch('ssd.SSD.write_ssd')
     ssd.run(input)
     ssd.write_ssd.assert_called_once()
-    ssd.write_ssd.assert_has_calls([call(input[2], input[3])])
+    ssd.write_ssd.assert_has_calls([call(input[2], int(input[3], 16))])
 
 
-@pytest.mark.parametrize("input", [[None, 'A'], [None, 'W', 10], [None, 'W', 10, 1, 1], [None, 'R'], [None, 'R', 99, 0xABCDEF90]])
+@pytest.mark.parametrize("input", [[None, 'E', 1, 2], [None, 'E', 5, 5], [None, 'E', 10, 10]])
+def test_ssd_run_erase(ssd, mocker: MockerFixture, input):
+    mock_erase = mocker.patch('ssd.SSD.erase_ssd')
+    ssd.run(input)
+    ssd.erase_ssd.assert_called_once()
+    ssd.erase_ssd.assert_has_calls([call(input[2], input[3])])
+
+
+@pytest.mark.parametrize("input",
+                         [[None, 'A'], [None, 'W', 10], [None, 'W', 10, '1', 1], [None, 'R'],
+                          [None, 'R', 99, '0xABCDEF90'],
+                          [None, 'E', 10], [None, 'E', 10, 1, 1]])
 def test_ssd_run_wrong_command(ssd, input):
     with pytest.raises(ValueError, match="ERROR"):
         ssd.run(input)
 
 
+def test_erase_success(ssd):
+    ssd_nand = SSDNand()
+    for i in range(100):
+        ssd.write_ssd(lba=i, value=TEST_WRITE_VALUE)
+
+    ssd.erase_ssd(0, 10)
+    for i in range(0, 10):
+        assert ssd_nand.readline(i) == f"{i:02d} 0x00000000\n"
+
+    ssd.erase_ssd(11, 5)
+    for i in range(11, 16):
+        assert ssd_nand.readline(i) == f"{i:02d} 0x00000000\n"
+
+def test_erase_size_error(ssd):
+    with pytest.raises(ValueError, match="ERROR"):
+        ssd.erase_ssd(0, 11)
+
+    with pytest.raises(ValueError, match="ERROR"):
+        ssd.erase_ssd(0, 0)
+
+def test_erase_wrong_index_error(ssd):
+    with pytest.raiese(ValueError, match="ERROR"):
+        ssd.erase_ssd(0, 100)
+
+    with pytest.raiese(ValueError, match="ERROR"):
+        ssd.erase_ssd(-1, 10)
+
+
+def test_erase_exceed_index_error(ssd):
+    with pytest.raiese(ValueError, match="ERROR"):
+        ssd.erase_ssd(95, 10)

@@ -22,14 +22,13 @@ class SSD():
 
         lba = int(sys_argv[2])
         if (cmd == 'W'):
-            value = sys_argv[3]
+            value = int(sys_argv[3], 16)
             self.write_ssd(lba, value)
         elif (cmd == 'R'):
-            lba = int(sys_argv[2])
             self.read_ssd(lba)
-
-    def _check_command_validity(self, cmd, len_sys_argv):
-        return ((cmd == 'W') and (len_sys_argv == 4)) or ((cmd == 'R') and (len_sys_argv == 3))
+        elif (cmd == 'E'):
+            size = int(sys_argv[3])
+            self.erase_ssd(lba, size)
 
     def read_ssd(self, lba):
         if not self._check_input_validity(lba):
@@ -57,9 +56,17 @@ class SSD():
         # sse_output.txt 파일 초기화
         self._output_txt.write("")
 
+    # erase 함수
+    def erase_ssd(self, lba, size):
+        pass
+
     def _raise_error(self):
         self._output_txt.write("ERROR")
         raise ValueError("ERROR")
+
+    def _check_command_validity(self, cmd, len_sys_argv):
+        return ((cmd == 'W') and (len_sys_argv == 4)) or ((cmd == 'R') and (len_sys_argv == 3)) or (
+                    (cmd == 'E') and (len_sys_argv == 4))
 
     def _check_input_validity(self, lba, value=0x00000000):
         if type(lba) is not int:

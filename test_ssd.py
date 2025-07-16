@@ -161,12 +161,13 @@ def test_ssd_write_output(ssd, mocker: MockerFixture):
     assert ssd._output_txt.write.call_count == 1
     ssd._output_txt.write.assert_called_with("")
 
+
 @pytest.mark.parametrize("output", [["ERROR"], ["10 0x00000000"], ["20 0x00000000"]])
 def test_singleton_ssd_nand(output):
-    ssd_output = SSDNand()
-    ssd_output.write(output)
+    ssd_nand = SSDNand()
+    ssd_nand.write(output)
     ssd_new_output = SSDNand()
-    assert ssd_output.read() == ssd_new_output.read()
+    assert ssd_nand.read() == ssd_new_output.read()
 
 
 @pytest.mark.parametrize("output", ["ERROR", "10 0x00000000", "20 0x00000000"])
@@ -175,6 +176,16 @@ def test_singleton_ssd_output(output):
     ssd_output.write(output)
     ssd_new_output = SSDOutput()
     assert ssd_output.read() == ssd_new_output.read()
+
+
+def test_singleton_ssd():
+    ssd_nand = SSDNand()
+    ssd_nand.write(["10 0x00000000"])
+    ssd_output = SSDOutput()
+    ssd_output.write("20 0xABCD0000")
+    ssd = SSD()
+    assert ssd_output.read() == ssd.output_txt.read()
+    assert ssd_nand.read() == ssd.nand_txt.read()
 
 
 @pytest.mark.parametrize("input", [[None, 'R', 0], [None, 'R', 10], [None, 'R', 99]])
@@ -224,6 +235,7 @@ def test_erase_success(ssd):
     for i in range(11, 16):
         assert ssd_nand.readline(i) == f"{i:02d} 0x00000000\n"
 
+
 def test_erase_size_error(ssd):
     with pytest.raises(ValueError, match="ERROR"):
         ssd._erase_ssd(0, 11)
@@ -231,10 +243,10 @@ def test_erase_size_error(ssd):
     with pytest.raises(ValueError, match="ERROR"):
         ssd._erase_ssd(0, 0)
 
+
 def test_erase_wrong_index_error(ssd):
     with pytest.raises(ValueError, match="ERROR"):
         ssd._erase_ssd(0, 100)
 
     with pytest.raises(ValueError, match="ERROR"):
         ssd._erase_ssd(-1, 10)
-

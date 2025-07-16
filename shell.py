@@ -122,7 +122,8 @@ class shell_ftn():
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
-            ('help', 1): lambda: self.help()
+            ('help', 1): lambda: self.help(),
+            ('erase', 2): lambda: self.erase(int(args[1]), int(args[2]))
         }
         return command_dict
 

@@ -9,14 +9,11 @@ class shell_ftn():
         self.ssd_output = SSDOutput()
         self.ssd_nand = SSDNand()
 
-
     def read(self, idx: int) -> None:
         self.ssd.read_ssd(idx)
         result = self.ssd_output.read()
         value = result.split()[1]
         print(f'[Read] LBA {idx}: {value}')
-
-
 
     def write(self, num: int, value: str) -> None:
         self.ssd.write_ssd(num, value)
@@ -24,6 +21,17 @@ class shell_ftn():
             print('[Write] Done')
             return True
         return False
+
+    def erase(self, lba: int, size: int):
+        if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 99):
+            raise Exception()
+
+        offset = 0
+        while size > 0:
+            erase_size = min(size, 10)
+            SSD.erase_ssd(lba + offset, erase_size)
+            offset += 10
+            size -= erase_size
 
     # help : 프로그램 사용법
     def help(self):
@@ -84,12 +92,11 @@ class shell_ftn():
             for x in range(5):
                 self.ssd.write_ssd(partialLBA_index_list[x], random_write_value)
             check_ref = self.ssd_nand.readline(0).split()[1]
-            for x in range(1,5):
+            for x in range(1, 5):
                 if check_ref != self.ssd_nand.readline(x).split()[1]:
                     print('FAIL')
                     return
         print("PASS")
-
 
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
@@ -106,7 +113,7 @@ class shell_ftn():
             raise ValueError("INVALID COMMAND")
         self.command_dictionary(args)[(args[0].lower(), len(args))]()
 
-    def command_dictionary(self,args):
+    def command_dictionary(self, args):
         command_dict = {
             ("read", 2): lambda: self.read(int(args[1])),
             ("write", 3): lambda: self.write(int(args[1]), int(args[2], 16)),
@@ -115,7 +122,8 @@ class shell_ftn():
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
-            ('help', 1): lambda: self.help()
+            ('help', 1): lambda: self.help(),
+            ('erase', 2): lambda: self.erase(int(args[1]), int(args[2]))
         }
         return command_dict
 

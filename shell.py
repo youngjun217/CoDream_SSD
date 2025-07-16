@@ -1,6 +1,5 @@
 import contextlib
 import io
-import os
 import sys
 from time import sleep
 
@@ -10,6 +9,7 @@ import datetime
 import os
 import time
 import glob
+from abc import ABC, abstractmethod
 
 class Logger:
     _instance = None
@@ -45,6 +45,30 @@ class Logger:
             os.rename(self.LOG_FILE, new_name)
 
 
+class Command(ABC):
+    @abstractmethod
+    def execute(self):
+        pass
+
+
+class ReadCommand(Command):
+    def __init__(self, shell, idx):
+        self.shell = shell
+        self.idx = idx
+
+    def execute(self) -> None:
+        self.shell._send_command('R', self.idx)
+        result = self.shell.ssd_output.read()
+        value = result.split()[1]
+        print(f'[Read] LBA {self.idx}: {value}')
+        self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
+
+class WriteCommand(Command):
+    def __init__(self, shell, idx):
+        self.shell = shell
+        self.idx = idx
+
+
 class Shell():
     def __init__(self):
         self.ssd = SSD()
@@ -62,12 +86,7 @@ class Shell():
         if (command == 'E'):
             return self.ssd.run([None, 'E', lba, value])
 
-    def read(self, idx: int) -> None:
-        self._send_command('R', idx)
-        result = self.ssd_output.read()
-        value = result.split()[1]
-        print(f'[Read] LBA {idx}: {value}')
-        self.logger.print(f"{self.read.__qualname__}()", f"LBA {idx}: {value}")
+
 
     def write(self, num: int, value: str) -> bool:
         self._send_command('W', num, value)
@@ -205,7 +224,8 @@ class Shell():
 
     def command_dictionary(self, args):
         command_dict = {
-            ("read", 2): lambda: self.read(int(args[1])),
+            # ("read", 2): lambda: self.read(int(args[1])),
+            ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
             ("write", 3): lambda: self.write(int(args[1]), int(args[2], 16)),
             ("fullwrite", 2): lambda: self.fullwrite(int(args[1], 16)),
             ("fullread", 1): lambda: self.fullread(),

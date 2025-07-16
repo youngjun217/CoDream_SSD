@@ -1,11 +1,13 @@
 import sys
 from abc import ABC, abstractmethod
+from buffer import Buffer
 
 
 class SSD():
     def __init__(self):
         self._nand_txt = SSDNand()
         self._output_txt = SSDOutput()
+        self.buffer = Buffer()
 
     @property
     def nand_txt(self):
@@ -25,7 +27,16 @@ class SSD():
             value = int(sys_argv[3], 16)
             self.write_ssd(lba, value)
         elif (cmd == 'R'):
+            buffer_lst = self.buffer.buf_lst
+
+            for buffer_cmd in buffer_lst:
+                cmd_lst = buffer_cmd.split('_')
+                if cmd_lst[1]=='W' and cmd_lst[2]==lba:
+                    return cmd_lst[3]
+                if cmd_lst[1]=='E' and int(cmd_lst[2])<=lba<int(cmd_lst[2])+int(cmd_lst[3]):
+                    return 0x00000000
             self.read_ssd(lba)
+
         elif (cmd == 'E'):
             size = int(sys_argv[3])
             self.erase_ssd(lba, size)

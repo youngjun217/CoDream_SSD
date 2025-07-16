@@ -120,6 +120,18 @@ class EraseRangeCommand(Command):
         erase_cmd.execute()
 
 
+class FullWriteCommand(Command):
+    def __init__(self, shell, value):
+        super().__init__(shell)
+        self.value = value
+    def execute(self):
+        for x in range(100):
+            self.shell._send_command('W', x, self.value)
+        print("[Full Write] Done")
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
+
+
+
 class Shell():
     def __init__(self):
         self.ssd = SSD()
@@ -158,11 +170,7 @@ class Shell():
               )
         self.logger.print(f"{self.help.__qualname__}()", "DONE")
 
-    def fullwrite(self, value):
-        for x in range(100):
-            self._send_command('W', x, value)
-        print("[Full Write] Done")
-        self.logger.print(f"{self.fullwrite.__qualname__}()", "DONE")
+
 
     def fullread(self):
         print("[Full Read]")
@@ -246,7 +254,7 @@ class Shell():
             # ("read", 2): lambda: self.read(int(args[1])),
             ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
             ("write", 3): lambda: WriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
-            ("fullwrite", 2): lambda: self.fullwrite(int(args[1], 16)),
+            ("fullwrite", 2): lambda: FullWriteCommand(self,int(args[1], 16)).execute(),
             ("fullread", 1): lambda: self.fullread(),
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),

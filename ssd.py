@@ -1,7 +1,5 @@
-import pdb
 import sys
 from abc import ABC, abstractmethod
-from multiprocessing.spawn import get_command_line
 
 
 class SSD():
@@ -79,14 +77,15 @@ class ReadCommand(SSDCommand):
             return False
 
         self.args_parser(args)
-        if type(self._lba) is not int:
-            return False
         if not 0 <= self._lba < 100:
             return False
         return True
 
     def args_parser(self, args: list):
-        self._lba = int(args[0])
+        try:
+            self._lba = int(args[0])
+        except ValueError:
+            self._raise_error()
 
     def execute(self):
         lines = self._nand_txt.read()
@@ -106,10 +105,6 @@ class WriteCommand(SSDCommand):
             return False
 
         self.args_parser(args)
-        if type(self._lba) is not int:
-            return False
-        if type(self._value) is not int:
-            return False
         if not 0 <= self._lba < 100:
             return False
         if not 0 <= self._value <= 0xFFFFFFFF:
@@ -117,8 +112,11 @@ class WriteCommand(SSDCommand):
         return True
 
     def args_parser(self, args: list):
-        self._lba = int(args[0])
-        self._value = int(args[1], 16)
+        try:
+            self._lba = int(args[0])
+            self._value = int(args[1], 16)
+        except ValueError:
+            self._raise_error()
 
     def execute(self):
         # ssd_nand.txt 파일 읽기
@@ -145,10 +143,6 @@ class EraseCommand(SSDCommand):
             return False
 
         self.args_parser(args)
-        if type(self._lba) is not int:
-            return False
-        if type(self._size) is not int:
-            return False
         if not 0 <= self._lba < 100:
             return False
         if not 1 <= self._size <= 10:
@@ -156,8 +150,11 @@ class EraseCommand(SSDCommand):
         return True
 
     def args_parser(self, args: list):
-        self._lba = int(args[0])
-        self._size = int(args[1])
+        try:
+            self._lba = int(args[0])
+            self._size = int(args[1])
+        except ValueError:
+            self._raise_error()
 
     def execute(self):
         end_index = self._lba + self._size

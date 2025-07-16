@@ -196,3 +196,34 @@ def test_ssd_run_wrong_command(ssd, input):
         ssd.run(input)
 
 
+def test_erase_success(ssd):
+    ssd_nand = SSDNand()
+    for i in range(100):
+        ssd.write_ssd(lba=i, value=TEST_WRITE_VALUE)
+
+    ssd.erase_ssd(0, 10)
+    for i in range(0, 10):
+        assert ssd_nand.readline(i) == f"{i:02d} 0x00000000\n"
+
+    ssd.erase_ssd(11, 5)
+    for i in range(11, 16):
+        assert ssd_nand.readline(i) == f"{i:02d} 0x00000000\n"
+
+def test_erase_size_error(ssd):
+    with pytest.raises(ValueError, match="ERROR"):
+        ssd.erase_ssd(0, 11)
+
+    with pytest.raises(ValueError, match="ERROR"):
+        ssd.erase_ssd(0, 0)
+
+def test_erase_wrong_index_error(ssd):
+    with pytest.raiese(ValueError, match="ERROR"):
+        ssd.erase_ssd(0, 100)
+
+    with pytest.raiese(ValueError, match="ERROR"):
+        ssd.erase_ssd(-1, 10)
+
+
+def test_erase_exceed_index_error(ssd):
+    with pytest.raiese(ValueError, match="ERROR"):
+        ssd.erase_ssd(95, 10)

@@ -130,6 +130,27 @@ class FullWriteCommand(Command):
         print("[Full Write] Done")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
+class FullReadCommand(Command):
+    def __init__(self, shell):
+        super().__init__(shell)
+    def execute(self):
+        print("[Full Read]")
+        for idx in range(100):
+            try:
+                self.shell._send_command('R', idx)
+                output = self.shell.ssd_output.read()
+
+                if output == "ERROR" or len(output.split()) < 2:
+                    print(output)
+                    continue
+
+                print(f"LBA {output.split()[0]} : {output.split()[1]}")
+
+            except Exception as e:
+                self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
+                raise e
+
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 
 class Shell():
@@ -172,25 +193,6 @@ class Shell():
 
 
 
-    def fullread(self):
-        print("[Full Read]")
-
-        for idx in range(100):
-            try:
-                self._send_command('R', idx)
-                output = self.ssd_output.read()
-
-                if output == "ERROR" or len(output.split()) < 2:
-                    print(output)
-                    continue
-
-                print(f"LBA {output.split()[0]} : {output.split()[1]}")
-
-            except Exception as e:
-                self.logger.print(f"{self.fullread.__qualname__}()", "FAIL")
-                raise e
-
-        self.logger.print(f"{self.fullread.__qualname__}()", "DONE")
 
     def FullWriteAndReadCompare(self):
         for start_idx in range(0, 100, 5):
@@ -255,7 +257,7 @@ class Shell():
             ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
             ("write", 3): lambda: WriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
             ("fullwrite", 2): lambda: FullWriteCommand(self,int(args[1], 16)).execute(),
-            ("fullread", 1): lambda: self.fullread(),
+            ("fullread", 1): lambda: FullReadCommand(self).execute(),
             ('1_', 1): lambda: self.FullWriteAndReadCompare(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),

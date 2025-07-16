@@ -141,27 +141,6 @@ def test_nand_write():
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
         assert file.readlines() == ssd_nand_txt
 
-@pytest.mark.skip()
-def test_ssd_read_output(ssd, mocker: MockerFixture):
-    mk = mocker.Mock(spec=SSDOutput)
-    ssd._output_txt = mk
-    ssd.run([None, 'R', 3])
-    assert ssd._output_txt.write.call_count == 1
-
-    lines = ssd._nand_txt.read()
-    target_line = lines[3]
-    ssd._output_txt.write.assert_called_with(target_line)
-
-
-@pytest.mark.skip()
-def test_ssd_write_output(ssd, mocker: MockerFixture):
-    mk = mocker.Mock(spec=SSDOutput)
-    ssd._output_txt = mk
-
-    ssd.run([None, 'W', 3, "0x12341234"])
-    assert ssd._output_txt.write.call_count == 1
-    ssd._output_txt.write.assert_called_with("")
-
 
 @pytest.mark.parametrize("output", [["ERROR"], ["10 0x00000000"], ["20 0x00000000"]])
 def test_singleton_ssd_nand(output):
@@ -187,34 +166,6 @@ def test_singleton_ssd():
     ssd = SSD()
     assert ssd_output.read() == ssd.output_txt.read()
     assert ssd_nand.read() == ssd.nand_txt.read()
-
-
-@pytest.mark.skip()
-@pytest.mark.parametrize("input", [[None, 'R', 0], [None, 'R', 10], [None, 'R', 99]])
-def test_ssd_run_read(ssd, mocker: MockerFixture, input):
-    mock_read = mocker.patch('ssd.SSD._command')
-    ssd.run(input)
-    ssd._command.assert_called_once()
-    ssd._command.assert_has_calls([call(input[2])])
-
-
-@pytest.mark.skip()
-@pytest.mark.parametrize("input",
-                         [[None, 'W', 0, '0x00000000'], [None, 'W', 10, '0x12345678'], [None, 'W', 99, '0xABCDEF90']])
-def test_ssd_run_write(ssd, mocker: MockerFixture, input):
-    mock_write = mocker.patch('ssd.SSD._write_ssd')
-    ssd.run(input)
-    ssd._write_ssd.assert_called_once()
-    ssd._write_ssd.assert_has_calls([call(input[2], int(input[3], 16))])
-
-
-@pytest.mark.skip()
-@pytest.mark.parametrize("input", [[None, 'E', 1, 2], [None, 'E', 5, 5], [None, 'E', 10, 10]])
-def test_ssd_run_erase(ssd, mocker: MockerFixture, input):
-    mock_erase = mocker.patch('ssd.SSD._erase_ssd')
-    ssd.run(input)
-    ssd._erase_ssd.assert_called_once()
-    ssd._erase_ssd.assert_has_calls([call(input[2], input[3])])
 
 
 @pytest.mark.parametrize("input",
@@ -254,3 +205,15 @@ def test_erase_wrong_index_error(ssd):
 
     with pytest.raises(ValueError, match="ERROR"):
         ssd.run([None, 'E', -1, 10])
+
+
+@pytest.mark.parametrize("lba, size", [("abc", 2), (1, "ab")])
+def test_erase_wrong_index_error_not_digit(ssd, lba, size):
+    with pytest.raises(ValueError, match=ERROR_MESSAGE):
+        ssd.run([None, 'E', lba, size])
+
+
+@pytest.mark.parametrize("cmd", ['A', '1', '@'])
+def test_wrong_command_error(ssd, cmd):
+    with pytest.raises(ValueError, match="ERROR"):
+        ssd.run([None, cmd, 0, 100])

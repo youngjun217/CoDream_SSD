@@ -47,25 +47,23 @@ class SSDCommand(ABC):
         raise ValueError("ERROR")
 
     @abstractmethod
-    def check_input_validity(self, args: list):
-        pass
+    def check_input_validity(self, args: list): pass
 
     @abstractmethod
-    def args_parser(self, args: list):
-        pass
+    def args_parser(self, args: list): pass
 
     @abstractmethod
-    def execute(self):
-        pass
+    def execute(self): pass
 
 class ErrorCommand(SSDCommand):
     def __init__(self):
         super().__init__()
 
-    def check_input_validity(self, args: list): pass
+    def check_input_validity(self, args: list):
+        return False
+
     def args_parser(self, args: list): pass
-    def execute(self):
-        self._raise_error()
+    def execute(self): pass
 
 class ReadCommand(SSDCommand):
     def __init__(self):
@@ -180,12 +178,10 @@ class SSDText(ABC):
             self.initialized = True
 
     @abstractmethod
-    def read(self):
-        pass
+    def read(self): pass
 
     @abstractmethod
-    def write(self, output):
-        pass
+    def write(self, output): pass
 
 
 class SSDNand(SSDText):

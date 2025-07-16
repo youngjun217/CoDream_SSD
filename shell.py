@@ -22,6 +22,7 @@ class shell_ftn():
         self.ssd = SSD()
         self.ssd_output = SSDOutput()
         self.ssd_nand = SSDNand()
+        self.logger = Logger()
 
     def read(self, idx: int) -> None:
         self.ssd.read_ssd(idx)
@@ -31,7 +32,7 @@ class shell_ftn():
         self.logger.print(f"{self.read.__qualname__}()", f"LBA {idx}: {value}")
 
 
-    def write(self, num: int, value: str) -> None:
+    def write(self, num: int, value: str) -> bool:
         self.ssd.write_ssd(num, value)
         if self.ssd_output.read() == '':
             print('[Write] Done')
@@ -42,6 +43,7 @@ class shell_ftn():
 
     def erase(self, lba: int, size: int):
         if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 99):
+            self.logger.print(f"{self.read.__qualname__}()", "FAIL")
             raise Exception()
 
         offset = 0
@@ -50,6 +52,7 @@ class shell_ftn():
             SSD.erase_ssd(lba + offset, erase_size)
             offset += 10
             size -= erase_size
+        self.logger.print(f"{self.read.__qualname__}()", "DONE")
 
     # help : 프로그램 사용법
     def help(self):

@@ -5,25 +5,6 @@ from unittest.mock import call
 import ssd
 from shell import shell_ftn
 
-import os
-import time
-import glob
-
-
-class Logger:
-    LOG_FILE = 'latest.log'
-    MAX_SIZE = 10 * 1024  # 10KB
-
-    def rotate_log_if_needed(self):
-        if os.path.exists(self.LOG_FILE) and os.path.getsize(self.LOG_FILE) > self.MAX_SIZE:
-            for existing in glob.glob("until_*.log"):
-                os.rename(existing, existing.replace(".log", ".zip"))
-
-            timestamp = time.strftime("until_%y%m%d_%Hh_%Mm_%Ss")
-            new_name = f"{timestamp}.log"
-            os.rename(self.LOG_FILE, new_name)
-
-
 
 
 @pytest.fixture

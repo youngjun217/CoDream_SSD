@@ -2,18 +2,31 @@ import sys
 from ssd import SSD, SSDOutput, SSDNand
 import random
 import datetime
-
+import os
+import time
+import glob
 
 class Logger:
-    def __init__(self):
-        pass
+    _instance = None
+    LOG_FILE = 'latest.log'
+    MAX_SIZE = 10 * 1024  # 10KB
+
 
     def print(self, header, message):
+        self.rotate_log_if_needed()
         with open("latest.log", 'a', encoding='utf-8') as file:
             now = datetime.datetime.now()
-            log = f"[{now.strftime('%y.%m.%d %H:%M')}] {header}\t: {message}"
-            log.expandtabs(tabsize=48)
-            file.writelines(log)
+            log = f"[{now.strftime('%y.%m.%d %H:%M')}] {header}\t: {message}\n"
+            log = log.expandtabs(tabsize=48)
+            file.write(log)
+    def rotate_log_if_needed(self):
+        if os.path.exists(self.LOG_FILE) and os.path.getsize(self.LOG_FILE) > self.MAX_SIZE:
+            for existing in glob.glob("until_*.log"):
+                os.rename(existing, existing.replace(".log", ".zip"))
+
+            timestamp = time.strftime("until_%y%m%d_%Hh_%Mm_%Ss")
+            new_name = f"{timestamp}.log"
+            os.rename(self.LOG_FILE, new_name)
 
 
 class shell_ftn():

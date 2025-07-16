@@ -234,21 +234,26 @@ class Test_logger():
     @pytest.fixture
     def setup_logger(self, mocker):
          # 싱글톤 초기화
-        Logger._instance = None
-        self._logger = Logger()
+        # self._logger = Logger()
         self.mock_open = mocker.patch("builtins.open", mocker.mock_open())
 
+    @pytest.fixture
+    def logger(self):
+        Logger._instance = None  # 싱글톤 초기화
+        return Logger()
 
-    def test_init_removes_log_file_if_exists(self,setup_logger,mocker):
+    def test_init_removes_log_file_if_exists(self,mocker):
         mock_exists = mocker.patch("os.path.exists", return_value=True)
         mock_remove = mocker.patch("os.remove")
+        Logger._instance = None
+        logger = Logger()
         #Assert
-        mock_exists.assert_called_once_with(self._logger.LOG_FILE)
-        mock_remove.assert_called_once_with(self._logger.LOG_FILE)
+        mock_exists.assert_called_once_with(Logger.LOG_FILE)
+        mock_remove.assert_called_once_with(Logger.LOG_FILE)
 
     def test_print_calls_rotate_and_writes(self,setup_logger, mocker, logger):
         mock_rotate = mocker.patch.object(logger, "rotate_log_if_needed")
-        self._logger.print("HEADER", "message")
+        logger.print("HEADER", "message")
         mock_rotate.assert_called_once()
         self.mock_open.assert_called_once_with("latest.log", 'a', encoding='utf-8')
         written_text = self.mock_open.write.call_args[0][0]
@@ -258,7 +263,7 @@ class Test_logger():
         assert "message" in written_text
         assert written_text.endswith("\n")
 
-    def test_rotate_log_if_needed_renames(mocker, logger):
+    def test_rotate_log_if_needed_renames(self, mocker, logger):
         mocker.patch("os.path.exists", return_value=True)
         mocker.patch("os.path.getsize", return_value=Logger.MAX_SIZE + 1)
         mocker.patch("glob.glob", return_value=["until_250708_17h_12m_52s.log"])

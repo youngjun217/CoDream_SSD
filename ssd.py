@@ -36,25 +36,19 @@ class SSD():
         elif cmd == 'W':
             combine_idx = -1
             for idx, buffer_cmd in enumerate(buffer_lst):
+                if 'empty' in buffer_cmd:
+                    break
                 cmd_lst = buffer_cmd.split('_')
                 if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
                     combine_idx = idx
                 if cmd_lst[1] == 'E' and int(cmd_lst[2]) == lba and int(cmd_lst[3]) == 1:
                     combine_idx = idx
-                if cmd_lst[1] == 'R' and int(cmd_lst[2]) == lba and combine_idx >= 0:
-                    combine_idx = -1
-                if 'empty' in buffer_cmd:
-                    break
 
             if combine_idx >= 0:
                 value = int(sys_argv[3], 16)
                 old_name = f"./buffer/{buffer_lst[combine_idx]}"
                 new_name = f"./buffer/{combine_idx}_{cmd}_{lba}_{value}"
                 os.rename(old_name, new_name)
-
-            elif cmd_lst[1]=='E':
-                pass
-
 
         elif (cmd == 'E'):
             size = int(sys_argv[3])

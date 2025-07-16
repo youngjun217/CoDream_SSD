@@ -10,7 +10,18 @@ class Logger:
     _instance = None
     LOG_FILE = 'latest.log'
     MAX_SIZE = 10 * 1024  # 10KB
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 
+    def __init__(self):
+        if self._initialized:
+            return
+        self._initialized = True
+        if os.path.exists(self.LOG_FILE):
+            os.remove(self.LOG_FILE)
 
     def print(self, header, message):
         self.rotate_log_if_needed()

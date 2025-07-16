@@ -13,7 +13,6 @@ class Logger:
             now = datetime.datetime.now()
             log = f"[{now.strftime('%y.%m.%d %H:%M')}] {header}\t: {message}"
             log.expandtabs(tabsize=48)
-            print(log)  #테스트용
             file.writelines(log)
 
 

@@ -24,7 +24,7 @@ class shell_ftn():
 
     def erase(self, lba: int, size: int):
         if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 99):
-            raise Exception()
+            raise ValueError("Invalid LBA range or SIZE")
 
         offset = 0
         while size > 0:

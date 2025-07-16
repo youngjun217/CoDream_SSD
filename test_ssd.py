@@ -190,10 +190,10 @@ def test_singleton_ssd():
 
 @pytest.mark.parametrize("input", [[None, 'R', 0], [None, 'R', 10], [None, 'R', 99]])
 def test_ssd_run_read(ssd, mocker: MockerFixture, input):
-    mock_read = mocker.patch('ssd.SSD._read_ssd')
+    mock_read = mocker.patch('ssd.SSD._command')
     ssd.run(input)
-    ssd._read_ssd.assert_called_once()
-    ssd._read_ssd.assert_has_calls([call(input[2])])
+    ssd._command.assert_called_once()
+    ssd._command.assert_has_calls([call(input[2])])
 
 
 @pytest.mark.parametrize("input",

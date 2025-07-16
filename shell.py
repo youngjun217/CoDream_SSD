@@ -79,7 +79,7 @@ class Shell():
         return False
 
     def erase(self, lba: int, size: int):
-        if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 99):
+        if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 100):
             self.logger.print(f"{self.read.__qualname__}()", "FAIL")
             raise Exception()
 
@@ -97,6 +97,7 @@ class Shell():
 
         size = en_lba - st_lba + 1  # inclusive range
         self.erase(st_lba, size)
+
 
     # help : 프로그램 사용법
     def help(self):
@@ -187,8 +188,8 @@ class Shell():
 
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
-        self.write(idx, value1)
-        self.write(idx, value2)
+        self._send_command('W', idx, value1)
+        self._send_command('W', idx, value2)
         self.erase_range(idx, min(idx+2,99))
 
     def EraseAndWriteAging(self):

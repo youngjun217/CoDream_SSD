@@ -50,6 +50,3 @@ class Buffer:
     def flush(self):
         for idx, file in enumerate(self.buf_lst):
             os.rename(f"{self.folder_path}/{file}", f"{self.folder_path}/{idx+1}_empty")
-
-bf = Buffer()
-print(bf.buf_lst)

@@ -33,6 +33,13 @@ class shell_ftn():
             offset += 10
             size -= erase_size
 
+    def erase_range(self, st_lba: int, en_lba: int):
+        if st_lba > en_lba or st_lba < 0 or en_lba > 99:
+            raise ValueError("Invalid LBA range")
+
+        size = en_lba - st_lba + 1  # inclusive range
+        self.erase(st_lba, size)
+
     # help : 프로그램 사용법
     def help(self):
         print('[Help]\n',
@@ -123,7 +130,8 @@ class shell_ftn():
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
             ('help', 1): lambda: self.help(),
-            ('erase', 2): lambda: self.erase(int(args[1]), int(args[2]))
+            ('erase', 2): lambda: self.erase(int(args[1]), int(args[2])),
+            ('erase_range', 2): lambda: self.erase(int(args[1]), int(args[2]))
         }
         return command_dict
 

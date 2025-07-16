@@ -14,10 +14,10 @@ def shell():
     return Shell()
 
 
-@pytest.mark.parametrize("index", ['1 10', '2 20'])
-def test_read(shell, mocker: MockerFixture, index):
+@pytest.mark.parametrize("index, output", [(1, '1 10'), (2, '2 20')])
+def test_read(shell, mocker: MockerFixture, index, output):
     mock_read_ssd = mocker.patch.object(shell.ssd, 'read_ssd')
-    mock_read_output = mocker.patch.object(shell.ssd_output, 'read', return_value=index)
+    mock_read_output = mocker.patch.object(shell.ssd_output, 'read', return_value=output)
     mock_print = mocker.patch('builtins.print')
 
     shell.read(index)

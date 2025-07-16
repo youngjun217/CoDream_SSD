@@ -34,12 +34,12 @@ class SSD():
                 cmd_lst = buffer_cmd.split('_')
 
                 if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
-                    self._output_txt.write(cmd_lst[3])
+                    self._output_txt.write(f"{lba:02d} {cmd_lst[3]}")
                 if cmd_lst[1] == 'E':
                     start_lba = int(cmd_lst[2])
                     size = int(cmd_lst[3])
                     if start_lba <= lba < start_lba + size:
-                        self._output_txt.write(0x00000000)
+                        self._output_txt.write(f"{lba:02d} 0x00000000\n")
 
             self.read_ssd(lba)
 

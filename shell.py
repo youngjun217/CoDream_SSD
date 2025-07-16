@@ -9,8 +9,16 @@ class shell_ftn():
         self.ssd_output = SSDOutput()
         self.ssd_nand = SSDNand()
 
+    def _send_command(self, command, lba, value = None):
+        if (command == 'W'):
+            return self.ssd.run([None, 'W', lba, hex(value).upper()])
+        if (command == 'R'):
+            return self.ssd.run([None, 'R', lba])
+        if (command == 'E'):
+            return self.ssd.run([None, 'E', lba, value])
+
     def read(self, idx: int) -> None:
-        self.ssd.read_ssd(idx)
+        self._send_command('R', idx)
         result = self.ssd_output.read()
         value = result.split()[1]
         print(f'[Read] LBA {idx}: {value}')
@@ -62,7 +70,7 @@ class shell_ftn():
 
         for idx in range(100):
             try:
-                self.ssd.read_ssd(idx)
+                self._send_command('R', idx)
                 output = self.ssd_output.read()
 
                 if output == "ERROR" or len(output.split()) < 2:

@@ -38,9 +38,9 @@ class Buffer:
         if empty_idx != -1:
             os.rename(old_name, new_name)
 
-    def execute(self, files):
+    def execute(self):
         ssd = SSD()
-        for file_name in files:
+        for file_name in self.buf_lst:
             _, command, lba, value = file_name.split("_")
             if command == "W":
                 ssd.write_ssd(lba, value)

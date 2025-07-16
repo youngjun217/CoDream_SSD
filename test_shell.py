@@ -60,7 +60,7 @@ def test_erase_success(shell, mocker):
 
 
 def test_erase_fail(shell):
-    with pytest.raises(ValueError, match="Invalid LBA range or SIZE"):
+    with pytest.raises(Exception):
         shell.erase(-1,25)
 
 

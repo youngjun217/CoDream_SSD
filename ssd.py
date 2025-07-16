@@ -1,5 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
+from buffer import Buffer
 
 
 class SSD():
@@ -7,6 +8,7 @@ class SSD():
         self._nand_txt = SSDNand()
         self._output_txt = SSDOutput()
         self._command: SSDCommand = ErrorCommand()
+        self.buffer = Buffer()
 
     @property
     def nand_txt(self):
@@ -16,8 +18,40 @@ class SSD():
     def output_txt(self):
         return self._output_txt
 
+    def _check_buffer(self, cmd, lba, sys_argv):
+        if (cmd == 'R'):
+            buffer_lst = self.buffer.buf_lst
+
+            for buffer_cmd in buffer_lst:
+                cmd_lst = buffer_cmd.split('_')
+                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
+                    self._output_txt.write(f"{lba:02d} {cmd_lst[3]}\n")
+                    return True
+                if cmd_lst[1] == 'E':
+                    start_lba = int(cmd_lst[2])
+                    size = int(cmd_lst[3])
+                    if start_lba <= lba < start_lba + size:
+                        self._output_txt.write(f"{lba:02d} 0x00000000\n")
+                        return True
+            return False
+
+        elif (cmd == 'W'):
+            value = int(sys_argv[3], 16)
+            self.write_ssd(lba, value)
+            # 기능 추가 필요
+
+        elif (cmd == 'E'):
+            size = int(sys_argv[3])
+            self.erase_ssd(lba, size)
+            # 기능 추가 필요
+
+
     def run(self, sys_argv):
         cmd = sys_argv[1]
+        lba = int(sys_argv[2])
+        if self._check_buffer(cmd, lba, sys_argv):
+            return
+
         self._command = self.get_command(cmd)
         self._command.run_command(sys_argv[2:])
 

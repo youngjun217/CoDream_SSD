@@ -162,12 +162,12 @@ class FullWriteAndReadCompareCommand(Command):
                 rand_num = random.randint(0, 0xFFFFFFFF)
                 hex_str = f"0x{rand_num:08X}"
                 self.shell._send_command('W', start_idx + x, rand_num)
-                if self.shell.readline(start_idx + x).split()[1] != hex_str:
+                if self.shell.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
-                    self.shell.print(f"{self.execute.__qualname__}()", "FAIL")
+                    self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
         print('PASS')
-        self.shell.print(f"{self.execute.__qualname__}()", "PASS")
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
 
@@ -262,7 +262,7 @@ class Shell():
             ("write", 3): lambda: WriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
             ("fullwrite", 2): lambda: FullWriteCommand(self,int(args[1], 16)).execute(),
             ("fullread", 1): lambda: FullReadCommand(self).execute(),
-            ('1_', 1): lambda: FullWriteAndReadCompareCommand(self),
+            ('1_', 1): lambda: FullWriteAndReadCompareCommand(self).execute(),
             ('2_', 1): lambda: self.PartialLBAWrite(),
             ('3_', 1): lambda: self.WriteReadAging(),
             ('4_', 1): lambda: self.EraseAndWriteAging(),

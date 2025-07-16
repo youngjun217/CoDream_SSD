@@ -1,7 +1,7 @@
 import sys
 from abc import ABC, abstractmethod
 from buffer import Buffer
-
+import os
 
 class SSD():
     def __init__(self):
@@ -18,9 +18,8 @@ class SSD():
         return self._output_txt
 
     def _check_buffer(self, cmd, lba, sys_argv):
+        buffer_lst = self.buffer.buf_lst
         if (cmd == 'R'):
-            buffer_lst = self.buffer.buf_lst
-
             for buffer_cmd in buffer_lst:
                 cmd_lst = buffer_cmd.split('_')
                 if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
@@ -34,10 +33,28 @@ class SSD():
                         return True
             return False
 
-        elif (cmd == 'W'):
-            value = int(sys_argv[3], 16)
-            self.write_ssd(lba, value)
-            # 기능 추가 필요
+        elif cmd == 'W':
+            combine_idx = -1
+            for idx, buffer_cmd in enumerate(buffer_lst):
+                cmd_lst = buffer_cmd.split('_')
+                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
+                    combine_idx = idx
+                if cmd_lst[1] == 'E' and int(cmd_lst[2]) == lba and int(cmd_lst[3]) == 1:
+                    combine_idx = idx
+                if cmd_lst[1] == 'R' and int(cmd_lst[2]) == lba and combine_idx >= 0:
+                    combine_idx = -1
+                if 'empty' in buffer_cmd:
+                    break
+
+            if combine_idx >= 0:
+                value = int(sys_argv[3], 16)  # sys_argv는 인자로 받아야 함
+                old_name = f"./buffer/{buffer_lst[combine_idx]}"
+                new_name = f"./buffer/{combine_idx}_{cmd}_{lba}_{value}"
+                os.rename(old_name, new_name)
+
+            elif cmd_lst[1]=='E':
+                pass
+
 
         elif (cmd == 'E'):
             size = int(sys_argv[3])

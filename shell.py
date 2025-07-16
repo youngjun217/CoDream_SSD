@@ -169,6 +169,23 @@ class FullWriteAndReadCompareCommand(Command):
         print('PASS')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
+class PartialLBAWriteCommand(Command):
+    def __init__(self, shell):
+        super().__init__(shell)
+    def execute(self):
+        partialLBA_index_list = [4, 0, 3, 1, 2]
+        for _ in range(30):
+            random_write_value = random.randint(0, 0xFFFFFFFF)
+            for x in range(5):
+                self.shell._send_command('W', partialLBA_index_list[x], random_write_value)
+            check_ref = self.shell.ssd_nand.readline(0).split()[1]
+            for x in range(1, 5):
+                if check_ref != self.shell.ssd_nand.readline(x).split()[1]:
+                    print('FAIL')
+                    self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
+                    return
+        print("PASS")
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
 
@@ -211,20 +228,6 @@ class Shell():
         self.logger.print(f"{self.help.__qualname__}()", "DONE")
 
 
-    def PartialLBAWrite(self):
-        partialLBA_index_list = [4, 0, 3, 1, 2]
-        for _ in range(30):
-            random_write_value = random.randint(0, 0xFFFFFFFF)
-            for x in range(5):
-                self._send_command('W', partialLBA_index_list[x], random_write_value)
-            check_ref = self.ssd_nand.readline(0).split()[1]
-            for x in range(1, 5):
-                if check_ref != self.ssd_nand.readline(x).split()[1]:
-                    print('FAIL')
-                    self.logger.print(f"{self.PartialLBAWrite.__qualname__}()", "FAIL")
-                    return
-        print("PASS")
-        self.logger.print(f"{self.PartialLBAWrite.__qualname__}()", "PASS")
 
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
@@ -263,7 +266,7 @@ class Shell():
             ("fullwrite", 2): lambda: FullWriteCommand(self,int(args[1], 16)).execute(),
             ("fullread", 1): lambda: FullReadCommand(self).execute(),
             ('1_', 1): lambda: FullWriteAndReadCompareCommand(self).execute(),
-            ('2_', 1): lambda: self.PartialLBAWrite(),
+            ('2_', 1): lambda: PartialLBAWriteCommand(self).execute(),
             ('3_', 1): lambda: self.WriteReadAging(),
             ('4_', 1): lambda: self.EraseAndWriteAging(),
             ('help', 1): lambda: self.help(),

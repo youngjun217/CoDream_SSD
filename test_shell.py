@@ -6,8 +6,7 @@ from pytest_mock import MockerFixture
 from unittest.mock import call
 
 import ssd
-from shell import Shell
-
+from shell import Shell, Logger
 
 
 @pytest.fixture
@@ -240,4 +239,19 @@ def test_option_main_fail(shell,mocker, tmp_path):
     shell.option_main("non_existing_file.txt")
 
     mock_print.assert_called_with('ERROR')
+
+
+@pytest.fixture
+def logger():
+    Logger._instance = None  # 싱글톤 초기화
+    return Logger()
+
+def test_init_removes_log_file_if_exists(mocker):
+    mock_exists = mocker.patch("os.path.exists", return_value=True)
+    mock_remove = mocker.patch("os.remove")
+    Logger._instance = None
+    logger = Logger()
+    mock_exists.assert_called_once_with(Logger.LOG_FILE)
+    mock_remove.assert_called_once_with(Logger.LOG_FILE)
+
 

@@ -1,4 +1,5 @@
 import contextlib
+import inspect
 import io
 import os
 import sys
@@ -73,9 +74,9 @@ class Shell():
         self._send_command('W', num, value)
         if self.ssd_output.read() == '':
             print('[Write] Done')
-            self.logger.print(f"{self.read.__qualname__}()", "DONE")
+            self.logger.print(f"{self.write.__qualname__}()", "DONE")
             return True
-        self.logger.print(f"{self.read.__qualname__}()", "FAIL")
+        self.logger.print(f"{self.write.__qualname__}()", "FAIL")
         return False
 
     def erase(self, lba: int, size: int):
@@ -89,7 +90,12 @@ class Shell():
             self._send_command('E', lba + offset, erase_size)
             offset += 10
             size -= erase_size
-        self.logger.print(f"{self.read.__qualname__}()", "DONE")
+        caller_frame = inspect.stack()[3]
+        caller_name = caller_frame.function
+        if caller_name=='EraseAndWriteAging':
+            pass
+        else:
+            self.logger.print(f"{self.erase.__qualname__}()", "DONE")
 
     def erase_range(self, st_lba: int, en_lba: int):
         if st_lba > en_lba or st_lba < 0 or en_lba > 99:
@@ -97,7 +103,6 @@ class Shell():
 
         size = en_lba - st_lba + 1  # inclusive range
         self.erase(st_lba, size)
-
 
     # help : 프로그램 사용법
     def help(self):
@@ -118,13 +123,13 @@ class Shell():
               '3_WriteReadAging : Write a random value at index 0.99 and check if the values are the same 200 times.\n',
               '4_EraseAndWriteAging :Performs 30 cycles of writing two random values to each even LBA (2–98), followed by erasing the next two LBA blocks to simulate aging behavior.\n',
               )
-        self.logger.print(f"{self.read.__qualname__}()", "DONE")
+        self.logger.print(f"{self.help.__qualname__}()", "DONE")
 
     def fullwrite(self, value):
         for x in range(100):
             self._send_command('W', x, value)
         print("[Full Write] Done")
-        self.logger.print(f"{self.read.__qualname__}()", "DONE")
+        self.logger.print(f"{self.fullwrite.__qualname__}()", "DONE")
 
     def fullread(self):
         print("[Full Read]")
@@ -141,10 +146,10 @@ class Shell():
                 print(f"LBA {output.split()[0]} : {output.split()[1]}")
 
             except Exception as e:
-                self.logger.print(f"{self.read.__qualname__}()", "FAIL")
+                self.logger.print(f"{self.fullread.__qualname__}()", "FAIL")
                 raise e
 
-        self.logger.print(f"{self.read.__qualname__}()", "DONE")
+        self.logger.print(f"{self.fullread.__qualname__}()", "DONE")
 
     def FullWriteAndReadCompare(self):
         for start_idx in range(0, 100, 5):
@@ -154,10 +159,10 @@ class Shell():
                 self._send_command('W', start_idx + x, rand_num)
                 if self.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
-                    self.logger.print(f"{self.read.__qualname__}()", "FAIL")
+                    self.logger.print(f"{self.FullWriteAndReadCompare.__qualname__}()", "FAIL")
                     return
         print('PASS')
-        self.logger.print(f"{self.read.__qualname__}()", "PASS")
+        self.logger.print(f"{self.FullWriteAndReadCompare.__qualname__}()", "PASS")
 
     def PartialLBAWrite(self):
         partialLBA_index_list = [4, 0, 3, 1, 2]
@@ -169,10 +174,10 @@ class Shell():
             for x in range(1, 5):
                 if check_ref != self.ssd_nand.readline(x).split()[1]:
                     print('FAIL')
-                    self.logger.print(f"{self.read.__qualname__}()", "FAIL")
+                    self.logger.print(f"{self.PartialLBAWrite.__qualname__}()", "FAIL")
                     return
         print("PASS")
-        self.logger.print(f"{self.read.__qualname__}()", "PASS")
+        self.logger.print(f"{self.PartialLBAWrite.__qualname__}()", "PASS")
 
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
@@ -181,10 +186,10 @@ class Shell():
             self._send_command('W', 99, value)
             if self.ssd_nand.readline(0).split()[1] != self.ssd_nand.readline(99).split()[1]:
                 print('FAIL')
-                self.logger.print(f"{self.read.__qualname__}()", "FAIL")
+                self.logger.print(f"{self.WriteReadAging.__qualname__}()", "FAIL")
                 return
         print('PASS')
-        self.logger.print(f"{self.read.__qualname__}()", "PASS")
+        self.logger.print(f"{self.WriteReadAging.__qualname__}()", "PASS")
 
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
@@ -193,10 +198,17 @@ class Shell():
         self.erase_range(idx, min(idx+2,99))
 
     def EraseAndWriteAging(self):
-        self.erase_range(0,2)
+        self._send_command('E', 0, 3)
         for i in range(30):
             for idx in range(2, 100, 2):
-                self._aging(idx)
+                try:
+                    self._aging(idx)
+                except Exception as e:
+                    print('FAIL')
+                    self.logger.print(f"{self.EraseAndWriteAging.__qualname__}()", "FAIL")
+                    raise e
+        print('PASS')
+        self.logger.print(f"{self.EraseAndWriteAging.__qualname__}()", "PASS")
 
 
     def main_function(self, args):
@@ -230,7 +242,7 @@ class Shell():
         option_dict = {
             ('1_'): 5,
             ('2_'): 13,
-            ('3_'): 15,
+            ('3_'): 14,
             ('4_'): 11
         }
         return option_dict

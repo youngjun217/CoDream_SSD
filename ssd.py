@@ -34,7 +34,7 @@ class SSD():
                 cmd_lst = buffer_cmd.split('_')
 
                 if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
-                    self._output_txt.write(f"{lba:02d} {cmd_lst[3]}")
+                    self._output_txt.write(f"{lba:02d} {cmd_lst[3]}\n")
                 if cmd_lst[1] == 'E':
                     start_lba = int(cmd_lst[2])
                     size = int(cmd_lst[3])

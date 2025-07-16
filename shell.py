@@ -11,7 +11,9 @@ class shell_ftn():
 
     def _send_command(self, command, lba, value = None):
         if (command == 'W'):
-            return self.ssd.run([None, 'W', lba, hex(value).upper()])
+            if type(value) is int:
+                value = hex(value).upper()
+            return self.ssd.run([None, 'W', lba, value])
         if (command == 'R'):
             return self.ssd.run([None, 'R', lba])
         if (command == 'E'):
@@ -23,8 +25,8 @@ class shell_ftn():
         value = result.split()[1]
         print(f'[Read] LBA {idx}: {value}')
 
-    def write(self, num: int, value: str) -> None:
-        self.ssd.write_ssd(num, value)
+    def write(self, num: int, value: int) -> None:
+        self._send_command('W', num, value)
         if self.ssd_output.read() == '':
             print('[Write] Done')
             return True
@@ -62,7 +64,7 @@ class shell_ftn():
 
     def fullwrite(self, value):
         for x in range(100):
-            self.ssd.write_ssd(x, value)
+            self._send_command('W', x, value)
         print("[Full Write] Done")
 
     def fullread(self):
@@ -87,7 +89,7 @@ class shell_ftn():
             for x in range(5):
                 rand_num = random.randint(0, 0xFFFFFFFF)
                 hex_str = f"0x{rand_num:08X}"
-                self.ssd.write_ssd(start_idx + x, rand_num)
+                self._send_command('W', start_idx + x, rand_num)
                 if self.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
                     print('FAIL')
                     return
@@ -98,7 +100,7 @@ class shell_ftn():
         for _ in range(30):
             random_write_value = random.randint(0, 0xFFFFFFFF)
             for x in range(5):
-                self.ssd.write_ssd(partialLBA_index_list[x], random_write_value)
+                self._send_command('W', partialLBA_index_list[x], random_write_value)
             check_ref = self.ssd_nand.readline(0).split()[1]
             for x in range(1, 5):
                 if check_ref != self.ssd_nand.readline(x).split()[1]:
@@ -109,8 +111,8 @@ class shell_ftn():
     def WriteReadAging(self):
         value = random.randint(0, 0xFFFFFFFF)
         for i in range(200):
-            self.ssd.write_ssd(0, value)
-            self.ssd.write_ssd(99, value)
+            self._send_command('W', 0, value)
+            self._send_command('W', 99, value)
             if self.ssd_nand.readline(0).split()[1] != self.ssd_nand.readline(99).split()[1]:
                 print('FAIL')
                 return

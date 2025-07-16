@@ -55,3 +55,4 @@ ssd_nand.txt
 ssd_output.txt
 *.txt
 *.ini
+buffer/

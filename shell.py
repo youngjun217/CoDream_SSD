@@ -79,7 +79,7 @@ class Shell():
         return False
 
     def erase(self, lba: int, size: int):
-        if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 99):
+        if (0 > lba or lba > 99) or (1 > size or size > 100) or (lba + size > 100):
             self.logger.print(f"{self.erase.__qualname__}()", "FAIL")
             raise Exception()
 

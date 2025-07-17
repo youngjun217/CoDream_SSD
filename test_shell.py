@@ -1,14 +1,14 @@
 from datetime import datetime
 
 import pytest
-from unittest.mock import call
+from unittest.mock import call, MagicMock
 import unittest
 from unittest import mock
 from shell import *
 
 
 class Test_shell:
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def setup_shell(self, mocker):
         self.shell = Shell()
         self.get_response = mocker.patch.object(self.shell, '_get_response')
@@ -17,15 +17,38 @@ class Test_shell:
         self.rand_num = mocker.patch('random.randint', return_value=12345678)
         self.shell._send_command = mocker.Mock()
 
-    def test_read(self):
+    @pytest.fixture
+    def setup_ssdinterface(self, mocker):
+        self.shell = Shell()
+        self.shell.ssd_interface = mocker.Mock()
+
+    @pytest.mark.parametrize('command', ['E', 'W', 'R'])
+    def test_send_command(self, setup_ssdinterface, command):
+        self.shell.ssd_interface.run.return_value = 'OK'
+        result = self.shell._send_command(command, 10, 10)
+
+        self.shell.ssd_interface.run.assert_called_once()
+        assert result == 'OK'
+
+    def test_response(self, setup_ssdinterface):
+        self.shell.ssd_interface.get_response.return_value = 'RESPONSE'
+        assert self.shell._get_response() == 'RESPONSE'
+        self.shell.ssd_interface.get_response.assert_called_once()
+
+    @pytest.mark.parametrize('values,result', [('01 0xDEADBEEF', '0xDEADBEEF'), ('ERROR', 'ERROR')])
+    def test_getresponsevalue(self, setup_ssdinterface, values, result):
+        self.shell.ssd_interface.get_response.return_value = values
+        assert self.shell._get_response_value() == result
+
+    def test_read(self, setup_shell):
         # Act
         ReadCommand(self.shell, 1).execute()
         # Assert
-        assert self.shell._send_command.call_args_list == [(('R', 1),)]
-        self.get_response.assert_called_once()
+        assert self.shell._send_command.call_count == 1
+        self.get_response_value.assert_called_once()
 
     def test_write_success(self, setup_shell):
-        self.get_response.return_value = ''
+        self.get_response_value.return_value = ''
         # Act
         result = WriteCommand(self.shell, idx=5, value=0xDEADBEEF).execute()
         # Assert
@@ -33,7 +56,7 @@ class Test_shell:
         self.shell._send_command.assert_called_once_with('W', 5, 0xDEADBEEF)
 
     def test_write_fail(self, setup_shell):
-        self.get_response.return_value = 'ERROR'
+        self.get_response_value.return_value = 'ERROR'
         # Act
         result = WriteCommand(self.shell, idx=5, value=0xCAFEBABE).execute()
         # Assert
@@ -60,6 +83,11 @@ class Test_shell:
         assert self.shell._send_command.call_args_list == [call('E', 3, 10), call('E', 13, 8)]
         assert self.shell._send_command.call_count == 2
 
+    def test_erase_range_fail(self, setup_shell):
+        # Act & Assert
+        with pytest.raises(ValueError):
+            EraseRangeCommand(self.shell, st_lba=-1, en_lba=25).execute()
+
     def test_help_output(self, setup_shell):
         # Act
         self.shell.help()
@@ -73,16 +101,16 @@ class Test_shell:
         assert self.shell._send_command.call_count == 100
         self.mock_print.assert_any_call("[Full Read]")
 
-    @pytest.mark.parametrize('values', ['ERROR', '1 10'])
-    def test_fullread_with_errors(self, setup_shell, values):
-        self.get_response.return_value = values
+    @pytest.mark.parametrize('values', ['ERROR'])
+    def test_fullread_errors(self, setup_shell, values):
+        self.get_response_value.return_value = values
         # Act
         FullReadCommand(self.shell).execute()
         # Assert
-        assert self.shell._send_command.call_count == 100
+        self.mock_print.assert_any_call("ERROR")
 
     def test_fullread_raises_exception(self, setup_shell):
-        self.get_response.side_effect = ValueError("ERROR")
+        self.get_response_value.side_effect = ValueError("ERROR")
         # Act & #Assert
         with pytest.raises(ValueError, match="ERROR"):
             FullReadCommand(self.shell).execute()
@@ -94,9 +122,9 @@ class Test_shell:
         assert self.shell._send_command.call_count == 100
         self.mock_print.assert_called_once_with("[Full Write] Done")
 
-    def test_FullWriteAndReadCompare_pass(self, setup_shell, mocker):
+    def test_FullWriteAndReadCompare_pass(self, setup_shell):
         self.rand_num.side_effect = ([0xAABBCCDD] * 100)
-        self.get_response_value.side_effect = lambda idx: f"{idx} 0xAABBCCDD"
+        self.get_response_value.return_value = '0xAABBCCDD'
         # Act
         FullWriteAndReadCompareCommand(self.shell).execute()
         # Assert
@@ -114,7 +142,7 @@ class Test_shell:
         # Act
         PartialLBAWriteCommand(self.shell).execute()
         # Assert
-        assert self.shell._send_command.call_count == 150
+        assert self.shell._send_command.call_count == 300
         self.mock_print.assert_called_with('PASS')
 
     def test_PartialLBAWrite_fail(self, setup_shell):

@@ -57,15 +57,15 @@ class Command(ABC):
 
 
 class ReadCommand(Command):
-    def __init__(self, shell, idx):
+    def __init__(self, shell, lba):
         super().__init__(shell)
-        self.idx = idx
+        self.lba = lba
 
     def execute(self) -> None:
-        self.shell._send_command('R', self.idx)
+        self.shell._send_command('R', self.lba)
         value = self.shell._get_response_value()
-        print(f'[Read] LBA {self.idx}: {value}')
-        self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
+        print(f'[Read] LBA {self.lba}: {value}')
+        self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.lba}: {value}")
 
 
 class WriteCommand(Command):
@@ -117,7 +117,7 @@ class EraseRangeCommand(Command):
 
     def execute(self) -> None:
         if self.st_lba > self.en_lba or self.st_lba < 0 or self.en_lba > 100:
-            raise ValueError("Invalid LBA range")
+            raise ValueError
 
         size = self.en_lba - self.st_lba + 1  # inclusive range
         erase_cmd = EraseCommand(self.shell, self.st_lba, size)

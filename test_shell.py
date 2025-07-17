@@ -11,11 +11,11 @@ class Test_shell:
     @pytest.fixture
     def setup_shell(self, mocker):
         self.shell = Shell()
-        self.get_response = mocker.patch.object(self.shell, '_get_response')
-        self.get_response_value = mocker.patch.object(self.shell, '_get_response_value')
+        self.get_response = mocker.patch.object(self.shell, 'get_response')
+        self.get_response_value = mocker.patch.object(self.shell, 'get_response_value')
         self.mock_print = mocker.patch('builtins.print')
         self.rand_num = mocker.patch('random.randint', return_value=12345678)
-        self.shell._send_command = mocker.Mock()
+        self.shell.send_command = mocker.Mock()
 
     @pytest.fixture
     def setup_ssdinterface(self, mocker):
@@ -50,7 +50,7 @@ class Test_shell:
     def test_write_success(self, setup_shell):
         self.get_response_value.return_value = ''
         # Act
-        result = ShellWriteCommand(self.shell, idx=5, value=0xDEADBEEF).execute()
+        result = ShellWriteCommand(self.shell, lba=5, value=0xDEADBEEF).execute()
         # Assert
         assert result is True
         self.shell.send_command.assert_called_once_with('W', 5, 0xDEADBEEF)
@@ -58,7 +58,7 @@ class Test_shell:
     def test_write_fail(self, setup_shell):
         self.get_response_value.return_value = 'ERROR'
         # Act
-        result = ShellWriteCommand(self.shell, idx=5, value=0xCAFEBABE).execute()
+        result = ShellWriteCommand(self.shell, lba=5, value=0xCAFEBABE).execute()
         # Assert
         self.mock_print.assert_not_called()
         assert result is False
@@ -86,7 +86,7 @@ class Test_shell:
     def test_erase_range_fail(self, setup_shell):
         # Act & Assert
         with pytest.raises(ValueError):
-            EraseRangeCommand(self.shell, st_lba=-1, en_lba=25).execute()
+            ShellEraseRangeCommand(self.shell, st_lba=-1, en_lba=25).execute()
 
     def test_help_output(self, setup_shell):
         # Act
@@ -168,14 +168,14 @@ class Test_shell:
         self.mock_print.assert_called_with('FAIL')
 
     def test_EraseAndWriteAging_pass(self, setup_shell, mocker):
-        mocker.patch.object(EraseRangeCommand, 'execute', return_value=None)
+        mocker.patch.object(ShellEraseRangeCommand, 'execute', return_value=None)
         # Act
         ShellEraseAndWriteAgingCommand(self.shell).execute()
         # Assert
         self.mock_print.assert_called_with('PASS')
 
     def test_EraseAndWriteAging_fail(self, setup_shell, mocker):
-        mocker.patch.object(EraseRangeCommand, 'execute', side_effect=RuntimeError())
+        mocker.patch.object(ShellEraseRangeCommand, 'execute', side_effect=RuntimeError())
         # Act & Assert
         with pytest.raises(Exception):
             ShellEraseAndWriteAgingCommand(self.shell).execute()
@@ -189,7 +189,7 @@ class Test_shell:
         # Act
         self.shell.main_function(['read', '10'])
         # Assert
-        self.shell._send_command.assert_called_once_with('R', 10)
+        self.shell.send_command.assert_called_once_with('R', 10)
 
     def test_main(self, setup_shell, mocker):
         mocker.patch('builtins.input', side_effect=['read 10', 'exit'])

@@ -48,8 +48,11 @@ class Buffer:
         if cmd == "W":
             self._output_txt.write("")
 
+        return self._run_command
+
     def set_buffer(self, sys_argv):
         self.buf_lst = []
+        self._run_command =[]
         cmd = sys_argv[1]
         lba = int(sys_argv[2])
 
@@ -94,10 +97,9 @@ class Buffer:
                         self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
                         prev_command = EMPTY
 
-        flashed = False
+        flushed = False
         while len(self.buf_lst) > 5:
-            #flash
-            flashed = True
+            flushed = True
             for i in range(5):
                 _, flushed_cmd, flushed_lba, flushed_value = self.buf_lst[i].split("_")
                 flushed_lba = int(flushed_lba)
@@ -107,6 +109,7 @@ class Buffer:
                     flushed_value = int(flushed_value)
                     for flush_erase_idx in range(flushed_lba, flushed_lba+flushed_value):
                         self.command_memory[int(flush_erase_idx)] = EMPTY
+                self._run_command.append([None, flushed_cmd, flushed_lba, flushed_value])
 
             self.buf_lst = self.buf_lst[5:]
 
@@ -117,7 +120,7 @@ class Buffer:
             self.buf_lst.append(f"{len(self.buf_lst)+1}_empty")
 
 
-        if flashed:
+        if flushed:
             for filename in os.listdir(self.folder_path):
                 file_path = os.path.join(self.folder_path, filename)
                 os.remove(file_path)

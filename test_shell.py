@@ -236,12 +236,19 @@ class Test_logger():
     #     self.mock_open = mocker.patch("builtins.open", mocker.mock_open())
 
     def test_logger_init_removes_log_file(self, mocker):
-        mock_exists = mocker.patch("os.path.exists", return_value=True)
-        mock_remove = mocker.patch("os.remove")
+        Logger._instance = None
+        Logger._initialized = False
+
+        mock_exists = mocker.patch("shell.os.path.exists", return_value=True)
+        mock_remove = mocker.patch("shell.os.remove")
+        mock_glob = mocker.patch("shell.glob.glob", side_effect=lambda pattern: ["file.log", "file.zip"])
+
         logger = Logger()
+
         assert logger._initialized is True
-        mock_exists.assert_called_once_with(Logger.LOG_FILE)
-        mock_remove.assert_called_once_with(Logger.LOG_FILE)
+        mock_glob.assert_called()
+        mock_remove.assert_any_call("file.log")
+        mock_remove.assert_any_call("file.zip")
 
     def test_print_calls_rotate_and_writes(self, mocker):
         logger = Logger()

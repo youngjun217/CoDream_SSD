@@ -64,7 +64,7 @@ class Command(ABC):
 class ShellReadCommand(Command):
     def __init__(self, shell, idx):
         super().__init__(shell)
-        self.idx = idx
+        self.lba = lba
 
     def execute(self) -> None:
         self.shell.send_command('R', self.idx)
@@ -113,6 +113,7 @@ class ShellEraseCommand(Command):
         else:
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
+            
 class ShellEraseRangeCommand(Command):
     def __init__(self, shell, st_lba: int, en_lba: int):
         super().__init__(shell)
@@ -121,7 +122,7 @@ class ShellEraseRangeCommand(Command):
 
     def execute(self) -> None:
         if self.st_lba > self.en_lba or self.st_lba < 0 or self.en_lba > 100:
-            raise ValueError("Invalid LBA range")
+            raise ValueError
 
         size = self.en_lba - self.st_lba + 1  # inclusive range
         erase_cmd = ShellEraseCommand(self.shell, self.st_lba, size)
@@ -132,15 +133,18 @@ class ShellFullWriteCommand(Command):
     def __init__(self, shell, value):
         super().__init__(shell)
         self.value = value
+
     def execute(self):
         for x in range(100):
             self.shell.send_command('W', x, self.value)
         print("[Full Write] Done")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
+
 class ShellFullReadCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
+
     def execute(self):
         print("[Full Read]")
         for lba in range(100):
@@ -160,6 +164,7 @@ class ShellFullReadCommand(Command):
 
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
+
 class ShellFullWriteAndReadCompareCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
@@ -178,9 +183,11 @@ class ShellFullWriteAndReadCompareCommand(Command):
         print('PASS')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
+
 class ShellPartialLBAWriteCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
+
     def execute(self):
         partialLBA_index_list = [4, 0, 3, 1, 2]
         for _ in range(30):
@@ -199,9 +206,11 @@ class ShellPartialLBAWriteCommand(Command):
         print("PASS")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
+
 class ShellEraseAndWriteAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
+
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
         self.shell.send_command('W', idx, value1)
@@ -225,6 +234,7 @@ class ShellEraseAndWriteAgingCommand(Command):
 class ShellWriteReadAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
+
     def execute(self):
         value = random.randint(0, 0xFFFFFFFF)
         for i in range(200):
@@ -298,8 +308,6 @@ class Shell():
               '4_EraseAndWriteAging :Performs 30 cycles of writing two random values to each even LBA (2–98), followed by erasing the next two LBA blocks to simulate aging behavior.\n',
               )
         self.logger.print(f"{self.help.__qualname__}()", "DONE")
-
-
 
     def main_function(self, args):
         if not (args[0], len(args)) in self.command_dictionary(args):

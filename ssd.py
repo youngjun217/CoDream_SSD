@@ -2,7 +2,7 @@ import sys
 import os
 
 from buffer import Buffer
-from ssd_commands import SSDCommand, SSDErrorCommand, SSDWriteCommand, SSDReadCommand, SSDEraseCommand
+from ssd_commands import SSDCommand, SSDErrorCommand, SSDWriteCommand, SSDReadCommand, SSDEraseCommand, SSDFlushCommand
 from ssd_texts import SSDNand, SSDOutput
 
 class SSD:
@@ -26,6 +26,8 @@ class SSD:
             return SSDReadCommand()
         elif (cmd == 'E'):
             return SSDEraseCommand()
+        elif (cmd == 'F'):
+            return SSDFlushCommand()
         else:
             return SSDErrorCommand()
 

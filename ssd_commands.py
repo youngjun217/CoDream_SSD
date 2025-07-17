@@ -143,3 +143,19 @@ class SSDEraseCommand(SSDCommand):
         for i in range(self._lba, end_index):
             ssd_nand_txt[i] = f"{i:02d} 0x00000000\n"
         self._nand_txt.write(ssd_nand_txt)
+
+
+class SSDFlushCommand(SSDCommand):
+    def __init__(self):
+        super().__init__()
+        self._lba = 0
+        self._size = 0
+
+    def _check_input_validity(self, args: list):
+        if args:
+            return False
+        return True
+
+    def args_parser(self, args: list): pass
+
+    def execute(self): pass

@@ -1,6 +1,5 @@
 import os
-
-# from ssd import SSD
+from ssd import SSD
 
 
 class Buffer:
@@ -41,12 +40,15 @@ class Buffer:
     def execute(self):
         ssd = SSD()
         for file_name in self.buf_lst:
-            _, command, lba, value = file_name.split("_")
+            idx, command, lba, value = file_name.split("_")
             if command == "W":
                 ssd.write_ssd(lba, value)
             if command == "E":
                 ssd.erase_ssd(lba, value)
 
+
     def flush(self):
+        self.execute()
         for idx, file in enumerate(self.buf_lst):
             os.rename(f"{self.folder_path}/{file}", f"{self.folder_path}/{idx+1}_empty")
+            self.buf_lst[idx] = f"{idx + 1}_empty"

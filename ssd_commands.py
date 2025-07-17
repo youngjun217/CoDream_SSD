@@ -9,29 +9,35 @@ class SSDCommand(ABC):
         self._output_txt = SSDOutput()
 
     def run_command(self, args: list):
-        if not self.check_input_validity(args):
-            self._raise_error()
+        self.args_parser(args)
         self.execute()
 
     def _raise_error(self):
         self._output_txt.write("ERROR")
         raise ValueError("ERROR")
 
-    @abstractmethod
-    def check_input_validity(self, args: list): pass
+    def check_input_validity(self, args: list):
+        if not self._check_input_validity(args):
+            self._raise_error()
 
     @abstractmethod
-    def args_parser(self, args: list): pass
+    def _check_input_validity(self, args: list):
+        pass
 
     @abstractmethod
-    def execute(self): pass
+    def args_parser(self, args: list):
+        pass
+
+    @abstractmethod
+    def execute(self):
+        pass
 
 
 class SSDErrorCommand(SSDCommand):
     def __init__(self):
         super().__init__()
 
-    def check_input_validity(self, args: list):
+    def _check_input_validity(self, args: list):
         return False
 
     def args_parser(self, args: list): pass
@@ -44,7 +50,7 @@ class SSDReadCommand(SSDCommand):
         super().__init__()
         self._lba = 0
 
-    def check_input_validity(self, args: list):
+    def _check_input_validity(self, args: list):
         if len(args) != 1:
             return False
 
@@ -71,7 +77,7 @@ class SSDWriteCommand(SSDCommand):
         self._lba = 0
         self._value = 0
 
-    def check_input_validity(self, args: list):
+    def _check_input_validity(self, args: list):
         # pdb.set_trace()
         if len(args) != 2:
             return False
@@ -110,7 +116,7 @@ class SSDEraseCommand(SSDCommand):
         self._lba = 0
         self._size = 0
 
-    def check_input_validity(self, args: list):
+    def _check_input_validity(self, args: list):
         if len(args) != 2:
             return False
 

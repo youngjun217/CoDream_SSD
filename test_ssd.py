@@ -1,5 +1,4 @@
 import random
-from lib2to3.btm_utils import reduce_tree
 from unittest.mock import call
 import pytest
 

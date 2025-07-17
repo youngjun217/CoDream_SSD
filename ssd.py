@@ -7,7 +7,6 @@ class SSD:
     def __init__(self):
         self._nand_txt = SSDNand()
         self._output_txt = SSDOutput()
-        self._command: SSDCommand = SSDErrorCommand()
 
     @property
     def nand_txt(self):
@@ -19,11 +18,13 @@ class SSD:
 
     def run(self, sys_argv):
         cmd = sys_argv[1]
+        args = sys_argv[2:]
 
-        self._command = self.get_command(cmd)
-        self._command.run_command(sys_argv[2:])
+        command: SSDCommand = self.get_command(cmd)
+        command.check_input_validity(args)
+        command.run_command(args)
 
-    def get_command(self, cmd):
+    def get_command(self, cmd) -> SSDCommand:
         if (cmd == 'W'):
             return SSDWriteCommand()
         elif (cmd == 'R'):

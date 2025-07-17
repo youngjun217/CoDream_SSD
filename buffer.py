@@ -41,7 +41,7 @@ class Buffer:
 
     def execute(self):
         for file_name in self.buf_lst:
-            idx, command, lba, value = file_name.split("_")
+            _, command, lba, value = file_name.split("_")
             self.ssd.run(f'{command} {lba} {value}')
 
     def flush(self):

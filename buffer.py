@@ -20,10 +20,7 @@ class Buffer:
             open(file_path, 'a').close()
             self.buf_lst.append(file_name)
 
-    def write(self, command, lba, value):
-        if command == 'R':
-            return
-
+    def write(self, command, lba, value=None):
         empty_idx = -1
         for idx, file_name in enumerate(self.buf_lst):
             splited_file_name = file_name.split("_")
@@ -33,30 +30,38 @@ class Buffer:
 
         if empty_idx == -1:
             self.flush()
+            empty_idx=1
 
         old_name = f"{self.folder_path}/{empty_idx}_empty"
         new_name = f"{self.folder_path}/{empty_idx}_{command}_{lba}_{value}"
         if empty_idx != -1:
             os.rename(old_name, new_name)
+            self.buf_lst[empty_idx - 1] = f"{empty_idx}_{command}_{lba}_{value}"
+        print(self.buf_lst)
 
     def execute(self):
         for file_name in self.buf_lst:
             _, command, lba, value = file_name.split("_")
-            self.ssd.run(f'{command} {lba} {value}')
+            self.ssd.run([None, command, lba, value])
 
     def flush(self):
         self.execute()
-        for idx, file in enumerate(self.buf_lst):
-            os.rename(f"{self.folder_path}/{file}", f"{self.folder_path}/{idx + 1}_empty")
-            self.buf_lst[idx] = f"{idx + 1}_empty"
+        for filename in os.listdir(self.folder_path):
+            file_path = os.path.join(self.folder_path, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        self.buf_lst.clear()
+        self.create()
+
 
     def run(self, sys_argv):
         cmd = sys_argv[1]
         lba = int(sys_argv[2])
-        buffer_lst = self.buf_lst
-        buffer_empty_cnt = sum('empty' in buffer_cmd for buffer_cmd in buffer_lst)
+        if len(sys_argv)==4: self.write(cmd, lba, sys_argv[3])
+
+        buffer_empty_cnt = sum('empty' in buffer_cmd for buffer_cmd in self.buf_lst)
         if cmd == 'R':
-            for buffer_cmd in buffer_lst:
+            for buffer_cmd in self.buf_lst:
                 cmd_lst = buffer_cmd.split('_')
                 if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
                     self.ssd._output_txt.write(f"{lba:02d} {cmd_lst[3]}\n")
@@ -72,7 +77,7 @@ class Buffer:
         elif cmd == 'W':
             self.ssd._output_txt.write("")
             combine_idx = -1
-            for idx, buffer_cmd in enumerate(buffer_lst):
+            for idx, buffer_cmd in enumerate(self.buf_lst):
                 if 'empty' in buffer_cmd:
                     break
                 cmd_lst = buffer_cmd.split('_')
@@ -83,7 +88,7 @@ class Buffer:
 
             if combine_idx >= 0:
                 value = int(sys_argv[3], 16)
-                old_name = f"./buffer/{buffer_lst[combine_idx]}"
+                old_name = f"./buffer/{self.buf_lst[combine_idx]}"
                 new_name = f"./buffer/{combine_idx}_{cmd}_{lba}_{value}"
                 os.rename(old_name, new_name)
 

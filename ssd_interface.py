@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from buffer import Buffer
-from ssd import SSDOutput
+from ssd import SSD
+from ssd_texts import SSDOutput
 
 
 class SSDInterface(ABC):
@@ -14,11 +14,9 @@ class SSDInterface(ABC):
 
 
 class SSDConcreteInterface(SSDInterface):
-    def __init__(self):
-        self.buffer = Buffer()
-
     def run(self, args):
-        self.buffer.run(args)
+        ssd = SSD()
+        ssd.run(args)
 
     def get_response(self):
         ssd_output_txt = SSDOutput()

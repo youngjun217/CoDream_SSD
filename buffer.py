@@ -2,6 +2,10 @@ import os
 
 from ssd import SSD
 
+EMPTY = 0
+EMPTY_VALUE = 0x00000000
+WRITE = 1
+ERASE = 2
 
 class Buffer:
 
@@ -10,6 +14,8 @@ class Buffer:
         self.buf_lst = []
         self.create()
         self.ssd = SSD()
+        self.command_memory = [EMPTY] * 100
+        self.value_memory = [EMPTY_VALUE] * 100
 
     def create(self):
         if not os.path.exists(self.folder_path):
@@ -52,48 +58,61 @@ class Buffer:
         self.buf_lst.clear()
         self.create()
 
-
     def run(self, sys_argv):
+        self.set_buffer(sys_argv)
         cmd = sys_argv[1]
         lba = int(sys_argv[2])
-        if len(sys_argv)==4: self.write(cmd, lba, sys_argv[3])
 
-        buffer_empty_cnt = sum('empty' in buffer_cmd for buffer_cmd in self.buf_lst)
-        if cmd == 'R':
-            for buffer_cmd in self.buf_lst:
-                cmd_lst = buffer_cmd.split('_')
-                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
-                    self.ssd._output_txt.write(f"{lba:02d} {cmd_lst[3]}\n")
-                    return
-                if cmd_lst[1] == 'E':
-                    start_lba = int(cmd_lst[2])
-                    size = int(cmd_lst[3])
-                    if start_lba <= lba < start_lba + size:
-                        self.ssd._output_txt.write(f"{lba:02d} 0x00000000\n")
-                        return
-            self.ssd.run(sys_argv)
-
-        elif cmd == 'W':
+        if cmd == "R":
+            self.ssd._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
+        if cmd == "W":
             self.ssd._output_txt.write("")
-            combine_idx = -1
-            for idx, buffer_cmd in enumerate(self.buf_lst):
-                if 'empty' in buffer_cmd:
-                    break
-                cmd_lst = buffer_cmd.split('_')
-                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
-                    combine_idx = idx
-                if cmd_lst[1] == 'E' and int(cmd_lst[2]) == lba and int(cmd_lst[3]) == 1:
-                    combine_idx = idx
 
-            if combine_idx >= 0:
-                value = int(sys_argv[3], 16)
-                old_name = f"./buffer/{self.buf_lst[combine_idx]}"
-                new_name = f"./buffer/{combine_idx}_{cmd}_{lba}_{value}"
-                os.rename(old_name, new_name)
+        #if buffer size is over 6, flush feature is needed. it's not developed yet.
 
-        elif cmd == 'E':
-            # 기능 추가 필요
-            pass
+    def set_buffer(self, sys_argv):
+        self.buf_lst = []
+        cmd = sys_argv[1]
+        lba = int(sys_argv[2])
+        value = int(sys_argv[3]) if cmd != "R" else 0
 
-        elif cmd == 'F' or buffer_empty_cnt == 0:
-            self.flush()
+        if cmd == "W":
+            self.command_memory[lba] = WRITE
+            self.value_memory[lba] = value
+
+        if cmd == "E":
+            for erase_lba in range(lba, lba+value):
+                self.command_memory[erase_lba] = ERASE
+                self.value_memory[erase_lba] = EMPTY_VALUE
+
+        #update buffer
+        prev_command = EMPTY
+        start_lba = -1
+        erase_size = 0
+        for memory_lba, saved_command in enumerate(self.command_memory):
+            if saved_command == WRITE:
+                self.buf_lst.append(f"{len(self.buf_lst)+1}_W_{memory_lba}_0x{self.value_memory[memory_lba]:08X}")
+                if prev_command == ERASE:
+                    self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
+                prev_command = WRITE
+                continue
+
+            if saved_command == EMPTY:
+                if prev_command == ERASE:
+                    self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
+                prev_command = EMPTY
+                continue
+
+            if saved_command == ERASE:
+                if prev_command != ERASE:
+                    start_lba = memory_lba
+                    erase_size = 1
+                    prev_command = ERASE
+                else:
+                    erase_size += 1
+                    if erase_size == 10:
+                        self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
+                        prev_command = EMPTY
+
+        while len(self.buf_lst) != 5:
+            self.buf_lst.append(f"{len(self.buf_lst)+1}_empty")

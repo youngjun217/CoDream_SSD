@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 
-from ssd_texts import SSDNand, SSDOutput
+from ssd_texts import SSDNand, SSDOutput, SSDText
 
 
 class SSDCommand(ABC):
     def __init__(self):
-        self._nand_txt = SSDNand()
-        self._output_txt = SSDOutput()
+        self._nand_txt: SSDText = SSDNand()
+        self._output_txt: SSDText = SSDOutput()
 
     def run_command(self, args: list):
         self.args_parser(args)

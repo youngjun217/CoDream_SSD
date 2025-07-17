@@ -9,8 +9,10 @@ TEST_LBA = 3
 TEST_WRITE_VALUE = 0x1298CDEF
 ERROR_MESSAGE = "ERROR"
 
+
 def dec_to_hex(value):
     return f"0x{value:08X}"
+
 
 @pytest.fixture
 def ssd():
@@ -22,7 +24,7 @@ def test_read(ssd):
     ssd_nand = SSDNand()
 
     ssd.run([None, 'R', TEST_LBA])
-    assert ssd_output.read() == ssd_nand.readline(TEST_LBA)
+    assert ssd_output.read() == ssd_nand.read()[TEST_LBA]
 
 
 @pytest.mark.parametrize("lba", [0, 10, 20, 50, 90, 99])
@@ -31,7 +33,7 @@ def test_write(ssd, lba):
     ssd_output = SSDOutput()
     ssd.run([None, 'W', lba, dec_to_hex(TEST_WRITE_VALUE)])
 
-    assert f"{lba:02} 0x{TEST_WRITE_VALUE:08X}\n" == ssd_nand.readline(lba)
+    assert f"{lba:02} 0x{TEST_WRITE_VALUE:08X}\n" == ssd_nand.read()[lba]
     assert ssd_output.read() == ""
 
 
@@ -39,41 +41,47 @@ def test_write(ssd, lba):
 def test_ssd_read_error_minus_index(ssd, lba):
     with pytest.raises(ValueError, match="ERROR"):
         ssd.run([None, 'R', lba])
-    assert ssd._output_txt.read() == ERROR_MESSAGE
+    output_txt = SSDOutput()
+    assert output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("lba", [100, 1000, 10000])
 def test_ssd_read_error_index_above_99(ssd, lba):
     with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.run([None, 'R', lba])
-    assert ssd._output_txt.read() == ERROR_MESSAGE
+    output_txt = SSDOutput()
+    assert output_txt.read() == ERROR_MESSAGE
 
 
 def test_ssd_read_error_not_digit(ssd):
     with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.run([None, 'R', 'abc'])
-    assert ssd._output_txt.read() == ERROR_MESSAGE
+    output_txt = SSDOutput()
+    assert output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("lba, value", [(-1, 0x00000000), (-10, 0x00000000)])
 def test_ssd_write_error_minus_index(ssd, lba, value):
     with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.run([None, 'W', lba, dec_to_hex(value)])
-    assert ssd._output_txt.read() == ERROR_MESSAGE
+    output_txt = SSDOutput()
+    assert output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("lba, value", [(100, 0x00000000), (1000, 0x00000000), (10000, 0x00000000)])
 def test_ssd_write_error_index_above_99(ssd, lba, value):
     with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.run([None, 'W', lba, dec_to_hex(value)])
-    assert ssd._output_txt.read() == ERROR_MESSAGE
+    output_txt = SSDOutput()
+    assert output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("lba, value", [("abc", 0x00000000), ("ax", 0xABCD0000)])
 def test_ssd_write_error_not_digit(ssd, lba, value):
     with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.run([None, 'W', lba, dec_to_hex(value)])
-    assert ssd._output_txt.read() == ERROR_MESSAGE
+    output_txt = SSDOutput()
+    assert output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("lba, value", [(10, -1), (10, -10)])
@@ -88,7 +96,8 @@ def test_ssd_write_error_minus_value(ssd, lba, value):
 def test_ssd_write_error_value_above_32bits(ssd, lba, value):
     with pytest.raises(ValueError, match=ERROR_MESSAGE):
         ssd.run([None, 'W', lba, dec_to_hex(value)])
-    assert ssd._output_txt.read() == ERROR_MESSAGE
+    output_txt = SSDOutput()
+    assert output_txt.read() == ERROR_MESSAGE
 
 
 @pytest.mark.parametrize("output", ["ERROR", "10 0x00000000", "20 0x00000000"])
@@ -126,7 +135,7 @@ def test_nand_readline(lba):
     with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
         output = file.readlines()
 
-    assert output[lba] == ssd_nand.readline(lba)
+    assert output[lba] == ssd_nand.read()[lba]
 
 
 def test_nand_write():
@@ -160,16 +169,6 @@ def test_singleton_ssd_output(output):
     assert ssd_output.read() == ssd_new_output.read()
 
 
-def test_singleton_ssd():
-    ssd_nand = SSDNand()
-    ssd_nand.write(["10 0x00000000"])
-    ssd_output = SSDOutput()
-    ssd_output.write("20 0xABCD0000")
-    ssd = SSD()
-    assert ssd_output.read() == ssd.output_txt.read()
-    assert ssd_nand.read() == ssd.nand_txt.read()
-
-
 @pytest.mark.parametrize("input",
                          [[None, 'A'], [None, 'W', 10], [None, 'W', 10, '1', 1], [None, 'R'],
                           [None, 'R', 99, '0xABCDEF90'],
@@ -186,11 +185,11 @@ def test_erase_success(ssd):
 
     ssd.run([None, 'E', 0, 10])
     for i in range(0, 10):
-        assert ssd_nand.readline(i) == f"{i:02d} 0x00000000\n"
+        assert ssd_nand.read()[i] == f"{i:02d} 0x00000000\n"
 
     ssd.run([None, 'E', 11, 5])
     for i in range(11, 16):
-        assert ssd_nand.readline(i) == f"{i:02d} 0x00000000\n"
+        assert ssd_nand.read()[i] == f"{i:02d} 0x00000000\n"
 
 
 def test_erase_size_error(ssd):

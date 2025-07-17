@@ -33,10 +33,6 @@ class SSDNand(SSDText):
             fixed_size_lines = fixed_size_lines[:100]
             return fixed_size_lines
 
-    def readline(self, lba):
-        with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-            return file.readlines()[lba]
-
     def write(self, output):
         with open("ssd_nand.txt", 'w', encoding='utf-8') as file:
             file.writelines(output)

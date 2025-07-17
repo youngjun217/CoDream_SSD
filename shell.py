@@ -111,6 +111,7 @@ class EraseCommand(Command):
         else:
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
+
 class EraseRangeCommand(Command):
     def __init__(self, shell, st_lba: int, en_lba: int):
         super().__init__(shell)
@@ -130,15 +131,18 @@ class FullWriteCommand(Command):
     def __init__(self, shell, value):
         super().__init__(shell)
         self.value = value
+
     def execute(self):
         for x in range(100):
             self.shell._send_command('W', x, self.value)
         print("[Full Write] Done")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
+
 class FullReadCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
+
     def execute(self):
         print("[Full Read]")
         for idx in range(100):
@@ -158,6 +162,7 @@ class FullReadCommand(Command):
 
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
+
 class FullWriteAndReadCompareCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
@@ -175,9 +180,11 @@ class FullWriteAndReadCompareCommand(Command):
         print('PASS')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
+
 class PartialLBAWriteCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
+
     def execute(self):
         partialLBA_index_list = [4, 0, 3, 1, 2]
         for _ in range(30):
@@ -193,14 +200,16 @@ class PartialLBAWriteCommand(Command):
         print("PASS")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
+
 class EraseAndWriteAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
+
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
         self.shell._send_command('W', idx, value1)
         self.shell._send_command('W', idx, value2)
-        EraseRangeCommand(self.shell, idx, min(idx+2,99)).execute()
+        EraseRangeCommand(self.shell, idx, min(idx + 2, 99)).execute()
 
     def execute(self):
         self.shell._send_command('E', 0, 3)
@@ -216,10 +225,10 @@ class EraseAndWriteAgingCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
-
 class WriteReadAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
+
     def execute(self):
         value = random.randint(0, 0xFFFFFFFF)
         for i in range(200):
@@ -280,8 +289,6 @@ class Shell():
               )
         self.logger.print(f"{self.help.__qualname__}()", "DONE")
 
-
-
     def main_function(self, args):
         if not (args[0].lower(), len(args)) in self.command_dictionary(args):
             raise ValueError("INVALID COMMAND")
@@ -291,7 +298,7 @@ class Shell():
         command_dict = {
             ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
             ("write", 3): lambda: WriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
-            ("fullwrite", 2): lambda: FullWriteCommand(self,int(args[1], 16)).execute(),
+            ("fullwrite", 2): lambda: FullWriteCommand(self, int(args[1], 16)).execute(),
             ("fullread", 1): lambda: FullReadCommand(self).execute(),
             ('1_', 1): lambda: FullWriteAndReadCompareCommand(self).execute(),
             ('2_', 1): lambda: PartialLBAWriteCommand(self).execute(),
@@ -299,8 +306,8 @@ class Shell():
             ('4_', 1): lambda: EraseAndWriteAgingCommand(self).execute(),
             ('help', 1): lambda: self.help(),
             ('erase', 3): lambda: EraseCommand(self, int(args[1]), int(args[2])).execute(),
-            ('erase_range', 3): lambda: EraseRangeCommand(self,int(args[1]), int(args[2])).execute(),
-            ('flush',1): lambda:FlushCommand(self).execute()
+            ('erase_range', 3): lambda: EraseRangeCommand(self, int(args[1]), int(args[2])).execute(),
+            ('flush', 1): lambda: FlushCommand(self).execute()
         }
         return command_dict
 

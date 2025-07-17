@@ -68,7 +68,7 @@ class ReadCommand(Command):
 
     def execute(self) -> None:
         self.shell.send_command('R', self.idx)
-        value = self.shell._get_response_value()
+        value = self.shell.get_response_value()
         print(f'[Read] LBA {self.idx}: {value}')
         self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
@@ -81,7 +81,7 @@ class WriteCommand(Command):
 
     def execute(self) -> bool:
         self.shell.send_command('W', self.idx, self.value)
-        if self.shell._get_response_value() == '':
+        if self.shell.get_response_value() == '':
             print('[Write] Done')
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
             return True
@@ -146,7 +146,7 @@ class FullReadCommand(Command):
         for lba in range(100):
             try:
                 self.shell.send_command('R', lba)
-                value = self.shell._get_response_value()
+                value = self.shell.get_response_value()
 
                 if value == "ERROR":
                     print(value)
@@ -171,7 +171,7 @@ class FullWriteAndReadCompareCommand(Command):
                 hex_str = f"0x{rand_num:08X}"
                 self.shell.send_command('W', start_idx + x, rand_num)
                 self.shell.send_command('R', start_idx + x)
-                if self.shell._get_response_value() != hex_str:
+                if self.shell.get_response_value() != hex_str:
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
@@ -189,10 +189,10 @@ class PartialLBAWriteCommand(Command):
                 self.shell.send_command('W', partialLBA_index_list[x], random_write_value)
 
             self.shell.send_command('R', 0)
-            check_ref = self.shell._get_response_value()
+            check_ref = self.shell.get_response_value()
             for x in range(1, 5):
                 self.shell.send_command('R', x)
-                if check_ref != self.shell._get_response_value():
+                if check_ref != self.shell.get_response_value():
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
@@ -232,10 +232,10 @@ class WriteReadAgingCommand(Command):
             self.shell.send_command('W', 99, value)
 
             self.shell.send_command('R', 0)
-            check_ref = self.shell._get_response_value()
+            check_ref = self.shell.get_response_value()
 
             self.shell.send_command('R', 99)
-            check_comp = self.shell._get_response_value()
+            check_comp = self.shell.get_response_value()
 
             if check_ref != check_comp:
                 print('FAIL')
@@ -269,10 +269,10 @@ class Shell():
         if (command == 'E'):
             return self.ssd_interface.run([None, 'E', lba, value])
 
-    def _get_response(self):
+    def get_response(self):
         return self.ssd_interface.get_response()
 
-    def _get_response_value(self):
+    def get_response_value(self):
         output = self.ssd_interface.get_response()
         if len(output.split()) == 2:
             return output.split()[1]

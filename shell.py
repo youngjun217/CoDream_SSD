@@ -256,6 +256,8 @@ class ShellFlushCommand:
         pass
 
 class ShellHelpCommand(Command):
+    def __init__(self, shell):
+        super().__init__(shell)
     def execute(self):
         print('[Help]\n',
               'CoDream Team : our dreaming code\n',
@@ -274,7 +276,7 @@ class ShellHelpCommand(Command):
               '3_WriteReadAging : Write a random value at index 0.99 and check if the values are the same 200 times.\n',
               '4_EraseAndWriteAging :Performs 30 cycles of writing two random values to each even LBA (2–98), followed by erasing the next two LBA blocks to simulate aging behavior.\n',
               )
-        self.logger.print(f"{self.help.__qualname__}()", "DONE")
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 class Shell:
     def __init__(self):

@@ -117,8 +117,16 @@ class Buffer:
                 if os.path.isfile(file_path):
                     os.remove(file_path)
             self.create()
+            contains_W = [elem for elem in self.buf_lst[:5] if "W" in elem]
+            if contains_W:
+                self.ssd._output_txt.write("")
             self.buf_lst = self.buf_lst[5:]
 
         while len(self.buf_lst) < 5:
             self.buf_lst.append(f"{len(self.buf_lst)+1}_empty")
+
+        for idx, filename in enumerate(os.listdir(self.folder_path)):
+            if self.buf_lst[idx] != filename:
+                os.rename(filename, self.buf_lst[idx])
+
 

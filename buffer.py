@@ -1,7 +1,5 @@
 import os
-
 from ssd import SSD
-
 
 class Buffer:
 
@@ -48,5 +46,6 @@ class Buffer:
                 ssd.erase_ssd(lba, value)
 
     def flush(self):
+        self.execute()
         for idx, file in enumerate(self.buf_lst):
             os.rename(f"{self.folder_path}/{file}", f"{self.folder_path}/{idx+1}_empty")

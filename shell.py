@@ -104,9 +104,9 @@ class EraseCommand(Command):
             self.shell._send_command('E', self.lba + offset, erase_size)
             offset += 10
             self.size -= erase_size
-        caller_frame = inspect.stack()[3]
-        caller_name = caller_frame.function
-        if caller_name=='EraseAndWriteAging':
+        caller_frame = inspect.stack()[4]
+        caller_name = caller_frame.code_context
+        if 'EraseAndWriteAgingCommand' in caller_name[0]:
             pass
         else:
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
@@ -118,7 +118,7 @@ class EraseRangeCommand(Command):
         self.en_lba = en_lba
 
     def execute(self) -> None:
-        if self.st_lba > self.en_lba or self.st_lba < 0 or self.en_lba > 99:
+        if self.st_lba > self.en_lba or self.st_lba < 0 or self.en_lba > 100:
             raise ValueError("Invalid LBA range")
 
         size = self.en_lba - self.st_lba + 1  # inclusive range
@@ -213,7 +213,8 @@ class EraseAndWriteAgingCommand(Command):
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     raise e
         print('PASS')
-        self.shell.logger.print(f"{self.execute().__qualname__}()", "PASS")
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
+
 
 
 class WriteReadAgingCommand(Command):
@@ -279,7 +280,6 @@ class Shell():
 
     def command_dictionary(self, args):
         command_dict = {
-            # ("read", 2): lambda: self.read(int(args[1])),
             ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
             ("write", 3): lambda: WriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
             ("fullwrite", 2): lambda: FullWriteCommand(self,int(args[1], 16)).execute(),

@@ -66,10 +66,6 @@ class Buffer:
         if cmd == "R":
             self.ssd._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
 
-
-
-        #if buffer size is over 6, flush feature is needed. it's not developed yet.
-
     def set_buffer(self, sys_argv):
         self.buf_lst = []
         cmd = sys_argv[1]
@@ -114,5 +110,15 @@ class Buffer:
                         self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
                         prev_command = EMPTY
 
-        while len(self.buf_lst) != 5:
+        while len(self.buf_lst) > 5:
+            #flush
+            for filename in os.listdir(self.folder_path):
+                file_path = os.path.join(self.folder_path, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+            self.create()
+            self.buf_lst = self.buf_lst[5:]
+
+        while len(self.buf_lst) < 5:
             self.buf_lst.append(f"{len(self.buf_lst)+1}_empty")
+

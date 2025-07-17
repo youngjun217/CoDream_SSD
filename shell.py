@@ -302,9 +302,9 @@ class Shell():
 
 
     def main_function(self, args):
-        if not (args[0].lower(), len(args)) in self.command_dictionary(args):
+        if not (args[0], len(args)) in self.command_dictionary(args):
             raise ValueError("INVALID COMMAND")
-        self.command_dictionary(args)[(args[0].lower(), len(args))]()
+        self.command_dictionary(args)[(args[0], len(args))]()
 
     def command_dictionary(self, args):
         command_dict = {
@@ -316,6 +316,10 @@ class Shell():
             ('2_', 1): lambda: ShellPartialLBAWriteCommand(self).execute(),
             ('3_', 1): lambda: ShellWriteReadAgingCommand(self).execute(),
             ('4_', 1): lambda: ShellEraseAndWriteAgingCommand(self).execute(),
+            ('1_FullWriteAndReadCompare', 1): lambda: ShellFullWriteAndReadCompareCommand(self).execute(),
+            ('2_PartialLBAWrite', 1): lambda: ShellPartialLBAWriteCommand(self).execute(),
+            ('3_WriteReadAging', 1): lambda: ShellWriteReadAgingCommand(self).execute(),
+            ('4_EraseAndWriteAging', 1): lambda: ShellEraseAndWriteAgingCommand(self).execute(),
             ('help', 1): lambda: self.help(),
             ('erase', 3): lambda: ShellEraseCommand(self, int(args[1]), int(args[2])).execute(),
             ('erase_range', 3): lambda: ShellEraseRangeCommand(self, int(args[1]), int(args[2])).execute(),

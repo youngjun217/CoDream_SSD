@@ -9,6 +9,7 @@ class Buffer:
         self.folder_path = './buffer'
         self.buf_lst = []
         self.create()
+        self.ssd = SSD()
 
     def create(self):
         if not os.path.exists(self.folder_path):
@@ -50,3 +51,43 @@ class Buffer:
     def flush(self):
         for idx, file in enumerate(self.buf_lst):
             os.rename(f"{self.folder_path}/{file}", f"{self.folder_path}/{idx+1}_empty")
+
+
+    def run(self, sys_argv):
+        cmd = sys_argv[1]
+        lba = int(sys_argv[2])
+        buffer_lst = self.buf_lst
+        if cmd == 'R':
+            for buffer_cmd in buffer_lst:
+                cmd_lst = buffer_cmd.split('_')
+                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
+                    self.ssd._output_txt.write(f"{lba:02d} {cmd_lst[3]}\n")
+                    return
+                if cmd_lst[1] == 'E':
+                    start_lba = int(cmd_lst[2])
+                    size = int(cmd_lst[3])
+                    if start_lba <= lba < start_lba + size:
+                        self.ssd._output_txt.write(f"{lba:02d} 0x00000000\n")
+                        return
+            self.ssd.run(sys_argv)
+
+        elif cmd == 'W':
+            combine_idx = -1
+            for idx, buffer_cmd in enumerate(buffer_lst):
+                if 'empty' in buffer_cmd:
+                    break
+                cmd_lst = buffer_cmd.split('_')
+                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
+                    combine_idx = idx
+                if cmd_lst[1] == 'E' and int(cmd_lst[2]) == lba and int(cmd_lst[3]) == 1:
+                    combine_idx = idx
+
+            if combine_idx >= 0:
+                value = int(sys_argv[3], 16)
+                old_name = f"./buffer/{buffer_lst[combine_idx]}"
+                new_name = f"./buffer/{combine_idx}_{cmd}_{lba}_{value}"
+                os.rename(old_name, new_name)
+
+        elif cmd == 'E':
+            # 기능 추가 필요
+            pass

@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from ssd import SSD, SSDOutput
+
+from buffer import Buffer
+from ssd import SSDOutput
 
 
 class SSDInterface(ABC):
@@ -11,10 +13,11 @@ class SSDInterface(ABC):
     def get_response(self):
         ...
 
+
 class SSDConcreteInterface(SSDInterface):
     def run(self, args):
-        ssd = SSD()
-        ssd.run(args)
+        buffer = Buffer()
+        buffer.run(args)
 
     def get_response(self):
         ssd_output_txt = SSDOutput()

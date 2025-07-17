@@ -16,7 +16,7 @@ def dec_to_hex(value):
 
 @pytest.fixture
 def ssd():
-    return SSD()
+    return SSD(True)
 
 
 def test_read(ssd):

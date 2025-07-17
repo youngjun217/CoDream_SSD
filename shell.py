@@ -8,8 +8,6 @@ import random
 import sys
 import time
 from abc import ABC, abstractmethod
-
-from ssd import SSDOutput, SSDNand
 from ssd_interface import SSDInterface, SSDConcreteInterface
 
 
@@ -65,8 +63,7 @@ class ReadCommand(Command):
 
     def execute(self) -> None:
         self.shell._send_command('R', self.idx)
-        result = self.shell.ssd_output.read()
-        value = result.split()[1]
+        value = self.shell._get_response_value()
         print(f'[Read] LBA {self.idx}: {value}')
         self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
@@ -79,7 +76,7 @@ class WriteCommand(Command):
 
     def execute(self) -> bool:
         self.shell._send_command('W', self.idx, self.value)
-        if self.shell.ssd_output.read() == '':
+        if self.shell._get_response_value() == '':
             print('[Write] Done')
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
             return True
@@ -145,16 +142,16 @@ class FullReadCommand(Command):
 
     def execute(self):
         print("[Full Read]")
-        for idx in range(100):
+        for lba in range(100):
             try:
-                self.shell._send_command('R', idx)
-                output = self.shell.ssd_output.read()
+                self.shell._send_command('R', lba)
+                value = self.shell._get_response_value()
 
-                if output == "ERROR" or len(output.split()) < 2:
-                    print(output)
+                if value == "ERROR":
+                    print(value)
                     continue
 
-                print(f"LBA {output.split()[0]} : {output.split()[1]}")
+                print(f"LBA {lba} : {value}")
 
             except Exception as e:
                 self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
@@ -173,7 +170,8 @@ class FullWriteAndReadCompareCommand(Command):
                 rand_num = random.randint(0, 0xFFFFFFFF)
                 hex_str = f"0x{rand_num:08X}"
                 self.shell._send_command('W', start_idx + x, rand_num)
-                if self.shell.ssd_nand.readline(start_idx + x).split()[1] != hex_str:
+                self.shell._send_command('R', start_idx + x)
+                if self.shell._get_response_value() != hex_str:
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
@@ -191,9 +189,12 @@ class PartialLBAWriteCommand(Command):
             random_write_value = random.randint(0, 0xFFFFFFFF)
             for x in range(5):
                 self.shell._send_command('W', partialLBA_index_list[x], random_write_value)
-            check_ref = self.shell.ssd_nand.readline(0).split()[1]
+
+            self.shell._send_command('R', 0)
+            check_ref = self.shell._get_response_value()
             for x in range(1, 5):
-                if check_ref != self.shell.ssd_nand.readline(x).split()[1]:
+                self.shell._send_command('R', x)
+                if check_ref != self.shell._get_response_value():
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
@@ -234,7 +235,14 @@ class WriteReadAgingCommand(Command):
         for i in range(200):
             self.shell._send_command('W', 0, value)
             self.shell._send_command('W', 99, value)
-            if self.shell.ssd_nand.readline(0).split()[1] != self.shell.ssd_nand.readline(99).split()[1]:
+
+            self.shell._send_command('R', 0)
+            check_ref = self.shell._get_response_value()
+
+            self.shell._send_command('R', 99)
+            check_comp = self.shell._get_response_value()
+
+            if check_ref != check_comp:
                 print('FAIL')
                 self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                 return
@@ -253,8 +261,6 @@ class FlushCommand:
 
 class Shell():
     def __init__(self):
-        self.ssd_output = SSDOutput()
-        self.ssd_nand = SSDNand()
         self.logger = Logger()
         self.ssd_interface: SSDInterface = SSDConcreteInterface()
 
@@ -267,6 +273,15 @@ class Shell():
             return self.ssd_interface.run([None, 'R', lba])
         if (command == 'E'):
             return self.ssd_interface.run([None, 'E', lba, value])
+
+    def _get_response(self):
+        return self.ssd_interface.get_response()
+
+    def _get_response_value(self):
+        output = self.ssd_interface.get_response()
+        if len(output.split()) == 2:
+            return output.split()[1]
+        return output
 
     # help : 프로그램 사용법
     def help(self):

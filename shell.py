@@ -255,6 +255,28 @@ class ShellFlushCommand:
         self.shell.ssd_interface.run()
         pass
 
+class ShellHelpCommand(Command):
+    def __init__(self, shell):
+        super().__init__(shell)
+    def execute(self):
+        print('[Help]\n',
+              'CoDream Team : our dreaming code\n',
+              '팀장 : 조영준\n',
+              '팀원 : 민동학, 박승욱, 이재원, 최일묵, 한재원 \n\n',
+              'How to Use???============================================\n',
+              'Rule 1. Index in 0~99\n',
+              'Rule 2. Value in 0x00000000~0xFFFFFFFF\n\n',
+              'read Index : read memory[Index] value                        ex)[Read] LBA 00 : 0x00000000\n',
+              'write Index Value : write value in memory[Index]             ex)[Write] Done\n',
+              'exit : exit program\n',
+              'fullwrite Value : write value all memory Index               ex)[Full Write] Done\n',
+              'fullread : read all memory Index value                       ex)[Full Read] ...\n',
+              '1_FullWriteAndReadCompare : compare write and read on every 5 Index \n',
+              '2_PartialLBAWrite : Write a random value at the 0~4 index and check if the values are the same 30 times.\n',
+              '3_WriteReadAging : Write a random value at index 0.99 and check if the values are the same 200 times.\n',
+              '4_EraseAndWriteAging :Performs 30 cycles of writing two random values to each even LBA (2–98), followed by erasing the next two LBA blocks to simulate aging behavior.\n',
+              )
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 class Shell:
     def __init__(self):
@@ -282,49 +304,33 @@ class Shell:
         return output
 
     # help : 프로그램 사용법
-    def help(self):
-        print('[Help]\n',
-              'CoDream Team : our dreaming code\n',
-              '팀장 : 조영준\n',
-              '팀원 : 민동학, 박승욱, 이재원, 최일묵, 한재원 \n\n',
-              'How to Use???============================================\n',
-              'Rule 1. Index in 0~99\n',
-              'Rule 2. Value in 0x00000000~0xFFFFFFFF\n\n',
-              'read Index : read memory[Index] value                        ex)[Read] LBA 00 : 0x00000000\n',
-              'write Index Value : write value in memory[Index]             ex)[Write] Done\n',
-              'exit : exit program\n',
-              'fullwrite Value : write value all memory Index               ex)[Full Write] Done\n',
-              'fullread : read all memory Index value                       ex)[Full Read] ...\n',
-              '1_FullWriteAndReadCompare : compare write and read on every 5 Index \n',
-              '2_PartialLBAWrite : Write a random value at the 0~4 index and check if the values are the same 30 times.\n',
-              '3_WriteReadAging : Write a random value at index 0.99 and check if the values are the same 200 times.\n',
-              '4_EraseAndWriteAging :Performs 30 cycles of writing two random values to each even LBA (2–98), followed by erasing the next two LBA blocks to simulate aging behavior.\n',
-              )
-        self.logger.print(f"{self.help.__qualname__}()", "DONE")
+
 
     def main_function(self, args):
         if not (args[0], len(args)) in self.command_dictionary(args):
             raise ValueError("INVALID COMMAND")
-        self.command_dictionary(args)[(args[0], len(args))]()
+        #self.command_dictionary(args)[(args[0], len(args))]()
+        shellCommand : Command = self.command_dictionary(args)[(args[0], len(args))]()
+        shellCommand.execute()
 
     def command_dictionary(self, args):
         command_dict = {
-            ("read", 2): lambda: ShellReadCommand(self, int(args[1])).execute(),
-            ("write", 3): lambda: ShellWriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
-            ("fullwrite", 2): lambda: ShellFullWriteCommand(self, int(args[1], 16)).execute(),
-            ("fullread", 1): lambda: ShellFullReadCommand(self).execute(),
-            ('1_', 1): lambda: ShellFullWriteAndReadCompareCommand(self).execute(),
-            ('2_', 1): lambda: ShellPartialLBAWriteCommand(self).execute(),
-            ('3_', 1): lambda: ShellWriteReadAgingCommand(self).execute(),
-            ('4_', 1): lambda: ShellEraseAndWriteAgingCommand(self).execute(),
-            ('1_FullWriteAndReadCompare', 1): lambda: ShellFullWriteAndReadCompareCommand(self).execute(),
-            ('2_PartialLBAWrite', 1): lambda: ShellPartialLBAWriteCommand(self).execute(),
-            ('3_WriteReadAging', 1): lambda: ShellWriteReadAgingCommand(self).execute(),
-            ('4_EraseAndWriteAging', 1): lambda: ShellEraseAndWriteAgingCommand(self).execute(),
-            ('help', 1): lambda: self.help(),
-            ('erase', 3): lambda: ShellEraseCommand(self, int(args[1]), int(args[2])).execute(),
-            ('erase_range', 3): lambda: ShellEraseRangeCommand(self, int(args[1]), int(args[2])).execute(),
-            ('flush',1): lambda:ShellFlushCommand(self).execute()
+            ("read", 2): lambda: ShellReadCommand(self, int(args[1])),
+            ("write", 3): lambda: ShellWriteCommand(self, int(args[1]), int(args[2], 16)),
+            ("fullwrite", 2): lambda: ShellFullWriteCommand(self, int(args[1], 16)),
+            ("fullread", 1): lambda: ShellFullReadCommand(self),
+            ('1_', 1): lambda: ShellFullWriteAndReadCompareCommand(self),
+            ('2_', 1): lambda: ShellPartialLBAWriteCommand(self),
+            ('3_', 1): lambda: ShellWriteReadAgingCommand(self),
+            ('4_', 1): lambda: ShellEraseAndWriteAgingCommand(self),
+            ('1_FullWriteAndReadCompare', 1): lambda: ShellFullWriteAndReadCompareCommand(self),
+            ('2_PartialLBAWrite', 1): lambda: ShellPartialLBAWriteCommand(self),
+            ('3_WriteReadAging', 1): lambda: ShellWriteReadAgingCommand(self),
+            ('4_EraseAndWriteAging', 1): lambda: ShellEraseAndWriteAgingCommand(self),
+            ('help', 1): lambda: ShellHelpCommand(self),
+            ('erase', 3): lambda: ShellEraseCommand(self, int(args[1]), int(args[2])),
+            ('erase_range', 3): lambda: ShellEraseRangeCommand(self, int(args[1]), int(args[2])),
+            ('flush',1): lambda:ShellFlushCommand(self)
         }
         return command_dict
 
@@ -351,7 +357,9 @@ class Shell:
                 print(command[0:-1] + ' ' * self.option_dict()[command[0:2]] + '___   Run...', end=' ', flush=True)
                 output_capture = io.StringIO()
                 with contextlib.redirect_stdout(output_capture):
-                    self.command_dictionary(command[0:2])[(command[0:2], 1)]()
+                    # self.command_dictionary(command[0:2])[(command[0:2], 1)]()
+                    shellCommand: Command = self.command_dictionary(command[0:2])[(command[0:2], 1)]()
+                    shellCommand.execute()
                 print(output_capture.getvalue().strip())
                 if (output_capture.getvalue().strip()) == 'FAIL': return
         else:

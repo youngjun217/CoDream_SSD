@@ -1,15 +1,15 @@
 from datetime import datetime
 
 import pytest
-from pytest_mock import MockerFixture
 from unittest.mock import call
-
+import unittest
+from unittest import  mock
 from shell import *
 
 
-class Test_shell():
-    @pytest.fixture
-    def setup_shell(self, mocker):
+class Test_shell:
+    @pytest.fixture(autouse=True)
+    def setup_shell(self,mocker):
         self.shell=Shell()
         self.read_output = mocker.patch.object(self.shell.ssd_output, 'read')
         self.nand_readline = mocker.patch.object(self.shell.ssd_nand, 'readline')
@@ -18,7 +18,7 @@ class Test_shell():
         self.shell._send_command = mocker.Mock()
 
 
-    def test_read(self, setup_shell):
+    def test_read(self):
         #Act
         cmd = ReadCommand(self.shell, 1)
         cmd.execute()
@@ -246,14 +246,12 @@ class Test_shell():
 
 class Test_logger():
 
-
-
-    @pytest.fixture
-    def setup_logger(self, mocker):
-         # 싱글톤 초기화
-        Logger._instance = None
-        self._logger = Logger()
-        self.mock_open = mocker.patch("builtins.open", mocker.mock_open())
+    # @pytest.fixture
+    # def setup_logger(self, mocker):
+    #      # 싱글톤 초기화
+    #     Logger._instance = None
+    #     self._logger = Logger()
+    #     self.mock_open = mocker.patch("builtins.open", mocker.mock_open())
 
     def test_singleton(self):
         logger1 = Logger()
@@ -274,7 +272,7 @@ class Test_logger():
         mock_rotate = mocker.patch.object(logger, "rotate_log_if_needed")
         mock_open = mocker.mock_open()
         mocker.patch("builtins.open", mock_open)
-        fake_now = datetime(2025, 7, 16, 15, 0)
+        fake_now = datetime.datetime(2025, 7, 16, 15, 0)
         mocker.patch("datetime.datetime", mocker.Mock(now=lambda: fake_now))
         logger.print("HEADER", "message")
 

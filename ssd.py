@@ -1,5 +1,7 @@
 import sys
 import os
+
+from buffer import Buffer
 from ssd_commands import SSDCommand, SSDErrorCommand, SSDWriteCommand, SSDReadCommand, SSDEraseCommand
 from ssd_texts import SSDNand, SSDOutput
 
@@ -22,6 +24,10 @@ class SSD:
 
         command: SSDCommand = self.get_command(cmd)
         command.check_input_validity(args)
+
+        buffer = Buffer()
+        buffer.run(sys_argv)
+
         command.run_command(args)
 
     def get_command(self, cmd) -> SSDCommand:

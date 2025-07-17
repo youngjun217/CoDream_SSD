@@ -1,6 +1,6 @@
 import os
 
-from ssd import SSD
+from ssd_texts import SSDOutput
 
 EMPTY = 0
 EMPTY_VALUE = 0x00000000
@@ -13,7 +13,8 @@ class Buffer:
         self.folder_path = './buffer'
         self.buf_lst = []
         self.create()
-        self.ssd = SSD()
+        self._output_txt = SSDOutput()
+        self._run_command = []
         self.command_memory = [EMPTY] * 100
         self.value_memory = [EMPTY_VALUE] * 100
 
@@ -47,7 +48,7 @@ class Buffer:
     def execute(self):
         for file_name in self.buf_lst:
             _, command, lba, value = file_name.split("_")
-            self.ssd.run([None, command, lba, value])
+            self._run_command.append([None, command, lba, value])
 
     def flush(self):
         self.execute()
@@ -64,9 +65,9 @@ class Buffer:
         lba = int(sys_argv[2])
 
         if cmd == "R":
-            self.ssd._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
+            self._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
         if cmd == "W":
-            self.ssd._output_txt.write("")
+            self._output_txt.write("")
 
         #if buffer size is over 6, flush feature is needed. it's not developed yet.
 
@@ -74,14 +75,15 @@ class Buffer:
         self.buf_lst = []
         cmd = sys_argv[1]
         lba = int(sys_argv[2])
-        value = int(sys_argv[3]) if cmd != "R" else 0
 
         if cmd == "W":
+            value = int(sys_argv[3], 16)
             self.command_memory[lba] = WRITE
             self.value_memory[lba] = value
 
         if cmd == "E":
-            for erase_lba in range(lba, lba+value):
+            size = int(sys_argv[3])
+            for erase_lba in range(lba, lba+size):
                 self.command_memory[erase_lba] = ERASE
                 self.value_memory[erase_lba] = EMPTY_VALUE
 

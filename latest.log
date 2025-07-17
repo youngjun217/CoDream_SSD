@@ -1,8 +1,0 @@
-[25.07.16 13:21] ReadCommand()                  : LBA 0: 00
-[25.07.16 13:21] WriteCommand()                 : DONE
-[25.07.16 13:21] WriteCommand()                 : FAIL
-[25.07.16 13:21] EraseCommand()                 : DONE
-[25.07.16 13:21] HelpCommand()                  : DONE
-[25.07.16 13:21] FullReadCommand()              : DONE
-[25.07.16 13:21] ReadCommand()                  : LBA 0: 0
-[25.07.16 13:21] WriteCommand()                 : FAIL

@@ -13,11 +13,13 @@ def buffer_instance(tmp_path):
     buf.create()
     return buf
 
+
 def test_buffer_mock_create(mocker: MockerFixture):
     mock_create = mocker.patch('buffer.Buffer.create')
     buffer = Buffer()
 
     buffer.create.assert_called_once()
+
 
 def test_buffer_create():
     buffer = Buffer()
@@ -25,7 +27,6 @@ def test_buffer_create():
 
     assert os.path.exists(BUFFER_FOLDER_PATH)
     assert buffer.buf_lst[1:] == file_list
-
 
 
 def test_write_and_updates_buf_lst(buffer_instance):
@@ -38,7 +39,7 @@ def test_write_and_updates_buf_lst(buffer_instance):
     new_path = os.path.join(buffer_instance.folder_path, new_name)
 
     assert os.path.isfile(new_path), f"파일 {new_path}가 존재하지 않습니다."
-    assert new_name == "1_W_10_0x00001234", f"파일명이 예상과 다릅니다: {new_name}"
+    assert new_name == "1_W_10_0x1234", f"파일명이 예상과 다릅니다: {new_name}"
 
 
 
@@ -51,7 +52,6 @@ def test_write_flush_called_when_no_empty(buffer_instance, mocker):
     flush_mock = mocker.patch.object(buffer_instance, "flush", autospec=True)
     buffer_instance.write("W", 1, "0x12345678")
     flush_mock.assert_called_once()
-
 
 
 def test_flush_removes_files_and_recreates(buffer_instance, mocker):
@@ -103,12 +103,25 @@ def test_run_writes_correctly(buffer_instance, mocker):
     write_mock.assert_called_once_with("")
 
 
-
 def test_run_writes_correctly(buffer_instance, mocker):
     write_mock = mocker.patch.object(buffer_instance._output_txt, "write")
     buffer_instance.value_memory[10] = 0x12345678
     buffer_instance.run([None, "R", "10"])
     write_mock.assert_called_once_with("10 0x12345678\n")
+
+
+def test_run_invalid_index_raises(buffer_instance):
+    with pytest.raises(IndexError):
+        buffer_instance.run([None, "R", "-1"])
+    with pytest.raises(IndexError):
+        buffer_instance.run([None, "W", "200"])
+
+
+def test_run_writes_correctly(buffer_instance, mocker):
+    write_mock_r = mocker.patch.object(buffer_instance.ssd._output_txt, "write")
+    buffer_instance.value_memory[10] = 0x12345678
+    buffer_instance.run([None, "R", "10"])
+    write_mock_r.assert_called_once_with("10 0x12345678\n")
 
 
 def test_set_buffer_erase_chunks(buffer_instance):

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from ssd import SSD
-from ssd_texts import SSDOutput
+from ssd_texts import SSDOutput, SSDText
 
 
 class SSDInterface(ABC):
@@ -19,5 +19,5 @@ class SSDConcreteInterface(SSDInterface):
         ssd.run(args)
 
     def get_response(self):
-        ssd_output_txt = SSDOutput()
+        ssd_output_txt: SSDText = SSDOutput()
         return ssd_output_txt.read()

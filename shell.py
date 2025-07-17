@@ -27,13 +27,6 @@ class Logger:
             return
         self._initialized = True
 
-        for ext in ('log', 'zip'):
-            for filepath in glob.glob(f"*.{ext}"):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    print(f"Failed to delete {filepath}: {e}")
-
     def print(self, header, message):
         self.rotate_log_if_needed()
         with open("latest.log", 'a', encoding='utf-8') as file:
@@ -153,6 +146,8 @@ class ShellFullReadCommand(Command):
             try:
                 self.shell.send_command('R', lba)
                 value = self.shell.get_response_value()
+                if value == "ERROR":
+                    print(value)
                 print(f"LBA {lba} : {value}")
             except Exception as e:
                 self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
@@ -276,6 +271,9 @@ class Shell:
         if command == 'E':
             return self.ssd_interface.run([None, 'E', lba, value])
         return None
+
+    def get_response(self):
+        return self.ssd_interface.get_response()
 
     def get_response_value(self):
         output = self.ssd_interface.get_response()

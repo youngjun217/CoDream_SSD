@@ -74,6 +74,7 @@ class Buffer:
             self.ssd.run(sys_argv)
 
         elif cmd == 'W':
+            self.ssd._output_txt.write("")
             combine_idx = -1
             for idx, buffer_cmd in enumerate(buffer_lst):
                 if 'empty' in buffer_cmd:

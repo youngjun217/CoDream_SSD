@@ -18,7 +18,6 @@ class SSDText(ABC):
 
 class SSDNand(SSDText):
     def __init__(self):
-        super().__init__()
         if not hasattr(self, 'initialized'):
             self.initialized = True
             ssd_nand_txt = []
@@ -29,7 +28,10 @@ class SSDNand(SSDText):
 
     def read(self):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-            return file.readlines()
+            lines = file.readlines()
+            fixed_size_lines = lines + ["\n"] * (100 - len(lines))
+            fixed_size_lines = fixed_size_lines[:100]
+            return fixed_size_lines
 
     def readline(self, lba):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
@@ -42,7 +44,6 @@ class SSDNand(SSDText):
 
 class SSDOutput(SSDText):
     def __init__(self):
-        super().__init__()
         if not hasattr(self, 'initialized'):
             self.initialized = True
             self.write("")

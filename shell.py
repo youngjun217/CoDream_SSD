@@ -26,8 +26,13 @@ class Logger:
         if self._initialized:
             return
         self._initialized = True
-        if os.path.exists(self.LOG_FILE):
-            os.remove(self.LOG_FILE)
+
+        for ext in ('log', 'zip'):
+            for filepath in glob.glob(f"*.{ext}"):
+                try:
+                    os.remove(filepath)
+                except Exception as e:
+                    print(f"Failed to delete {filepath}: {e}")
 
     def print(self, header, message):
         self.rotate_log_if_needed()
@@ -56,27 +61,27 @@ class Command(ABC):
         pass
 
 
-class ReadCommand(Command):
-    def __init__(self, shell, lba):
+class ShellReadCommand(Command):
+    def __init__(self, shell, idx):
         super().__init__(shell)
         self.lba = lba
 
     def execute(self) -> None:
-        self.shell._send_command('R', self.lba)
-        value = self.shell._get_response_value()
-        print(f'[Read] LBA {self.lba}: {value}')
-        self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.lba}: {value}")
+        self.shell.send_command('R', self.idx)
+        value = self.shell.get_response_value()
+        print(f'[Read] LBA {self.idx}: {value}')
+        self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
 
-class WriteCommand(Command):
+class ShellWriteCommand(Command):
     def __init__(self, shell, idx: int, value: int):
         super().__init__(shell)
         self.idx = idx
         self.value = value
 
     def execute(self) -> bool:
-        self.shell._send_command('W', self.idx, self.value)
-        if self.shell._get_response_value() == '':
+        self.shell.send_command('W', self.idx, self.value)
+        if self.shell.get_response_value() == '':
             print('[Write] Done')
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
             return True
@@ -84,7 +89,7 @@ class WriteCommand(Command):
         return False
 
 
-class EraseCommand(Command):
+class ShellEraseCommand(Command):
     def __init__(self, shell, lba: int, size: int):
         super().__init__(shell)
         self.lba = lba
@@ -98,7 +103,7 @@ class EraseCommand(Command):
         offset = 0
         while self.size > 0:
             erase_size = min(self.size, 10)
-            self.shell._send_command('E', self.lba + offset, erase_size)
+            self.shell.send_command('E', self.lba + offset, erase_size)
             offset += 10
             self.size -= erase_size
         caller_frame = inspect.stack()[4]
@@ -108,8 +113,8 @@ class EraseCommand(Command):
         else:
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
-
-class EraseRangeCommand(Command):
+            
+class ShellEraseRangeCommand(Command):
     def __init__(self, shell, st_lba: int, en_lba: int):
         super().__init__(shell)
         self.st_lba = st_lba
@@ -120,23 +125,23 @@ class EraseRangeCommand(Command):
             raise ValueError
 
         size = self.en_lba - self.st_lba + 1  # inclusive range
-        erase_cmd = EraseCommand(self.shell, self.st_lba, size)
+        erase_cmd = ShellEraseCommand(self.shell, self.st_lba, size)
         erase_cmd.execute()
 
 
-class FullWriteCommand(Command):
+class ShellFullWriteCommand(Command):
     def __init__(self, shell, value):
         super().__init__(shell)
         self.value = value
 
     def execute(self):
         for x in range(100):
-            self.shell._send_command('W', x, self.value)
+            self.shell.send_command('W', x, self.value)
         print("[Full Write] Done")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 
-class FullReadCommand(Command):
+class ShellFullReadCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
@@ -144,8 +149,8 @@ class FullReadCommand(Command):
         print("[Full Read]")
         for lba in range(100):
             try:
-                self.shell._send_command('R', lba)
-                value = self.shell._get_response_value()
+                self.shell.send_command('R', lba)
+                value = self.shell.get_response_value()
 
                 if value == "ERROR":
                     print(value)
@@ -160,7 +165,7 @@ class FullReadCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 
-class FullWriteAndReadCompareCommand(Command):
+class ShellFullWriteAndReadCompareCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
@@ -169,9 +174,9 @@ class FullWriteAndReadCompareCommand(Command):
             for x in range(5):
                 rand_num = random.randint(0, 0xFFFFFFFF)
                 hex_str = f"0x{rand_num:08X}"
-                self.shell._send_command('W', start_idx + x, rand_num)
-                self.shell._send_command('R', start_idx + x)
-                if self.shell._get_response_value() != hex_str:
+                self.shell.send_command('W', start_idx + x, rand_num)
+                self.shell.send_command('R', start_idx + x)
+                if self.shell.get_response_value() != hex_str:
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
@@ -179,7 +184,7 @@ class FullWriteAndReadCompareCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
-class PartialLBAWriteCommand(Command):
+class ShellPartialLBAWriteCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
@@ -188,13 +193,13 @@ class PartialLBAWriteCommand(Command):
         for _ in range(30):
             random_write_value = random.randint(0, 0xFFFFFFFF)
             for x in range(5):
-                self.shell._send_command('W', partialLBA_index_list[x], random_write_value)
+                self.shell.send_command('W', partialLBA_index_list[x], random_write_value)
 
-            self.shell._send_command('R', 0)
-            check_ref = self.shell._get_response_value()
+            self.shell.send_command('R', 0)
+            check_ref = self.shell.get_response_value()
             for x in range(1, 5):
-                self.shell._send_command('R', x)
-                if check_ref != self.shell._get_response_value():
+                self.shell.send_command('R', x)
+                if check_ref != self.shell.get_response_value():
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
@@ -202,18 +207,18 @@ class PartialLBAWriteCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
-class EraseAndWriteAgingCommand(Command):
+class ShellEraseAndWriteAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
-        self.shell._send_command('W', idx, value1)
-        self.shell._send_command('W', idx, value2)
-        EraseRangeCommand(self.shell, idx, min(idx + 2, 99)).execute()
+        self.shell.send_command('W', idx, value1)
+        self.shell.send_command('W', idx, value2)
+        ShellEraseRangeCommand(self.shell, idx, min(idx + 2, 99)).execute()
 
     def execute(self):
-        self.shell._send_command('E', 0, 3)
+        self.shell.send_command('E', 0, 3)
         for i in range(30):
             for idx in range(2, 100, 2):
                 try:
@@ -226,21 +231,21 @@ class EraseAndWriteAgingCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
-class WriteReadAgingCommand(Command):
+class ShellWriteReadAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
     def execute(self):
         value = random.randint(0, 0xFFFFFFFF)
         for i in range(200):
-            self.shell._send_command('W', 0, value)
-            self.shell._send_command('W', 99, value)
+            self.shell.send_command('W', 0, value)
+            self.shell.send_command('W', 99, value)
 
-            self.shell._send_command('R', 0)
-            check_ref = self.shell._get_response_value()
+            self.shell.send_command('R', 0)
+            check_ref = self.shell.get_response_value()
 
-            self.shell._send_command('R', 99)
-            check_comp = self.shell._get_response_value()
+            self.shell.send_command('R', 99)
+            check_comp = self.shell.get_response_value()
 
             if check_ref != check_comp:
                 print('FAIL')
@@ -250,7 +255,7 @@ class WriteReadAgingCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
-class FlushCommand:
+class ShellFlushCommand:
     def __init__(self, shell):
         super().__init__(shell)
 
@@ -264,7 +269,7 @@ class Shell():
         self.logger = Logger()
         self.ssd_interface: SSDInterface = SSDConcreteInterface()
 
-    def _send_command(self, command, lba, value=None):
+    def send_command(self, command, lba, value=None):
         if (command == 'W'):
             if type(value) is int:
                 value = hex(value).upper()
@@ -274,10 +279,10 @@ class Shell():
         if (command == 'E'):
             return self.ssd_interface.run([None, 'E', lba, value])
 
-    def _get_response(self):
+    def get_response(self):
         return self.ssd_interface.get_response()
 
-    def _get_response_value(self):
+    def get_response_value(self):
         output = self.ssd_interface.get_response()
         if len(output.split()) == 2:
             return output.split()[1]
@@ -305,24 +310,28 @@ class Shell():
         self.logger.print(f"{self.help.__qualname__}()", "DONE")
 
     def main_function(self, args):
-        if not (args[0].lower(), len(args)) in self.command_dictionary(args):
+        if not (args[0], len(args)) in self.command_dictionary(args):
             raise ValueError("INVALID COMMAND")
-        self.command_dictionary(args)[(args[0].lower(), len(args))]()
+        self.command_dictionary(args)[(args[0], len(args))]()
 
     def command_dictionary(self, args):
         command_dict = {
-            ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
-            ("write", 3): lambda: WriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
-            ("fullwrite", 2): lambda: FullWriteCommand(self, int(args[1], 16)).execute(),
-            ("fullread", 1): lambda: FullReadCommand(self).execute(),
-            ('1_', 1): lambda: FullWriteAndReadCompareCommand(self).execute(),
-            ('2_', 1): lambda: PartialLBAWriteCommand(self).execute(),
-            ('3_', 1): lambda: WriteReadAgingCommand(self).execute(),
-            ('4_', 1): lambda: EraseAndWriteAgingCommand(self).execute(),
+            ("read", 2): lambda: ShellReadCommand(self, int(args[1])).execute(),
+            ("write", 3): lambda: ShellWriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
+            ("fullwrite", 2): lambda: ShellFullWriteCommand(self, int(args[1], 16)).execute(),
+            ("fullread", 1): lambda: ShellFullReadCommand(self).execute(),
+            ('1_', 1): lambda: ShellFullWriteAndReadCompareCommand(self).execute(),
+            ('2_', 1): lambda: ShellPartialLBAWriteCommand(self).execute(),
+            ('3_', 1): lambda: ShellWriteReadAgingCommand(self).execute(),
+            ('4_', 1): lambda: ShellEraseAndWriteAgingCommand(self).execute(),
+            ('1_FullWriteAndReadCompare', 1): lambda: ShellFullWriteAndReadCompareCommand(self).execute(),
+            ('2_PartialLBAWrite', 1): lambda: ShellPartialLBAWriteCommand(self).execute(),
+            ('3_WriteReadAging', 1): lambda: ShellWriteReadAgingCommand(self).execute(),
+            ('4_EraseAndWriteAging', 1): lambda: ShellEraseAndWriteAgingCommand(self).execute(),
             ('help', 1): lambda: self.help(),
-            ('erase', 3): lambda: EraseCommand(self, int(args[1]), int(args[2])).execute(),
-            ('erase_range', 3): lambda: EraseRangeCommand(self, int(args[1]), int(args[2])).execute(),
-            ('flush', 1): lambda: FlushCommand(self).execute()
+            ('erase', 3): lambda: ShellEraseCommand(self, int(args[1]), int(args[2])).execute(),
+            ('erase_range', 3): lambda: ShellEraseRangeCommand(self, int(args[1]), int(args[2])).execute(),
+            ('flush',1): lambda:ShellFlushCommand(self).execute()
         }
         return command_dict
 

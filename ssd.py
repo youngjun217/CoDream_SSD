@@ -1,13 +1,13 @@
 import sys
 import os
-from ssd_commands import SSDCommand, ErrorCommand, WriteCommand, ReadCommand, EraseCommand
+from ssd_commands import SSDCommand, SSDErrorCommand, SSDWriteCommand, SSDReadCommand, SSDEraseCommand
 from ssd_texts import SSDNand, SSDOutput
 
-class SSD():
+class SSD:
     def __init__(self):
         self._nand_txt = SSDNand()
         self._output_txt = SSDOutput()
-        self._command: SSDCommand = ErrorCommand()
+        self._command: SSDCommand = SSDErrorCommand()
 
     @property
     def nand_txt(self):
@@ -25,13 +25,13 @@ class SSD():
 
     def get_command(self, cmd):
         if (cmd == 'W'):
-            return WriteCommand()
+            return SSDWriteCommand()
         elif (cmd == 'R'):
-            return ReadCommand()
+            return SSDReadCommand()
         elif (cmd == 'E'):
-            return EraseCommand()
+            return SSDEraseCommand()
         else:
-            return ErrorCommand()
+            return SSDErrorCommand()
 
 
 if __name__ == "__main__":

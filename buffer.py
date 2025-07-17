@@ -90,6 +90,31 @@ class Buffer:
                 new_name = f"./buffer/{combine_idx}_{cmd}_{lba}_{value}"
                 os.rename(old_name, new_name)
 
+
         elif cmd == 'E':
-            # 기능 추가 필요
-            pass
+            size = int(sys_argv[3])
+            buf_list = self.buffer.buf_lst
+
+            for buf in buf_list:
+                idx, buf_cmd, buf_lba, buf_value = buf.split('_')
+                if buf_cmd == "empty":
+                    return True
+
+                if buf_cmd == "E":
+                    # 새로운 범위가 기존 E의 범위를 포함함(기존 E를 새로운 E가 대체)
+                    if lba <= buf_lba and buf_value <= size:
+                        buf_list[int(idx) - 1] = f"{idx}_{lba}_{size}"
+                        return True
+                        ### 이렇게 합쳤는데 기존에 있던 범위가 겹치거나 이어질 때 (기존 E와 새로운 E를 합침) 한 번더 작업이 필요함
+
+                    # 새로운 범위가 기존범위와 어느정도 겹치거나 이어질 때 (기존 E와 새로운 E를 합침)
+                    left_extend = lba <= buf_lba and buf_lba + buf_value <= lba + size
+                    right_extend = lba <= buf_lba + buf_value <= lba + size
+                    if (left_extend and buf_lba+buf_value-lba+1 <= 10) or (right_extend and lba+size-buf_lba+1 <= 10):
+                        buf_list[int(idx) - 1] = f"{idx}_{lba}_{size}"
+                        return True
+
+                if buf_cmd == "W":
+                    # 새로운 범위가 기존 W의 범위를 포함함(기존 W를 새로운 E가 대체)
+                    if lba <= buf_lba and buf_lba <= lba + size:
+                        buf_list[int(idx) - 1] = f"{idx}_{lba}_{size}"

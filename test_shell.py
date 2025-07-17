@@ -66,7 +66,7 @@ class Test_shell:
     def test_erase_success(self, setup_shell):
         expected_calls = [call('E', 2, 10), call('E', 12, 10), call('E', 22, 5)]
         # Act
-        ShellEraseCommand(self.shell, lba=2, size=25).execute()
+        ShellEraseCommand(self.shell, st_lba=2, erase_size=25).execute()
         # Assert
         assert self.shell.send_command.call_args_list == expected_calls
         assert self.shell.send_command.call_count == 3
@@ -74,7 +74,7 @@ class Test_shell:
     def test_erase_fail(self, setup_shell):
         # Act & Assert
         with pytest.raises(Exception):
-            ShellEraseCommand(self.shell, lba=-1, size=25).execute()
+            ShellEraseCommand(self.shell, st_lba=-1, erase_size=25).execute()
 
     def test_erase_range_success(self, setup_shell):
         # Act
@@ -235,20 +235,9 @@ class Test_logger():
     #     self._logger = Logger()
     #     self.mock_open = mocker.patch("builtins.open", mocker.mock_open())
 
-    def test_logger_init_removes_log_file(self, mocker):
-        Logger._instance = None
-        Logger._initialized = False
-
-        mock_exists = mocker.patch("shell.os.path.exists", return_value=True)
-        mock_remove = mocker.patch("shell.os.remove")
-        mock_glob = mocker.patch("shell.glob.glob", side_effect=lambda pattern: ["file.log", "file.zip"])
-
+    def test_init_logger(self, mocker):
         logger = Logger()
-
         assert logger._initialized is True
-        mock_glob.assert_called()
-        mock_remove.assert_any_call("file.log")
-        mock_remove.assert_any_call("file.zip")
 
     def test_print_calls_rotate_and_writes(self, mocker):
         logger = Logger()

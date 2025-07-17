@@ -3,7 +3,7 @@ import os
 from ssd_commands import SSDCommand, ErrorCommand, WriteCommand, ReadCommand, EraseCommand
 from ssd_texts import SSDNand, SSDOutput
 
-class SSD():
+class SSD:
     def __init__(self):
         self._nand_txt = SSDNand()
         self._output_txt = SSDOutput()

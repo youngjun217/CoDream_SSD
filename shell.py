@@ -269,7 +269,7 @@ class Shell:
     def send_command(self, command, lba, value=None):
         if command == 'W':
             if type(value) is int:
-                value = hex(value).upper()
+                value = f"0x{value:08X}"
             return self.ssd_interface.run([None, 'W', lba, value])
         if command == 'R':
             return self.ssd_interface.run([None, 'R', lba])

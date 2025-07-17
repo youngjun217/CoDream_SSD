@@ -1,6 +1,7 @@
 import os
 from ssd import SSD
 
+
 class Buffer:
 
     def __init__(self):

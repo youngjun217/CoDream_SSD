@@ -46,8 +46,12 @@ class Buffer:
 
     def execute(self):
         for file_name in self.buf_lst:
-            _, command, lba, value = file_name.split("_")
+            parts = file_name.split("_")
+            if len(parts) != 4:
+                continue
+            _, command, lba, value = parts
             self.ssd.run([None, command, lba, value])
+
 
     def flush(self):
         self.execute()
@@ -74,14 +78,20 @@ class Buffer:
         self.buf_lst = []
         cmd = sys_argv[1]
         lba = int(sys_argv[2])
-        value = int(sys_argv[3]) if cmd != "R" else 0
+
+        if lba < 0 or lba >= len(self.command_memory):
+            raise IndexError("LBA index out of range")
+
+        value = int(sys_argv[3], 0) if cmd != "R" else 0
 
         if cmd == "W":
             self.command_memory[lba] = WRITE
             self.value_memory[lba] = value
 
         if cmd == "E":
-            for erase_lba in range(lba, lba+value):
+            for erase_lba in range(lba, lba + value):
+                if erase_lba >= len(self.command_memory) or erase_lba < 0:
+                    raise IndexError("LBA index out of range")
                 self.command_memory[erase_lba] = ERASE
                 self.value_memory[erase_lba] = EMPTY_VALUE
 

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from ssd import SSD, SSDOutput
+from ssd import SSD
+from ssd_texts import SSDOutput
 
 
 class SSDInterface(ABC):

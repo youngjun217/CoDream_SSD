@@ -39,7 +39,7 @@ class Logger:
         with open("latest.log", 'a', encoding='utf-8') as file:
             now = datetime.datetime.now()
             log = f"[{now.strftime('%y.%m.%d %H:%M')}] {header}\t: {message}\n"
-            log = log.expandtabs(tabsize=48)
+            log = log.expandtabs(tabsize=60)
             file.write(log)
 
     def rotate_log_if_needed(self):

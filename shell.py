@@ -27,19 +27,12 @@ class Logger:
             return
         self._initialized = True
 
-        for ext in ('log', 'zip'):
-            for filepath in glob.glob(f"*.{ext}"):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    print(f"Failed to delete {filepath}: {e}")
-
     def print(self, header, message):
         self.rotate_log_if_needed()
         with open("latest.log", 'a', encoding='utf-8') as file:
             now = datetime.datetime.now()
             log = f"[{now.strftime('%y.%m.%d %H:%M')}] {header}\t: {message}\n"
-            log = log.expandtabs(tabsize=60)
+            log = log.expandtabs(tabsize=70)
             file.write(log)
 
     def rotate_log_if_needed(self):
@@ -153,6 +146,8 @@ class ShellFullReadCommand(Command):
             try:
                 self.shell.send_command('R', lba)
                 value = self.shell.get_response_value()
+                if value == "ERROR":
+                    print(value)
                 print(f"LBA {lba} : {value}")
             except Exception as e:
                 self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
@@ -269,13 +264,16 @@ class Shell:
     def send_command(self, command, lba, value=None):
         if command == 'W':
             if type(value) is int:
-                value = hex(value).upper()
+                value = f"0x{value:08X}"
             return self.ssd_interface.run([None, 'W', lba, value])
         if command == 'R':
             return self.ssd_interface.run([None, 'R', lba])
         if command == 'E':
             return self.ssd_interface.run([None, 'E', lba, value])
         return None
+
+    def get_response(self):
+        return self.ssd_interface.get_response()
 
     def get_response_value(self):
         output = self.ssd_interface.get_response()

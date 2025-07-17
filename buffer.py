@@ -1,28 +1,42 @@
 import os
 
-from ssd import SSD
+from ssd_texts import SSDOutput
 
 EMPTY = 0
 EMPTY_VALUE = 0x00000000
 WRITE = 1
 ERASE = 2
+BUFFER_SIZE = 5
+BUFFER_FOLDER_PATH = "./buffer"
 
 class Buffer:
 
     def __init__(self):
-        self.folder_path = './buffer'
-        self.buf_lst = []
+        self.folder_path = BUFFER_FOLDER_PATH
+        self.buf_lst = [''] * (BUFFER_SIZE + 1)
         self.create()
-        self.ssd = SSD()
+        self._output_txt = SSDOutput()
+        self._run_command = []
         self.command_memory = [EMPTY] * 100
         self.value_memory = [EMPTY_VALUE] * 100
 
     def create(self):
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)
-        for i in range(1, 6):
-            file_path = os.path.join(self.folder_path, f'{i}_empty')
+
+        file_list = os.listdir(self.folder_path)
+        for file_name in file_list:
+            splited_file_name = file_name.split("_")
+            new_index = int(splited_file_name[0])
+            self.buf_lst[new_index] = file_name
+
+        for index, buf in enumerate(self.buf_lst):
+            if index == 0 or buf != '':
+                continue
+            file_name = f'{index}_empty'
+            file_path = os.path.join(self.folder_path, f'{index}_empty')
             open(file_path, 'a').close()
+            self.buf_lst[index] = file_name
 
     def run(self, sys_argv):
         self.set_buffer(sys_argv)
@@ -30,21 +44,24 @@ class Buffer:
         lba = int(sys_argv[2])
 
         if cmd == "R":
-            self.ssd._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
+            self._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
+        if cmd == "W":
+            self._output_txt.write("")
 
     def set_buffer(self, sys_argv):
         self.buf_lst = []
         cmd = sys_argv[1]
         lba = int(sys_argv[2])
-        value = int(sys_argv[3]) if cmd != "R" else 0
 
         if cmd == "W":
+            value = int(sys_argv[3], 16)
             self.command_memory[lba] = WRITE
             self.value_memory[lba] = value
-            self.ssd._output_txt.write("")
+            self._output_txt.write("")
 
         if cmd == "E":
-            for erase_lba in range(lba, lba+value):
+            size = int(sys_argv[3])
+            for erase_lba in range(lba, lba+size):
                 self.command_memory[erase_lba] = ERASE
                 self.value_memory[erase_lba] = EMPTY_VALUE
 

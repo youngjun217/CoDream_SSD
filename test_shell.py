@@ -283,7 +283,7 @@ class Test_logger():
         shell = Shell()
         mock_logger = mocker.Mock()
         shell.logger = mock_logger
-        cmd=ShellEraseCommand(shell, lba=-1, size=20)
+        cmd=ShellEraseCommand(shell, st_lba=-1, erase_size=20)
 
         with pytest.raises(Exception):
             cmd.execute()

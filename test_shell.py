@@ -20,7 +20,7 @@ class Test_shell:
 
     def test_read(self):
         #Act
-        cmd = ReadCommand(self.shell, 1)
+        cmd = ShellReadCommand(self.shell, 1)
         cmd.execute()
         #Assert
         assert self.shell._send_command.call_args_list == [(('R', 1),)]
@@ -30,7 +30,7 @@ class Test_shell:
     def test_write_success(self, setup_shell):
         self.read_output.return_value=''
         #Act
-        cmd = WriteCommand(self.shell, idx=5, value=0xDEADBEEF)
+        cmd = ShellWriteCommand(self.shell, idx=5, value=0xDEADBEEF)
         result = cmd.execute()
         #Assert
         assert result is True
@@ -40,7 +40,7 @@ class Test_shell:
     def test_write_fail(self, setup_shell):
         self.read_output.return_value='ERROR'
         #Act
-        cmd = WriteCommand(self.shell, idx=5, value=0xCAFEBABE)
+        cmd = ShellWriteCommand(self.shell, idx=5, value=0xCAFEBABE)
         result = cmd.execute()
         #Assert
         self.mock_print.assert_not_called()
@@ -50,7 +50,7 @@ class Test_shell:
     def test_erase_success(self, setup_shell):
         expected_calls = [call('E',2, 10), call('E',12, 10), call('E',22, 5)]
         #Act
-        cmd = EraseCommand(self.shell, lba=2, size=25)
+        cmd = ShellEraseCommand(self.shell, lba=2, size=25)
         cmd.execute()
         #Assert
         assert self.shell._send_command.call_args_list == expected_calls
@@ -59,7 +59,7 @@ class Test_shell:
 
     def test_erase_fail(self, setup_shell):
         #Act
-        cmd = EraseCommand(self.shell, lba=-1, size=25)
+        cmd = ShellEraseCommand(self.shell, lba=-1, size=25)
         #Assert
         with pytest.raises(Exception):
             cmd.execute()
@@ -68,7 +68,7 @@ class Test_shell:
     def test_erase_range_success(self, setup_shell):
         expected_calls = [call('E',3, 10), call('E',13, 8)]
         #Act
-        cmd = EraseRangeCommand(self.shell, st_lba=3, en_lba=20)
+        cmd = ShellEraseRangeCommand(self.shell, st_lba=3, en_lba=20)
         cmd.execute()
         #Assert
         assert self.shell._send_command.call_args_list == expected_calls
@@ -86,7 +86,7 @@ class Test_shell:
 
     def test_fullread_success(self, setup_shell):
         #Act
-        cmd = FullReadCommand(self.shell)
+        cmd = ShellFullReadCommand(self.shell)
         cmd.execute()
         #Assert
         assert self.shell._send_command.call_count == 100
@@ -97,7 +97,7 @@ class Test_shell:
     def test_fullread_with_errors(self, setup_shell, values):
         self.read_output.return_value=values
         #Act
-        cmd = FullReadCommand(self.shell)
+        cmd = ShellFullReadCommand(self.shell)
         cmd.execute()
         #Assert
         assert self.shell._send_command.call_count == 100
@@ -106,14 +106,14 @@ class Test_shell:
     def test_fullread_raises_exception(self, setup_shell):
         self.read_output.side_effect=ValueError("ERROR")
         #Act & #Assert
-        cmd = FullReadCommand(self.shell)
+        cmd = ShellFullReadCommand(self.shell)
         with pytest.raises(ValueError, match="ERROR"):
             cmd.execute()
 
 
     def test_fullwrite(self, setup_shell):
         #Act
-        cmd = FullWriteCommand(self.shell,value=12341234)
+        cmd = ShellFullWriteCommand(self.shell, value=12341234)
         cmd.execute()
         #Assert
         assert self.shell._send_command.call_count == 100
@@ -124,7 +124,7 @@ class Test_shell:
         mocker.patch('random.randint', side_effect=([0xAABBCCDD] * 100))
         self.nand_readline.side_effect = lambda idx: f"{idx} 0xAABBCCDD"
         #Act
-        cmd = FullWriteAndReadCompareCommand(self.shell)
+        cmd = ShellFullWriteAndReadCompareCommand(self.shell)
         cmd.execute()
         #Assert
         self.mock_print.assert_any_call('PASS')
@@ -134,7 +134,7 @@ class Test_shell:
     def test_FullWriteAndReadCompare_fail(self, setup_shell, values):
         self.nand_readline.return_value=values
         #Act
-        cmd = FullWriteAndReadCompareCommand(self.shell)
+        cmd = ShellFullWriteAndReadCompareCommand(self.shell)
         cmd.execute()
         #Assert
         self.mock_print.assert_called_with('FAIL')
@@ -142,7 +142,7 @@ class Test_shell:
 
     def test_PartialLBAWrite_pass(self, setup_shell):
         #Act
-        cmd = PartialLBAWriteCommand(self.shell)
+        cmd = ShellPartialLBAWriteCommand(self.shell)
         cmd.execute()
         #Assert
         assert self.shell._send_command.call_count == 150
@@ -151,7 +151,7 @@ class Test_shell:
     def test_PartialLBAWrite_fail(self, setup_shell):
         self.nand_readline.side_effect=['00 0x12345678', '02 0x00000000']
         #Act
-        cmd = PartialLBAWriteCommand(self.shell)
+        cmd = ShellPartialLBAWriteCommand(self.shell)
         result = cmd.execute()
         #Assert
         self.mock_print.assert_called_with('FAIL')
@@ -160,7 +160,7 @@ class Test_shell:
 
     def test_WriteReadAging_pass(self, setup_shell):
         #Act
-        cmd = WriteReadAgingCommand(self.shell)
+        cmd = ShellWriteReadAgingCommand(self.shell)
         cmd.execute()
 
         #Assert
@@ -172,25 +172,25 @@ class Test_shell:
     def test_WriteReadAging_fail(self, setup_shell):
         self.nand_readline.side_effect=['1 10', '2 20']
         #Act
-        cmd = WriteReadAgingCommand(self.shell)
+        cmd = ShellWriteReadAgingCommand(self.shell)
         cmd.execute()
         #Assert
         self.mock_print.assert_called_with('FAIL')
 
 
     def test_EraseAndWriteAging_pass(self, setup_shell, mocker):
-        mocker.patch.object(EraseRangeCommand, 'execute', return_value=None)
+        mocker.patch.object(ShellEraseRangeCommand, 'execute', return_value=None)
         #Act
-        cmd = EraseAndWriteAgingCommand(self.shell)
+        cmd = ShellEraseAndWriteAgingCommand(self.shell)
         cmd.execute()
         #Assert
         self.mock_print.assert_called_with('PASS')
 
 
     def test_EraseAndWriteAging_fail(self, setup_shell,mocker):
-        mocker.patch.object(EraseRangeCommand, 'execute', side_effect=RuntimeError())
+        mocker.patch.object(ShellEraseRangeCommand, 'execute', side_effect=RuntimeError())
         # Act & Assert
-        cmd = EraseAndWriteAgingCommand(self.shell)
+        cmd = ShellEraseAndWriteAgingCommand(self.shell)
         with pytest.raises(Exception):
             cmd.execute()
 
@@ -309,7 +309,7 @@ class Test_logger():
         shell=Shell()
         mock_logger = mocker.Mock()
         shell.logger = mock_logger
-        cmd=EraseCommand(shell, lba=-1, size=20)
+        cmd=ShellEraseCommand(shell, lba=-1, size=20)
 
 
         # 실패 조건: LBA < 0

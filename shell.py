@@ -61,7 +61,7 @@ class Command(ABC):
         pass
 
 
-class ReadCommand(Command):
+class ShellReadCommand(Command):
     def __init__(self, shell, idx):
         super().__init__(shell)
         self.idx = idx
@@ -73,7 +73,7 @@ class ReadCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
 
-class WriteCommand(Command):
+class ShellWriteCommand(Command):
     def __init__(self, shell, idx: int, value: int):
         super().__init__(shell)
         self.idx = idx
@@ -89,7 +89,7 @@ class WriteCommand(Command):
         return False
 
 
-class EraseCommand(Command):
+class ShellEraseCommand(Command):
     def __init__(self, shell, lba: int, size: int):
         super().__init__(shell)
         self.lba = lba
@@ -113,7 +113,7 @@ class EraseCommand(Command):
         else:
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
-class EraseRangeCommand(Command):
+class ShellEraseRangeCommand(Command):
     def __init__(self, shell, st_lba: int, en_lba: int):
         super().__init__(shell)
         self.st_lba = st_lba
@@ -124,11 +124,11 @@ class EraseRangeCommand(Command):
             raise ValueError("Invalid LBA range")
 
         size = self.en_lba - self.st_lba + 1  # inclusive range
-        erase_cmd = EraseCommand(self.shell, self.st_lba, size)
+        erase_cmd = ShellEraseCommand(self.shell, self.st_lba, size)
         erase_cmd.execute()
 
 
-class FullWriteCommand(Command):
+class ShellFullWriteCommand(Command):
     def __init__(self, shell, value):
         super().__init__(shell)
         self.value = value
@@ -138,7 +138,7 @@ class FullWriteCommand(Command):
         print("[Full Write] Done")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
-class FullReadCommand(Command):
+class ShellFullReadCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
     def execute(self):
@@ -160,7 +160,7 @@ class FullReadCommand(Command):
 
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
-class FullWriteAndReadCompareCommand(Command):
+class ShellFullWriteAndReadCompareCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
@@ -178,7 +178,7 @@ class FullWriteAndReadCompareCommand(Command):
         print('PASS')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
-class PartialLBAWriteCommand(Command):
+class ShellPartialLBAWriteCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
     def execute(self):
@@ -199,14 +199,14 @@ class PartialLBAWriteCommand(Command):
         print("PASS")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
-class EraseAndWriteAgingCommand(Command):
+class ShellEraseAndWriteAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
         self.shell.send_command('W', idx, value1)
         self.shell.send_command('W', idx, value2)
-        EraseRangeCommand(self.shell, idx, min(idx+2,99)).execute()
+        ShellEraseRangeCommand(self.shell, idx, min(idx + 2, 99)).execute()
 
     def execute(self):
         self.shell.send_command('E', 0, 3)
@@ -222,7 +222,7 @@ class EraseAndWriteAgingCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
-class WriteReadAgingCommand(Command):
+class ShellWriteReadAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
     def execute(self):
@@ -245,7 +245,7 @@ class WriteReadAgingCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
-class FlushCommand:
+class ShellFlushCommand:
     def __init__(self, shell):
         super().__init__(shell)
 
@@ -308,18 +308,18 @@ class Shell():
 
     def command_dictionary(self, args):
         command_dict = {
-            ("read", 2): lambda: ReadCommand(self, int(args[1])).execute(),
-            ("write", 3): lambda: WriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
-            ("fullwrite", 2): lambda: FullWriteCommand(self,int(args[1], 16)).execute(),
-            ("fullread", 1): lambda: FullReadCommand(self).execute(),
-            ('1_', 1): lambda: FullWriteAndReadCompareCommand(self).execute(),
-            ('2_', 1): lambda: PartialLBAWriteCommand(self).execute(),
-            ('3_', 1): lambda: WriteReadAgingCommand(self).execute(),
-            ('4_', 1): lambda: EraseAndWriteAgingCommand(self).execute(),
+            ("read", 2): lambda: ShellReadCommand(self, int(args[1])).execute(),
+            ("write", 3): lambda: ShellWriteCommand(self, int(args[1]), int(args[2], 16)).execute(),
+            ("fullwrite", 2): lambda: ShellFullWriteCommand(self, int(args[1], 16)).execute(),
+            ("fullread", 1): lambda: ShellFullReadCommand(self).execute(),
+            ('1_', 1): lambda: ShellFullWriteAndReadCompareCommand(self).execute(),
+            ('2_', 1): lambda: ShellPartialLBAWriteCommand(self).execute(),
+            ('3_', 1): lambda: ShellWriteReadAgingCommand(self).execute(),
+            ('4_', 1): lambda: ShellEraseAndWriteAgingCommand(self).execute(),
             ('help', 1): lambda: self.help(),
-            ('erase', 3): lambda: EraseCommand(self, int(args[1]), int(args[2])).execute(),
-            ('erase_range', 3): lambda: EraseRangeCommand(self,int(args[1]), int(args[2])).execute(),
-            ('flush',1): lambda:FlushCommand(self).execute()
+            ('erase', 3): lambda: ShellEraseCommand(self, int(args[1]), int(args[2])).execute(),
+            ('erase_range', 3): lambda: ShellEraseRangeCommand(self, int(args[1]), int(args[2])).execute(),
+            ('flush',1): lambda:ShellFlushCommand(self).execute()
         }
         return command_dict
 

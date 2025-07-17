@@ -85,35 +85,37 @@ class ShellWriteCommand(Command):
             print('[Write] Done')
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
             return True
+
         self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
         return False
 
 
 class ShellEraseCommand(Command):
-    def __init__(self, shell, lba: int, size: int):
+    def __init__(self, shell, st_lba: int, erase_size: int):
         super().__init__(shell)
-        self.lba = lba
-        self.size = size
+        self.st_lba = st_lba
+        self.erase_size = erase_size
 
     def execute(self):
-        if (0 > self.lba or self.lba > 99) or (1 > self.size or self.size > 100) or (self.lba + self.size > 100):
+        if (0 > self.st_lba or self.st_lba > 99) or (1 > self.erase_size or self.erase_size > 100) or (self.st_lba + self.erase_size > 100):
             self.shell.logger.print(f"{self.execute.__qualname__}()", f"FAIL")
             raise Exception()
 
         offset = 0
-        while self.size > 0:
-            erase_size = min(self.size, 10)
-            self.shell.send_command('E', self.lba + offset, erase_size)
+        while self.erase_size > 0:
+            erase_size = min(self.erase_size, 10)
+            self.shell.send_command('E', self.st_lba + offset, erase_size)
             offset += 10
-            self.size -= erase_size
+            self.erase_size -= erase_size
+
         caller_frame = inspect.stack()[4]
         caller_name = caller_frame.code_context
-        if 'EraseAndWriteAgingCommand' in caller_name[0]:
-            pass
-        else:
-            self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
-            
+        if 'EraseAndWriteAgingCommand' in caller_name[0]:
+            return
+
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
+
 class ShellEraseRangeCommand(Command):
     def __init__(self, shell, st_lba: int, en_lba: int):
         super().__init__(shell)
@@ -124,8 +126,8 @@ class ShellEraseRangeCommand(Command):
         if self.st_lba > self.en_lba or self.st_lba < 0 or self.en_lba > 100:
             raise ValueError
 
-        size = self.en_lba - self.st_lba + 1  # inclusive range
-        erase_cmd = ShellEraseCommand(self.shell, self.st_lba, size)
+        erase_range = self.en_lba - self.st_lba + 1  # inclusive range
+        erase_cmd = ShellEraseCommand(self.shell, self.st_lba, erase_range)
         erase_cmd.execute()
 
 
@@ -135,11 +137,11 @@ class ShellFullWriteCommand(Command):
         self.value = value
 
     def execute(self):
-        for x in range(100):
-            self.shell.send_command('W', x, self.value)
+        for lba in range(100):
+            self.shell.send_command('W', lba, self.value)
+
         print("[Full Write] Done")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
-
 
 class ShellFullReadCommand(Command):
     def __init__(self, shell):
@@ -151,75 +153,68 @@ class ShellFullReadCommand(Command):
             try:
                 self.shell.send_command('R', lba)
                 value = self.shell.get_response_value()
-
-                if value == "ERROR":
-                    print(value)
-                    continue
-
                 print(f"LBA {lba} : {value}")
-
             except Exception as e:
                 self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                 raise e
 
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
-
 class ShellFullWriteAndReadCompareCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
     def execute(self):
-        for start_lba in range(0, 100, 5):
-            for x in range(5):
-                rand_num = random.randint(0, 0xFFFFFFFF)
-                hex_str = f"0x{rand_num:08X}"
-                self.shell.send_command('W', start_lba + x, rand_num)
-                self.shell.send_command('R', start_lba + x)
-                if self.shell.get_response_value() != hex_str:
+        for st_lba in range(0, 100, 5):
+            for offset in range(5):
+                random_value = random.randint(0, 0xFFFFFFFF)
+                self.shell.send_command('W', st_lba + offset, random_value)
+                self.shell.send_command('R', st_lba + offset)
+                if self.shell.get_response_value() != f"0x{random_value:08X}":
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
+
         print('PASS')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
-
 
 class ShellPartialLBAWriteCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
     def execute(self):
-        partialLBA_index_list = [4, 0, 3, 1, 2]
+        lba_list = [4, 0, 3, 1, 2]
         for _ in range(30):
-            random_write_value = random.randint(0, 0xFFFFFFFF)
-            for x in range(5):
-                self.shell.send_command('W', partialLBA_index_list[x], random_write_value)
+            random_value = random.randint(0, 0xFFFFFFFF)
+            for i in range(5):
+                self.shell.send_command('W', lba_list[i], random_value)
 
             self.shell.send_command('R', 0)
-            check_ref = self.shell.get_response_value()
-            for x in range(1, 5):
-                self.shell.send_command('R', x)
-                if check_ref != self.shell.get_response_value():
+            ref_value = self.shell.get_response_value()
+            for lba in range(1, 5):
+                self.shell.send_command('R', lba)
+                comp_value = self.shell.get_response_value()
+                if ref_value != comp_value:
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
+
         print("PASS")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
-
 
 class ShellEraseAndWriteAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
     def _aging(self, lba):
-        value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
-        self.shell.send_command('W', lba, value1)
-        self.shell.send_command('W', lba, value2)
+        random_value1, random_value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
+        self.shell.send_command('W', lba, random_value1)
+        self.shell.send_command('W', lba, random_value2)
         ShellEraseRangeCommand(self.shell, lba, min(lba + 2, 99)).execute()
 
     def execute(self):
         self.shell.send_command('E', 0, 3)
-        for i in range(30):
+        for _ in range(30):
             for lba in range(2, 100, 2):
                 try:
                     self._aging(lba)
@@ -227,6 +222,7 @@ class ShellEraseAndWriteAgingCommand(Command):
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     raise e
+
         print('PASS')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
@@ -236,21 +232,22 @@ class ShellWriteReadAgingCommand(Command):
         super().__init__(shell)
 
     def execute(self):
-        value = random.randint(0, 0xFFFFFFFF)
-        for i in range(200):
-            self.shell.send_command('W', 0, value)
-            self.shell.send_command('W', 99, value)
+        random_value = random.randint(0, 0xFFFFFFFF)
+        for _ in range(200):
+            self.shell.send_command('W', 0, random_value)
+            self.shell.send_command('W', 99, random_value)
 
             self.shell.send_command('R', 0)
-            check_ref = self.shell.get_response_value()
+            ref_value = self.shell.get_response_value()
 
             self.shell.send_command('R', 99)
-            check_comp = self.shell.get_response_value()
+            comp_value = self.shell.get_response_value()
 
-            if check_ref != check_comp:
+            if ref_value != comp_value:
                 print('FAIL')
                 self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                 return
+
         print('PASS')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
@@ -264,23 +261,21 @@ class ShellFlushCommand:
         pass
 
 
-class Shell():
+class Shell:
     def __init__(self):
         self.logger = Logger()
         self.ssd_interface: SSDInterface = SSDConcreteInterface()
 
     def send_command(self, command, lba, value=None):
-        if (command == 'W'):
+        if command == 'W':
             if type(value) is int:
                 value = hex(value).upper()
             return self.ssd_interface.run([None, 'W', lba, value])
-        if (command == 'R'):
+        if command == 'R':
             return self.ssd_interface.run([None, 'R', lba])
-        if (command == 'E'):
+        if command == 'E':
             return self.ssd_interface.run([None, 'E', lba, value])
-
-    def get_response(self):
-        return self.ssd_interface.get_response()
+        return None
 
     def get_response_value(self):
         output = self.ssd_interface.get_response()

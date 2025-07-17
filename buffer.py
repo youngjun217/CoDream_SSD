@@ -7,11 +7,12 @@ EMPTY_VALUE = 0x00000000
 WRITE = 1
 ERASE = 2
 BUFFER_SIZE = 5
+BUFFER_FOLDER_PATH = "./buffer"
 
 class Buffer:
 
     def __init__(self):
-        self.folder_path = './buffer'
+        self.folder_path = BUFFER_FOLDER_PATH
         self.buf_lst = [''] * (BUFFER_SIZE + 1)
         self.create()
         self._output_txt = SSDOutput()

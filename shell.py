@@ -9,7 +9,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 
-from ssd import SSDOutput, SSDNand
+from ssd_texts import SSDOutput, SSDNand
 from ssd_interface import SSDInterface, SSDConcreteInterface
 
 

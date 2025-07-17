@@ -14,9 +14,11 @@ class SSDInterface(ABC):
 
 
 class SSDConcreteInterface(SSDInterface):
+    def __init__(self):
+        self.buffer = Buffer()
+
     def run(self, args):
-        buffer = Buffer()
-        buffer.run(args)
+        self.buffer.run(args)
 
     def get_response(self):
         ssd_output_txt = SSDOutput()

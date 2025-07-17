@@ -9,10 +9,6 @@ class SSDText(ABC):
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
-        if not hasattr(self, 'initialized'):
-            self.initialized = True
-
     @abstractmethod
     def read(self):  pass
 
@@ -22,16 +18,20 @@ class SSDText(ABC):
 
 class SSDNand(SSDText):
     def __init__(self):
-        super().__init__()
-        ssd_nand_txt = []
-        for i in range(0, 100):
-            newline = f"{i:02d} 0x00000000\n"
-            ssd_nand_txt.append(newline)
-        self.write(ssd_nand_txt)
+        if not hasattr(self, 'initialized'):
+            self.initialized = True
+            ssd_nand_txt = []
+            for i in range(0, 100):
+                newline = f"{i:02d} 0x00000000\n"
+                ssd_nand_txt.append(newline)
+            self.write(ssd_nand_txt)
 
     def read(self):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
-            return file.readlines()
+            lines = file.readlines()
+            fixed_size_lines = lines + ["\n"] * (100 - len(lines))
+            fixed_size_lines = fixed_size_lines[:100]
+            return fixed_size_lines
 
     def readline(self, lba):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
@@ -44,12 +44,13 @@ class SSDNand(SSDText):
 
 class SSDOutput(SSDText):
     def __init__(self):
-        super().__init__()
-        self.write("")
+        if not hasattr(self, 'initialized'):
+            self.initialized = True
+            self.write("")
 
     def read(self):
         with open("ssd_output.txt", 'r', encoding='utf-8') as file:
-            return file.read()
+            return file.read().rstrip('/n')
 
     def write(self, output):
         with open("ssd_output.txt", 'w', encoding='utf-8') as file:

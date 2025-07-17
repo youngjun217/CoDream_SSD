@@ -214,7 +214,7 @@ class EraseAndWriteAgingCommand(Command):
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     raise e
         print('PASS')
-        self.shell.logger.print(f"{self.execute().__qualname__}()", "PASS")
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
 class WriteReadAgingCommand(Command):

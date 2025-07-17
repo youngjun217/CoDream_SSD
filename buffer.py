@@ -37,7 +37,6 @@ class Buffer:
         if empty_idx != -1:
             os.rename(old_name, new_name)
             self.buf_lst[empty_idx - 1] = f"{empty_idx}_{command}_{lba}_{value}"
-        print(self.buf_lst)
 
     def execute(self):
         for file_name in self.buf_lst:

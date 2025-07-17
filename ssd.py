@@ -1,9 +1,7 @@
 import sys
 import os
-
 from ssd_commands import SSDCommand, ErrorCommand, WriteCommand, ReadCommand, EraseCommand
 from ssd_texts import SSDNand, SSDOutput
-
 
 class SSD():
     def __init__(self):

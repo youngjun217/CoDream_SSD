@@ -6,12 +6,13 @@ EMPTY = 0
 EMPTY_VALUE = 0x00000000
 WRITE = 1
 ERASE = 2
+BUFFER_SIZE = 5
 
 class Buffer:
 
     def __init__(self):
         self.folder_path = './buffer'
-        self.buf_lst = []
+        self.buf_lst = [''] * (BUFFER_SIZE + 1)
         self.create()
         self._output_txt = SSDOutput()
         self._run_command = []
@@ -21,11 +22,20 @@ class Buffer:
     def create(self):
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)
-        for i in range(1, 6):
-            file_name = f'{i}_empty'
-            file_path = os.path.join(self.folder_path, f'{i}_empty')
+
+        file_list = os.listdir(self.folder_path)
+        for file_name in file_list:
+            splited_file_name = file_name.split("_")
+            new_index = int(splited_file_name[0])
+            self.buf_lst[new_index] = file_name
+
+        for index, buf in enumerate(self.buf_lst):
+            if index == 0 or buf != '':
+                continue
+            file_name = f'{index}_empty'
+            file_path = os.path.join(self.folder_path, f'{index}_empty')
             open(file_path, 'a').close()
-            self.buf_lst.append(file_name)
+            self.buf_lst[index] = file_name
 
     def write(self, command, lba, value=None):
         empty_idx = -1

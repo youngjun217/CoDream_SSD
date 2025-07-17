@@ -1,4 +1,5 @@
 import os
+
 from ssd import SSD
 
 
@@ -13,7 +14,7 @@ class Buffer:
     def create(self):
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)
-        for i in range(1,6):
+        for i in range(1, 6):
             file_name = f'{i}_empty'
             file_path = os.path.join(self.folder_path, f'{i}_empty')
             open(file_path, 'a').close()
@@ -27,7 +28,7 @@ class Buffer:
         for idx, file_name in enumerate(self.buf_lst):
             splited_file_name = file_name.split("_")
             if splited_file_name[1] == "empty":
-                empty_idx = idx+1
+                empty_idx = idx + 1
                 break
 
         if empty_idx == -1:
@@ -39,26 +40,21 @@ class Buffer:
             os.rename(old_name, new_name)
 
     def execute(self):
-        ssd = SSD()
         for file_name in self.buf_lst:
-            idx, command, lba, value = file_name.split("_")
-            if command == "W":
-                ssd.write_ssd(lba, value)
-            if command == "E":
-                ssd.erase_ssd(lba, value)
-
+            _, command, lba, value = file_name.split("_")
+            self.ssd.run(f'{command} {lba} {value}')
 
     def flush(self):
         self.execute()
         for idx, file in enumerate(self.buf_lst):
-            os.rename(f"{self.folder_path}/{file}", f"{self.folder_path}/{idx+1}_empty")
+            os.rename(f"{self.folder_path}/{file}", f"{self.folder_path}/{idx + 1}_empty")
             self.buf_lst[idx] = f"{idx + 1}_empty"
-
 
     def run(self, sys_argv):
         cmd = sys_argv[1]
         lba = int(sys_argv[2])
         buffer_lst = self.buf_lst
+        buffer_empty_cnt = sum('empty' in buffer_cmd for buffer_cmd in buffer_lst)
         if cmd == 'R':
             for buffer_cmd in buffer_lst:
                 cmd_lst = buffer_cmd.split('_')
@@ -94,3 +90,6 @@ class Buffer:
         elif cmd == 'E':
             # 기능 추가 필요
             pass
+
+        elif cmd == 'F' or buffer_empty_cnt == 0:
+            self.flush()

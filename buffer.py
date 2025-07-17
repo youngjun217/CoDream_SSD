@@ -65,8 +65,8 @@ class Buffer:
 
         if cmd == "R":
             self.ssd._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
-        if cmd == "W":
-            self.ssd._output_txt.write("")
+
+
 
         #if buffer size is over 6, flush feature is needed. it's not developed yet.
 

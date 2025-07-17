@@ -26,8 +26,13 @@ class Logger:
         if self._initialized:
             return
         self._initialized = True
-        if os.path.exists(self.LOG_FILE):
-            os.remove(self.LOG_FILE)
+
+        for ext in ('log', 'zip'):
+            for filepath in glob.glob(f"*.{ext}"):
+                try:
+                    os.remove(filepath)
+                except Exception as e:
+                    print(f"Failed to delete {filepath}: {e}")
 
     def print(self, header, message):
         self.rotate_log_if_needed()
@@ -62,8 +67,8 @@ class ReadCommand(Command):
         self.idx = idx
 
     def execute(self) -> None:
-        self.shell._send_command('R', self.idx)
-        value = self.shell._get_response_value()
+        self.shell.send_command('R', self.idx)
+        value = self.shell.get_response_value()
         print(f'[Read] LBA {self.idx}: {value}')
         self.shell.logger.print(f"{self.execute.__qualname__}()", f"LBA {self.idx}: {value}")
 
@@ -75,8 +80,8 @@ class WriteCommand(Command):
         self.value = value
 
     def execute(self) -> bool:
-        self.shell._send_command('W', self.idx, self.value)
-        if self.shell._get_response_value() == '':
+        self.shell.send_command('W', self.idx, self.value)
+        if self.shell.get_response_value() == '':
             print('[Write] Done')
             self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
             return True
@@ -98,7 +103,7 @@ class EraseCommand(Command):
         offset = 0
         while self.size > 0:
             erase_size = min(self.size, 10)
-            self.shell._send_command('E', self.lba + offset, erase_size)
+            self.shell.send_command('E', self.lba + offset, erase_size)
             offset += 10
             self.size -= erase_size
         caller_frame = inspect.stack()[4]
@@ -129,7 +134,7 @@ class FullWriteCommand(Command):
         self.value = value
     def execute(self):
         for x in range(100):
-            self.shell._send_command('W', x, self.value)
+            self.shell.send_command('W', x, self.value)
         print("[Full Write] Done")
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
@@ -140,8 +145,8 @@ class FullReadCommand(Command):
         print("[Full Read]")
         for lba in range(100):
             try:
-                self.shell._send_command('R', lba)
-                value = self.shell._get_response_value()
+                self.shell.send_command('R', lba)
+                value = self.shell.get_response_value()
 
                 if value == "ERROR":
                     print(value)
@@ -164,9 +169,9 @@ class FullWriteAndReadCompareCommand(Command):
             for x in range(5):
                 rand_num = random.randint(0, 0xFFFFFFFF)
                 hex_str = f"0x{rand_num:08X}"
-                self.shell._send_command('W', start_idx + x, rand_num)
-                self.shell._send_command('R', start_idx + x)
-                if self.shell._get_response_value() != hex_str:
+                self.shell.send_command('W', start_idx + x, rand_num)
+                self.shell.send_command('R', start_idx + x)
+                if self.shell.get_response_value() != hex_str:
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
@@ -181,13 +186,13 @@ class PartialLBAWriteCommand(Command):
         for _ in range(30):
             random_write_value = random.randint(0, 0xFFFFFFFF)
             for x in range(5):
-                self.shell._send_command('W', partialLBA_index_list[x], random_write_value)
+                self.shell.send_command('W', partialLBA_index_list[x], random_write_value)
 
-            self.shell._send_command('R', 0)
-            check_ref = self.shell._get_response_value()
+            self.shell.send_command('R', 0)
+            check_ref = self.shell.get_response_value()
             for x in range(1, 5):
-                self.shell._send_command('R', x)
-                if check_ref != self.shell._get_response_value():
+                self.shell.send_command('R', x)
+                if check_ref != self.shell.get_response_value():
                     print('FAIL')
                     self.shell.logger.print(f"{self.execute.__qualname__}()", "FAIL")
                     return
@@ -199,12 +204,12 @@ class EraseAndWriteAgingCommand(Command):
         super().__init__(shell)
     def _aging(self, idx):
         value1, value2 = [random.randint(0, 0xFFFFFFFF) for _ in range(2)]
-        self.shell._send_command('W', idx, value1)
-        self.shell._send_command('W', idx, value2)
+        self.shell.send_command('W', idx, value1)
+        self.shell.send_command('W', idx, value2)
         EraseRangeCommand(self.shell, idx, min(idx+2,99)).execute()
 
     def execute(self):
-        self.shell._send_command('E', 0, 3)
+        self.shell.send_command('E', 0, 3)
         for i in range(30):
             for idx in range(2, 100, 2):
                 try:
@@ -223,14 +228,14 @@ class WriteReadAgingCommand(Command):
     def execute(self):
         value = random.randint(0, 0xFFFFFFFF)
         for i in range(200):
-            self.shell._send_command('W', 0, value)
-            self.shell._send_command('W', 99, value)
+            self.shell.send_command('W', 0, value)
+            self.shell.send_command('W', 99, value)
 
-            self.shell._send_command('R', 0)
-            check_ref = self.shell._get_response_value()
+            self.shell.send_command('R', 0)
+            check_ref = self.shell.get_response_value()
 
-            self.shell._send_command('R', 99)
-            check_comp = self.shell._get_response_value()
+            self.shell.send_command('R', 99)
+            check_comp = self.shell.get_response_value()
 
             if check_ref != check_comp:
                 print('FAIL')
@@ -254,7 +259,7 @@ class Shell():
         self.logger = Logger()
         self.ssd_interface: SSDInterface = SSDConcreteInterface()
 
-    def _send_command(self, command, lba, value=None):
+    def send_command(self, command, lba, value=None):
         if (command == 'W'):
             if type(value) is int:
                 value = hex(value).upper()
@@ -264,10 +269,10 @@ class Shell():
         if (command == 'E'):
             return self.ssd_interface.run([None, 'E', lba, value])
 
-    def _get_response(self):
+    def get_response(self):
         return self.ssd_interface.get_response()
 
-    def _get_response_value(self):
+    def get_response_value(self):
         output = self.ssd_interface.get_response()
         if len(output.split()) == 2:
             return output.split()[1]

@@ -233,6 +233,15 @@ class WriteReadAgingCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
+class FlushCommand:
+    def __init__(self, shell):
+        super().__init__(shell)
+
+    def execute(self):
+        self.shell.ssd_interface.run()
+        pass
+
+
 class Shell():
     def __init__(self):
         self.ssd_output = SSDOutput()
@@ -290,7 +299,8 @@ class Shell():
             ('4_', 1): lambda: EraseAndWriteAgingCommand(self).execute(),
             ('help', 1): lambda: self.help(),
             ('erase', 3): lambda: EraseCommand(self, int(args[1]), int(args[2])).execute(),
-            ('erase_range', 3): lambda: EraseRangeCommand(self,int(args[1]), int(args[2])).execute()
+            ('erase_range', 3): lambda: EraseRangeCommand(self,int(args[1]), int(args[2])).execute(),
+            ('flush',1): lambda:FlushCommand(self).execute()
         }
         return command_dict
 

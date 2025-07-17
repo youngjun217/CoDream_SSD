@@ -6,17 +6,6 @@ from ssd_commands import SSDCommand, SSDErrorCommand, SSDWriteCommand, SSDReadCo
 from ssd_texts import SSDNand, SSDOutput
 
 class SSD:
-    def __init__(self):
-        self._nand_txt = SSDNand()
-        self._output_txt = SSDOutput()
-
-    @property
-    def nand_txt(self):
-        return self._nand_txt
-
-    @property
-    def output_txt(self):
-        return self._output_txt
 
     def run(self, sys_argv):
         cmd = sys_argv[1]

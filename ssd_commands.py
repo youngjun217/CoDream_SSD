@@ -27,7 +27,7 @@ class SSDCommand(ABC):
     def execute(self): pass
 
 
-class ErrorCommand(SSDCommand):
+class SSDErrorCommand(SSDCommand):
     def __init__(self):
         super().__init__()
 
@@ -39,7 +39,7 @@ class ErrorCommand(SSDCommand):
     def execute(self): pass
 
 
-class ReadCommand(SSDCommand):
+class SSDReadCommand(SSDCommand):
     def __init__(self):
         super().__init__()
         self._lba = 0
@@ -65,7 +65,7 @@ class ReadCommand(SSDCommand):
         self._output_txt.write(target_line)
 
 
-class WriteCommand(SSDCommand):
+class SSDWriteCommand(SSDCommand):
     def __init__(self):
         super().__init__()
         self._lba = 0
@@ -104,7 +104,7 @@ class WriteCommand(SSDCommand):
         self._output_txt.write("")
 
 
-class EraseCommand(SSDCommand):
+class SSDEraseCommand(SSDCommand):
     def __init__(self):
         super().__init__()
         self._lba = 0

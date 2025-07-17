@@ -1,136 +1,171 @@
 import os
 
-from ssd_texts import SSDOutput
+from ssd_texts import SSDOutput, SSDText
 
 EMPTY = 0
 EMPTY_VALUE = 0x00000000
+ERASE_VALUE = 0x00000000
 WRITE = 1
 ERASE = 2
 BUFFER_SIZE = 5
+MAX_ERASE_SIZE = 10
 BUFFER_FOLDER_PATH = "./buffer"
+
 
 class Buffer:
 
     def __init__(self):
-        self.folder_path = BUFFER_FOLDER_PATH
-        self.buf_lst = [''] * (BUFFER_SIZE + 1)
-        self.create()
-        self._output_txt = SSDOutput()
+        self._folder_path = BUFFER_FOLDER_PATH
+        self._buf_lst = [''] * BUFFER_SIZE
+        self._buffer_cnt = 0
+        self._output_txt: SSDText = SSDOutput()
         self._run_command = []
-        self.command_memory = [EMPTY] * 100
-        self.value_memory = [EMPTY_VALUE] * 100
+        self._buffer_cmd_memory = [[EMPTY, EMPTY_VALUE] for _ in range(100)]
+
+        self.create()
 
     def create(self):
-        if not os.path.exists(self.folder_path):
-            os.makedirs(self.folder_path)
+        if not os.path.exists(self._folder_path):
+            os.makedirs(self._folder_path)
 
-        file_list = os.listdir(self.folder_path)
+        self.get_exist_files()
+        self.make_absent_files()
+
+    def get_exist_files(self):
+        file_list = os.listdir(self._folder_path)
         for file_name in file_list:
             splited_file_name = file_name.split("_")
-            new_index = int(splited_file_name[0])
-            self.buf_lst[new_index] = file_name
+            new_index = int(splited_file_name[0]) - 1
+            self._buf_lst[new_index] = file_name
+            if file_name[2:] != 'empty':
+                self._buffer_cnt += 1
+                cmd, lba, value = self._get_buf_information(file_name)
+                if cmd == 'W':
+                    value = int(value, 16)
+                    self._set_buffer_with_write(WRITE, lba, value)
+                else:
+                    size = int(value)
+                    self._set_buffer_with_erase(ERASE, lba, size)
 
-        for index, buf in enumerate(self.buf_lst):
-            if index == 0 or buf != '':
+    def _set_buffer_with_write(self, set_cmd, lba, value):
+        self._buffer_cmd_memory[lba][0] = WRITE if set_cmd == WRITE else EMPTY
+        self._buffer_cmd_memory[lba][1] = value if set_cmd == WRITE else EMPTY_VALUE
+
+    def _set_buffer_with_erase(self, set_cmd, lba, size):
+        for index in range(lba, lba + size):
+            self._buffer_cmd_memory[index][0] = ERASE if set_cmd == ERASE else EMPTY
+            self._buffer_cmd_memory[index][1] = ERASE_VALUE if set_cmd == ERASE else EMPTY_VALUE
+
+    def make_absent_files(self):
+        for index, buf in enumerate(self._buf_lst):
+            if buf != '':
                 continue
             file_name = f'{index}_empty'
-            file_path = os.path.join(self.folder_path, f'{index}_empty')
+            file_path = os.path.join(self._folder_path, f'{index}_empty')
             open(file_path, 'a').close()
-            self.buf_lst[index] = file_name
+            self._buf_lst[index] = file_name
+
+    def _get_buf_information(self, buf_val):
+        _, cmd, lba, value = buf_val.split("_")
+        return cmd, int(lba), value
 
     def run(self, sys_argv):
-        self.set_buffer(sys_argv)
+        self._run_command = []
         cmd = sys_argv[1]
-        lba = int(sys_argv[2])
+        if cmd == 'R':
+            self._check_buffer_read(sys_argv)
+        elif cmd == 'W':
+            self._check_buffer_write(sys_argv)
+        elif cmd == 'E':
+            self._check_buffer_erase(sys_argv)
+        else:
+            self._flush(self._buffer_cnt)
 
-        if cmd == "R":
-            self._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
-        if cmd == "W":
-            self._output_txt.write("")
-
+        self._update_buffer_files()
         return self._run_command
 
-    def set_buffer(self, sys_argv):
-        self.buf_lst = []
-        self._run_command =[]
-        cmd = sys_argv[1]
+    def _check_buffer_read(self, sys_argv):
         lba = int(sys_argv[2])
 
-        if cmd == "W":
-            value = int(sys_argv[3], 16)
-            self.command_memory[lba] = WRITE
-            self.value_memory[lba] = value
-            self._output_txt.write("")
+        if self._buffer_cmd_memory[lba][0] != EMPTY:
+            self._output_txt.write(f"{lba:02d} 0x{self._buffer_cmd_memory[lba][1]:08X}\n")  # f"0x{value:08X}"
+        else:
+            self._run_command.append(sys_argv)
 
-        if cmd == "E":
-            size = int(sys_argv[3])
-            for erase_lba in range(lba, lba+size):
-                self.command_memory[erase_lba] = ERASE
-                self.value_memory[erase_lba] = EMPTY_VALUE
+    def _check_buffer_write(self, sys_argv):
+        lba = int(sys_argv[2])
+        value = int(sys_argv[3], 16)
 
-        #update buffer
-        prev_command = EMPTY
-        start_lba = -1
-        erase_size = 0
-        for memory_lba, saved_command in enumerate(self.command_memory):
-            if saved_command == WRITE:
-                self.buf_lst.append(f"{len(self.buf_lst)+1}_W_{memory_lba}_0x{self.value_memory[memory_lba]:08X}")
-                if prev_command == ERASE:
-                    self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
-                prev_command = WRITE
+        if self._buffer_cmd_memory[lba][0] != WRITE and self._buffer_cnt == BUFFER_SIZE:
+            self._flush(self._buffer_cnt)
+
+        self._buffer_cnt = 0
+        self._set_buffer_with_write(WRITE, lba, value)
+
+        self._merge_writes()
+        self._merge_erases()
+
+        self._output_txt.write("")
+
+    def _check_buffer_erase(self, sys_argv):
+        lba = int(sys_argv[2])
+        size = int(sys_argv[3])
+
+        self._buffer_cnt = 0
+        self._set_buffer_with_erase(ERASE, lba, size)
+
+        self._merge_writes()
+        self._merge_erases()
+
+    def _merge_writes(self):
+        for lba, memory_value in enumerate(self._buffer_cmd_memory):
+            if memory_value[0] != WRITE:
+                continue
+            self._buf_lst[self._buffer_cnt] = f"{self._buffer_cnt + 1}_W_{lba}_0x{memory_value[1]:08X}"
+            self._buffer_cnt += 1
+
+    def _merge_erases(self):
+        erase_cnt = 0
+        first_lba = 0
+        for lba, memory_value in enumerate(self._buffer_cmd_memory):
+            if memory_value[0] != ERASE:
+                if erase_cnt > 0:
+                    erase_cnt = self._set_erace_command(first_lba, erase_cnt)
                 continue
 
-            if saved_command == EMPTY:
-                if prev_command == ERASE:
-                    self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
-                prev_command = EMPTY
-                continue
+            first_lba = lba if erase_cnt == 0 else first_lba
+            erase_cnt += 1
 
-            if saved_command == ERASE:
-                if prev_command != ERASE:
-                    start_lba = memory_lba
-                    erase_size = 1
-                    prev_command = ERASE
-                else:
-                    erase_size += 1
-                    if erase_size == 10:
-                        self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
-                        prev_command = EMPTY
+            if erase_cnt == MAX_ERASE_SIZE:
+                erase_cnt = self._set_erace_command(first_lba, erase_cnt)
 
-        self.flush(5)
+    def _set_erace_command(self, lba, size):
+        if self._buffer_cnt == BUFFER_SIZE:
+            self._flush(self._buffer_cnt)
 
-    def flush(self, cnt):
+        self._buf_lst[self._buffer_cnt] = f"{self._buffer_cnt + 1}_E_{lba}_{size}"
+        self._buffer_cnt += 1
+        return 0
+
+    def _flush(self, cnt):
         for i in range(cnt):
-            self.remove_buffer_and_put_run_command(i)
-        self.buf_lst = self.buf_lst[cnt:]
-        self.rename_buffer_to_start_1()
-        while len(self.buf_lst) < cnt:
-            self.buf_lst.append(f"{len(self.buf_lst) + 1}_empty")
-        self.remove_flushed_files_and_create_new_buffer()
+            self._remove_buffer_and_put_run_command(i)
+            self._buf_lst[i] = f"{i + 1}_empty"
+            self._buffer_cnt -= 1
 
-    def rename_buffer_to_start_1(self):
-        for buf_idx, buf in enumerate(self.buf_lst):
-            self.buf_lst[buf_idx] = f"{buf_idx + 1}_{buf[2:]}"
-
-    def remove_flushed_files_and_create_new_buffer(self):
-        for filename in os.listdir(self.folder_path):
-            file_path = os.path.join(self.folder_path, filename)
-            os.remove(file_path)
-        for buf in self.buf_lst:
-            file_path = os.path.join(self.folder_path, buf)
-            open(file_path, 'a').close()
-        for idx, filename in enumerate(os.listdir(self.folder_path)):
-            if self.buf_lst[idx] != filename:
-                file_path = os.path.join(self.folder_path, filename)
-                os.rename(file_path, f"{self.folder_path}/{self.buf_lst[idx]}")
-
-    def remove_buffer_and_put_run_command(self, i):
-        _, flushed_cmd, flushed_lba, flushed_value = self.buf_lst[i].split("_")
-        flushed_lba = int(flushed_lba)
+    def _remove_buffer_and_put_run_command(self, index):
+        flushed_cmd, flushed_lba, flushed_value = self._get_buf_information(self._buf_lst[index])
         if flushed_cmd == "W":
-            self.command_memory[int(flushed_lba)] = EMPTY
+            self._set_buffer_with_write(EMPTY, flushed_lba, flushed_value)
         if flushed_cmd == "E":
-            flushed_value = int(flushed_value)
-            for flush_erase_idx in range(flushed_lba, flushed_lba + flushed_value):
-                self.command_memory[int(flush_erase_idx)] = EMPTY
+            flushed_size = int(flushed_value)
+            self._set_buffer_with_erase(EMPTY, flushed_lba, flushed_size)
         self._run_command.append([None, flushed_cmd, flushed_lba, flushed_value])
+
+    def _update_buffer_files(self):
+        for filename in os.listdir(self._folder_path):
+            file_path = os.path.join(self._folder_path, filename)
+            os.remove(file_path)
+        for buf in self._buf_lst:
+            file_path = os.path.join(self._folder_path, buf)
+            open(file_path, 'a').close()

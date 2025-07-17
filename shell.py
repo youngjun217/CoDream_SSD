@@ -28,8 +28,13 @@ class Logger:
         if self._initialized:
             return
         self._initialized = True
-        if os.path.exists(self.LOG_FILE):
-            os.remove(self.LOG_FILE)
+
+        for ext in ('log', 'zip'):
+            for filepath in glob.glob(f"*.{ext}"):
+                try:
+                    os.remove(filepath)
+                except Exception as e:
+                    print(f"Failed to delete {filepath}: {e}")
 
     def print(self, header, message):
         self.rotate_log_if_needed()

@@ -29,7 +29,7 @@ class Buffer:
             os.makedirs(self._folder_path)
 
         self.get_exist_files()
-        self.make_absent_files()
+        self._make_absent_files()
 
     def get_exist_files(self):
         file_list = os.listdir(self._folder_path)
@@ -56,7 +56,7 @@ class Buffer:
             self._buffer_cmd_memory[index][0] = ERASE if set_cmd == ERASE else EMPTY
             self._buffer_cmd_memory[index][1] = ERASE_VALUE if set_cmd == ERASE else EMPTY_VALUE
 
-    def make_absent_files(self):
+    def _make_absent_files(self):
         for index, buf in enumerate(self._buf_lst):
             if buf != '':
                 continue
@@ -99,11 +99,11 @@ class Buffer:
         if self._buffer_cmd_memory[lba][0] != WRITE and self._buffer_cnt == BUFFER_SIZE:
             self._flush(self._buffer_cnt)
 
-        self._buffer_cnt = 0
-        self._set_buffer_with_write(WRITE, lba, value)
-
-        self._merge_writes()
+        self._set_buffer_all_empty()
         self._merge_erases()
+
+        self._set_buffer_with_write(WRITE, lba, value)
+        self._merge_writes()
 
         self._output_txt.write("")
 
@@ -111,16 +111,24 @@ class Buffer:
         lba = int(sys_argv[2])
         size = int(sys_argv[3])
 
-        self._buffer_cnt = 0
+        self._set_buffer_all_empty()
         self._set_buffer_with_erase(ERASE, lba, size)
 
-        self._merge_writes()
         self._merge_erases()
+        self._merge_writes()
+
+    def _set_buffer_all_empty(self):
+        self._buffer_cnt = 0
+        for index in range (BUFFER_SIZE):
+            self._buf_lst[index] = f'{index+1}_empty'
 
     def _merge_writes(self):
         for lba, memory_value in enumerate(self._buffer_cmd_memory):
             if memory_value[0] != WRITE:
                 continue
+            if self._buffer_cnt == BUFFER_SIZE:
+                self._flush(self._buffer_cnt)
+
             self._buf_lst[self._buffer_cnt] = f"{self._buffer_cnt + 1}_W_{lba}_0x{memory_value[1]:08X}"
             self._buffer_cnt += 1
 

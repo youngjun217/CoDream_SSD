@@ -1,6 +1,10 @@
 import os
 from ssd import SSD
 
+EMPTY = 0
+EMPTY_VALUE = 0x00000000
+WRITE = 1
+ERASE = 2
 
 class Buffer:
 
@@ -9,6 +13,8 @@ class Buffer:
         self.buf_lst = []
         self.create()
         self.ssd = SSD()
+        self.command_memory = [EMPTY] * 100
+        self.value_memory = [EMPTY_VALUE] * 100
 
     def create(self):
         if not os.path.exists(self.folder_path):
@@ -47,74 +53,67 @@ class Buffer:
             if command == "E":
                 ssd.erase_ssd(lba, value)
 
-
     def flush(self):
         self.execute()
         for idx, file in enumerate(self.buf_lst):
             os.rename(f"{self.folder_path}/{file}", f"{self.folder_path}/{idx+1}_empty")
             self.buf_lst[idx] = f"{idx + 1}_empty"
 
-
     def run(self, sys_argv):
+        self.set_buffer(sys_argv)
         cmd = sys_argv[1]
         lba = int(sys_argv[2])
-        buffer_lst = self.buf_lst
-        if cmd == 'R':
-            for buffer_cmd in buffer_lst:
-                cmd_lst = buffer_cmd.split('_')
-                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
-                    self.ssd._output_txt.write(f"{lba:02d} {cmd_lst[3]}\n")
-                    return
-                if cmd_lst[1] == 'E':
-                    start_lba = int(cmd_lst[2])
-                    size = int(cmd_lst[3])
-                    if start_lba <= lba < start_lba + size:
-                        self.ssd._output_txt.write(f"{lba:02d} 0x00000000\n")
-                        return
-            self.ssd.run(sys_argv)
 
-        elif cmd == 'W':
-            combine_idx = -1
-            for idx, buffer_cmd in enumerate(buffer_lst):
-                if 'empty' in buffer_cmd:
-                    break
-                cmd_lst = buffer_cmd.split('_')
-                if cmd_lst[1] == 'W' and int(cmd_lst[2]) == lba:
-                    combine_idx = idx
-                if cmd_lst[1] == 'E' and int(cmd_lst[2]) == lba and int(cmd_lst[3]) == 1:
-                    combine_idx = idx
+        if cmd == "R":
+            self.ssd._output_txt.write(f"{lba:02d} 0x{self.value_memory[lba]:08X}\n")  #f"0x{value:08X}"
+        if cmd == "W":
+            self.ssd._output_txt.write("")
 
-            if combine_idx >= 0:
-                value = int(sys_argv[3], 16)
-                old_name = f"./buffer/{buffer_lst[combine_idx]}"
-                new_name = f"./buffer/{combine_idx}_{cmd}_{lba}_{value}"
-                os.rename(old_name, new_name)
+        #if buffer size is over 6, flush feature is needed. it's not developed yet.
 
+    def set_buffer(self, sys_argv):
+        self.buf_lst = []
+        cmd = sys_argv[1]
+        lba = int(sys_argv[2])
+        value = int(sys_argv[3]) if cmd != "R" else 0
 
-        elif cmd == 'E':
-            size = int(sys_argv[3])
-            buf_list = self.buffer.buf_lst
+        if cmd == "W":
+            self.command_memory[lba] = WRITE
+            self.value_memory[lba] = value
 
-            for buf in buf_list:
-                idx, buf_cmd, buf_lba, buf_value = buf.split('_')
-                if buf_cmd == "empty":
-                    return True
+        if cmd == "E":
+            for erase_lba in range(lba, lba+value):
+                self.command_memory[erase_lba] = ERASE
+                self.value_memory[erase_lba] = EMPTY_VALUE
 
-                if buf_cmd == "E":
-                    # 새로운 범위가 기존 E의 범위를 포함함(기존 E를 새로운 E가 대체)
-                    if lba <= buf_lba and buf_value <= size:
-                        buf_list[int(idx) - 1] = f"{idx}_{lba}_{size}"
-                        return True
-                        ### 이렇게 합쳤는데 기존에 있던 범위가 겹치거나 이어질 때 (기존 E와 새로운 E를 합침) 한 번더 작업이 필요함
+        #update buffer
+        prev_command = EMPTY
+        start_lba = -1
+        erase_size = 0
+        for memory_lba, saved_command in enumerate(self.command_memory):
+            if saved_command == WRITE:
+                self.buf_lst.append(f"{len(self.buf_lst)+1}_W_{memory_lba}_0x{self.value_memory[memory_lba]:08X}")
+                if prev_command == ERASE:
+                    self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
+                prev_command = WRITE
+                continue
 
-                    # 새로운 범위가 기존범위와 어느정도 겹치거나 이어질 때 (기존 E와 새로운 E를 합침)
-                    left_extend = lba <= buf_lba and buf_lba + buf_value <= lba + size
-                    right_extend = lba <= buf_lba + buf_value <= lba + size
-                    if (left_extend and buf_lba+buf_value-lba+1 <= 10) or (right_extend and lba+size-buf_lba+1 <= 10):
-                        buf_list[int(idx) - 1] = f"{idx}_{lba}_{size}"
-                        return True
+            if saved_command == EMPTY:
+                if prev_command == ERASE:
+                    self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
+                prev_command = EMPTY
+                continue
 
-                if buf_cmd == "W":
-                    # 새로운 범위가 기존 W의 범위를 포함함(기존 W를 새로운 E가 대체)
-                    if lba <= buf_lba and buf_lba <= lba + size:
-                        buf_list[int(idx) - 1] = f"{idx}_{lba}_{size}"
+            if saved_command == ERASE:
+                if prev_command != ERASE:
+                    start_lba = memory_lba
+                    erase_size = 1
+                    prev_command = ERASE
+                else:
+                    erase_size += 1
+                    if erase_size == 10:
+                        self.buf_lst.append(f"{len(self.buf_lst)+1}_E_{start_lba}_{erase_size}")
+                        prev_command = EMPTY
+
+        while len(self.buf_lst) != 5:
+            self.buf_lst.append(f"{len(self.buf_lst)+1}_empty")

@@ -123,7 +123,6 @@ class ShellEraseRangeCommand(Command):
         erase_cmd = ShellEraseCommand(self.shell, self.st_lba, erase_range)
         erase_cmd.execute()
 
-
 class ShellFullWriteCommand(Command):
     def __init__(self, shell, value):
         super().__init__(shell)
@@ -221,7 +220,6 @@ class ShellEraseAndWriteAgingCommand(Command):
         print('PASS')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
-
 class ShellWriteReadAgingCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
@@ -252,8 +250,11 @@ class ShellFlushCommand:
         super().__init__(shell)
 
     def execute(self):
+        self.shell.send_command('F')  #??
         self.shell.ssd_interface.run()
-        pass
+
+
+        self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 class ShellHelpCommand(Command):
     def __init__(self, shell):

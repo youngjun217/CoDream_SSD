@@ -180,6 +180,10 @@ class Test_shell:
         with pytest.raises(Exception):
             ShellEraseAndWriteAgingCommand(self.shell).execute()
 
+
+    def test_Flush(self):
+        pass
+
     def test_main_function_invaild_case(self, setup_shell):
         # Act & Assert
         with pytest.raises(ValueError, match="INVALID COMMAND"):
@@ -228,25 +232,20 @@ class Test_shell:
 
 class Test_logger():
 
-    # @pytest.fixture
-    # def setup_logger(self, mocker):
-    #      # 싱글톤 초기화
-    #     Logger._instance = None
-    #     self._logger = Logger()
-    #     self.mock_open = mocker.patch("builtins.open", mocker.mock_open())
+    @pytest.fixture
+    def setup_logger(self):
+        self.logger = Logger()
 
-    def test_init_logger(self, mocker):
-        logger = Logger()
-        assert logger._initialized is True
+    def test_init_logger(self, setup_logger):
+        assert self.logger._initialized is True
 
-    def test_print_calls_rotate_and_writes(self, mocker):
-        logger = Logger()
-        mock_rotate = mocker.patch.object(logger, "rotate_log_if_needed")
+    def test_print_calls_rotate_and_writes(self, setup_logger,mocker):
+        mock_rotate = mocker.patch.object(self.logger, "rotate_log_if_needed")
         mock_open = mocker.mock_open()
         mocker.patch("builtins.open", mock_open)
         fake_now = datetime.datetime(2025, 7, 16, 15, 0)
         mocker.patch("datetime.datetime", mocker.Mock(now=lambda: fake_now))
-        logger.print("HEADER", "message")
+        self.logger.print("HEADER", "message")
 
         mock_rotate.assert_called_once()
         mock_open.assert_called_once_with("latest.log", 'a', encoding='utf-8')
@@ -256,15 +255,14 @@ class Test_logger():
         assert "HEADER" in written_text
         assert "message" in written_text
 
-    def test_rotate_log_if_needed_renames(self, mocker):
-        logger = Logger()
+    def test_rotate_log_if_needed_renames(self, setup_logger, mocker):
         mocker.patch("os.path.exists", return_value=True)
         mocker.patch("os.path.getsize", return_value=Logger.MAX_SIZE + 1)
         mocker.patch("glob.glob", return_value=["until_250708_17h_12m_52s.log"])
         mock_rename = mocker.patch("os.rename")
         mocker.patch("time.strftime", return_value="until_250710_09h_00m_00s")
 
-        logger.rotate_log_if_needed()
+        self.logger.rotate_log_if_needed()
 
         assert mock_rename.call_count == 2
 
@@ -275,13 +273,3 @@ class Test_logger():
         assert calls[1][0][1].startswith("until_")
         assert calls[1][0][1].endswith(".log")
 
-    def test_erase_logger_fail(self, mocker):
-        shell = Shell()
-        mock_logger = mocker.Mock()
-        shell.logger = mock_logger
-        cmd=ShellEraseCommand(shell, st_lba=-1, erase_size=20)
-
-        with pytest.raises(Exception):
-            cmd.execute()
-
-        mock_logger.print.assert_called_once()

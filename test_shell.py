@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import pytest
-from unittest.mock import call, MagicMock
+from unittest.mock import call, MagicMock, patch
 import unittest
 from unittest import mock
 from shell import *
@@ -232,6 +232,18 @@ class Test_shell:
         self.shell.option_main("non_existing_file.txt")
         # Assert
         self.mock_print.assert_called_with('ERROR')
+
+    @patch('ssd.SSD.run')
+    def test_SSDConcreteInterface_run(self, mock_ssd_run):
+        shell = Shell()
+        shell.send_command('R', 1)
+        assert mock_ssd_run.call_count == 1
+
+    @patch('ssd_texts.SSDOutput.read')
+    def test_SSDConcreteInterface_get_response(self, mock_ssd_output_read):
+        shell = Shell()
+        shell.get_response()
+        assert mock_ssd_output_read.call_count == 1
 
 
 class Test_logger():

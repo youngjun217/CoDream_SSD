@@ -22,7 +22,7 @@ class Test_shell:
         self.shell = Shell()
         self.shell.ssd_interface = mocker.Mock()
 
-    @pytest.mark.parametrize('command', ['E', 'W', 'R'])
+    @pytest.mark.parametrize('command', ['E', 'W', 'R', 'F'])
     def test_send_command(self, setup_ssdinterface, command):
         self.shell.ssd_interface.run.return_value = 'OK'
         result = self.shell.send_command(command, 10, 10)

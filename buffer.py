@@ -60,8 +60,8 @@ class Buffer:
         for index, buf in enumerate(self._buf_lst):
             if buf != '':
                 continue
-            file_name = f'{index}_empty'
-            file_path = os.path.join(self._folder_path, f'{index}_empty')
+            file_name = f'{index+1}_empty'
+            file_path = os.path.join(self._folder_path, file_name)
             open(file_path, 'a').close()
             self._buf_lst[index] = file_name
 
@@ -138,16 +138,16 @@ class Buffer:
         for lba, memory_value in enumerate(self._buffer_cmd_memory):
             if memory_value[0] != ERASE:
                 if erase_cnt > 0:
-                    erase_cnt = self._set_erace_command(first_lba, erase_cnt)
+                    erase_cnt = self._set_erase_command(first_lba, erase_cnt)
                 continue
 
             first_lba = lba if erase_cnt == 0 else first_lba
             erase_cnt += 1
 
             if erase_cnt == MAX_ERASE_SIZE:
-                erase_cnt = self._set_erace_command(first_lba, erase_cnt)
+                erase_cnt = self._set_erase_command(first_lba, erase_cnt)
 
-    def _set_erace_command(self, lba, size):
+    def _set_erase_command(self, lba, size):
         if self._buffer_cnt == BUFFER_SIZE:
             self._flush(self._buffer_cnt)
 

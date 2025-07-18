@@ -241,15 +241,12 @@ class ShellWriteReadAgingCommand(Command):
         self.shell.logger.print(f"{self.execute.__qualname__}()", "PASS")
 
 
-class ShellFlushCommand:
+class ShellFlushCommand(Command):
     def __init__(self, shell):
         super().__init__(shell)
 
     def execute(self):
-        self.shell.send_command('F')  #??
-        self.shell.ssd_interface.run()
-
-
+        self.shell.send_command('F')
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
 class ShellHelpCommand(Command):
@@ -280,7 +277,7 @@ class Shell:
         self.logger = Logger()
         self.ssd_interface: SSDInterface = SSDConcreteInterface()
 
-    def send_command(self, command, lba, value=None):
+    def send_command(self, command, lba=0, value=None):
         if command == 'W':
             if type(value) is int:
                 value = f"0x{value:08X}"

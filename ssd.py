@@ -1,5 +1,4 @@
 import sys
-import os
 
 from buffer import Buffer
 from ssd_commands import SSDCommand, SSDErrorCommand, SSDWriteCommand, SSDReadCommand, SSDEraseCommand, SSDFlushCommand
@@ -32,15 +31,15 @@ class SSD:
         cmd = sys_argv[1]
 
         if cmd == 'W':
-            return SSDWriteCommand(), sys_argv[2:]
+            return SSDWriteCommand(SSDNand(), SSDOutput()), sys_argv[2:]
         elif cmd == 'R':
-            return SSDReadCommand(), sys_argv[2:]
+            return SSDReadCommand(SSDNand(), SSDOutput()), sys_argv[2:]
         elif cmd == 'E':
-            return SSDEraseCommand(), sys_argv[2:]
+            return SSDEraseCommand(SSDNand(), SSDOutput()), sys_argv[2:]
         elif cmd == 'F':
-            return SSDFlushCommand(), sys_argv[2:]
+            return SSDFlushCommand(SSDNand(), SSDOutput()), sys_argv[2:]
         else:
-            return SSDErrorCommand(), []
+            return SSDErrorCommand(SSDNand(), SSDOutput()), []
 
 
 if __name__ == "__main__":

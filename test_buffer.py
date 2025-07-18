@@ -2,9 +2,11 @@ import pytest
 import os.path
 from pytest_mock import MockerFixture
 from buffer import Buffer, BUFFER_FOLDER_PATH, WRITE, ERASE, EMPTY_VALUE, ERASE_VALUE
+from unittest.mock import call
 
 TEST_LBA = 3
 TEST_WRITE_VALUE = 0x1234ABCD
+
 
 @pytest.fixture
 def buffer(mocker: MockerFixture):
@@ -18,6 +20,7 @@ def buffer(mocker: MockerFixture):
     buffer._buffer_cnt = 0
     return buffer
 
+
 def test_create_when_folder_does_not_exist(mocker: MockerFixture):
     mocker.patch("os.path.exists", return_value=False)
     makedirs_mock = mocker.patch("os.makedirs")
@@ -27,11 +30,61 @@ def test_create_when_folder_does_not_exist(mocker: MockerFixture):
     Buffer()
     makedirs_mock.assert_called_once_with(BUFFER_FOLDER_PATH)
 
+
+def test_create_some_files_not_exist(mocker: MockerFixture):
+    mocker.patch("os.path.exists", return_value=False)
+    makedirs_mock = mocker.patch("os.makedirs")
+    mocker.patch("os.listdir", return_value=['1_W_1_0x00001111', '2_E_10_8', '3_empty', '4_empty', '5_empty'])
+    mocker.patch("builtins.open", mocker.mock_open())
+    buffer = Buffer()
+    makedirs_mock.assert_called_once_with(BUFFER_FOLDER_PATH)
+
+    assert buffer._buffer_cnt == 2
+    assert buffer._buf_lst == ['1_W_1_0x00001111', '2_E_10_8', '3_empty', '4_empty', '5_empty']
+
+
+def test_read_run_with_buffer(mocker: MockerFixture):
+    mocker.patch("os.path.exists", return_value=False)
+    makedirs_mock = mocker.patch("os.makedirs")
+    mocker.patch("os.listdir",
+                 return_value=["1_W_1_0x00000001", "2_E_2_3", "3_W_3_0x00000003", "4_E_4_1", "5_W_5_0x00000005"])
+    mocker.patch("builtins.open", mocker.mock_open())
+    mocker.patch("buffer.Buffer._update_buffer_files")
+
+    buffer = Buffer()
+    mocker.patch("ssd_texts.SSDOutput.write")
+    buffer.run([None, 'R', 10])
+
+    assert buffer._buf_lst == ["1_W_1_0x00000001", "2_E_2_3", "3_W_3_0x00000003", "4_E_4_1", "5_W_5_0x00000005"]
+    assert buffer._buffer_cnt == 5
+    assert buffer._run_command == [[None, 'R', 10]]
+    assert buffer._output_txt.write.call_count == 0
+
+
+def test_read_direct_return_with_buffer(mocker: MockerFixture):
+    mocker.patch("os.path.exists", return_value=False)
+    makedirs_mock = mocker.patch("os.makedirs")
+    mocker.patch("os.listdir",
+                 return_value=["1_W_1_0x00000001", "2_E_2_3", "3_W_3_0x00000003", "4_E_4_1", "5_W_5_0x00000005"])
+    mocker.patch("builtins.open", mocker.mock_open())
+    mocker.patch("buffer.Buffer._update_buffer_files")
+
+    buffer = Buffer()
+    mocker.patch("ssd_texts.SSDOutput.write")
+    buffer.run([None, 'R', 1])
+
+    assert buffer._buf_lst == ["1_W_1_0x00000001", "2_E_2_3", "3_W_3_0x00000003", "4_E_4_1", "5_W_5_0x00000005"]
+    assert buffer._buffer_cnt == 5
+    assert buffer._run_command == []
+    buffer._output_txt.write.assert_has_calls([call("01 0x00000001\n")])
+
+
 def test_write_command_updates_memory(buffer: Buffer):
     sys_argv = [None, 'W', str(TEST_LBA), f"0x{TEST_WRITE_VALUE:08X}"]
-    buffer._set_buffer_with_write(WRITE, int(sys_argv[2]), int(sys_argv[3],16))
+    buffer._set_buffer_with_write(WRITE, int(sys_argv[2]), int(sys_argv[3], 16))
     assert buffer._buffer_cmd_memory[TEST_LBA][0] == WRITE
     assert buffer._buffer_cmd_memory[TEST_LBA][1] == TEST_WRITE_VALUE
+
 
 def test_flush_calls_remove_buffer_and_put_run_command(buffer: Buffer, mocker: MockerFixture):
     buffer._buf_lst = [
@@ -50,6 +103,69 @@ def test_flush_calls_remove_buffer_and_put_run_command(buffer: Buffer, mocker: M
     assert mock_remove.call_count == 5
     assert buffer._buf_lst == ['1_empty', '2_empty', '3_empty', '4_empty', '5_empty']
     assert buffer._buffer_cnt == 0
+
+
+def test_erase_calls_when_buffer_full(mocker: MockerFixture):
+    mocker.patch("os.path.exists", return_value=False)
+    makedirs_mock = mocker.patch("os.makedirs")
+    mocker.patch("os.listdir", return_value=["1_E_4_1", "2_W_1_0x00000001", "3_W_2_0x00000002", "4_W_3_0x00000003",
+                                             "5_W_5_0x00000004"])
+    mocker.patch("builtins.open", mocker.mock_open())
+    mocker.patch("buffer.Buffer._update_buffer_files")
+
+    buffer = Buffer()
+
+    buffer.run([None, 'E', 10, 2])
+
+    assert buffer._buf_lst == ['1_W_5_0x00000004', '2_empty', '3_empty', '4_empty', '5_empty']
+    assert buffer._buffer_cnt == 1
+
+
+def test_erase_calls_when_buffer_full_with_all_Erase(buffer: Buffer, mocker: MockerFixture):
+    mocker.patch("os.path.exists", return_value=False)
+    makedirs_mock = mocker.patch("os.makedirs")
+    mocker.patch("os.listdir", return_value=["1_E_1_8", "2_E_10_8", "3_E_20_8", "4_E_40_8", "5_E_50_8"])
+    mocker.patch("builtins.open", mocker.mock_open())
+    mocker.patch("buffer.Buffer._update_buffer_files")
+
+    buffer = Buffer()
+
+    buffer.run([None, 'E', 70, 10])
+
+    assert buffer._buf_lst == ['1_E_70_10', '2_empty', '3_empty', '4_empty', '5_empty']
+    assert buffer._buffer_cnt == 1
+
+
+def test_flush_calls_when_buffer_full(buffer: Buffer, mocker: MockerFixture):
+    buffer._buf_lst = [
+        "1_W_1_0x00000001",
+        "2_E_2_3",
+        "3_W_3_0x00000003",
+        "4_E_4_1",
+        "5_W_5_0x00000005"
+    ]
+    buffer._buffer_cnt = 5
+
+    buffer.run([None, 'W', 10, '0x0000000A'])
+
+    assert buffer._buf_lst == ['1_W_10_0x0000000A', '2_empty', '3_empty', '4_empty', '5_empty']
+    assert buffer._buffer_cnt == 1
+
+
+def test_erase_merge(buffer: Buffer, mocker: MockerFixture):
+    mocker.patch("os.path.exists", return_value=False)
+    makedirs_mock = mocker.patch("os.makedirs")
+    mocker.patch("os.listdir", return_value=["1_E_1_8", "2_empty", "3_empty", "4_empty", "5_empty"])
+    mocker.patch("builtins.open", mocker.mock_open())
+    mocker.patch("buffer.Buffer._update_buffer_files")
+
+    buffer = Buffer()
+
+    buffer.run([None, 'E', 7, 10])
+
+    assert buffer._buf_lst == ['1_E_1_10', '2_E_11_6', '3_empty', '4_empty', '5_empty']
+    assert buffer._buffer_cnt == 2
+
 
 def test_remove_buffer_and_put_run_command_write_full_buf(buffer: Buffer):
     buffer._buffer_cmd_memory[3][0] = WRITE
@@ -84,7 +200,6 @@ def test_remove_buffer_and_put_run_command_erase_full_buf(buffer: Buffer):
     assert buffer._run_command == [[None, 'E', 5, '2']]
 
 
-
 def test_multiple_writes_to_same_lba_overwrites_previous(buffer: Buffer):
     lba = 3
     first_value = 0xAAAA1111
@@ -101,8 +216,8 @@ def test_multiple_writes_to_same_lba_overwrites_previous(buffer: Buffer):
     expected_entry = f"{lba_entries[0].split('_')[0]}_W_{lba}_0x{second_value:08X}"
     assert lba_entries[0] == expected_entry
 
-def test_multiple_erases_to_same_range_are_merged(buffer: Buffer):
 
+def test_multiple_erases_to_same_range_are_merged(buffer: Buffer):
     first_lba = 11
     first_size = 4
     second_lba = 14
@@ -121,7 +236,6 @@ def test_multiple_erases_to_same_range_are_merged(buffer: Buffer):
 
 
 def test_erase_commands_split_by_write_are_not_merged(buffer: Buffer, mocker: MockerFixture):
-
     buffer._check_buffer_erase([None, 'E', '10', '2'])  # ERASE 10,11
     buffer._check_buffer_write([None, 'W', '12', '0xABCD1234'])  # WRITE 12
     buffer._check_buffer_erase([None, 'E', '13', '2'])  # ERASE 13,14
@@ -137,6 +251,7 @@ def test_erase_commands_split_by_write_are_not_merged(buffer: Buffer, mocker: Mo
     assert any("_E_10_2" in entry for entry in erase_entries)
     assert any("_E_13_2" in entry for entry in erase_entries)
 
+
 def test_buffer_create():
     buffer = Buffer()
     file_list = os.listdir(BUFFER_FOLDER_PATH)
@@ -144,6 +259,16 @@ def test_buffer_create():
     assert os.path.exists(BUFFER_FOLDER_PATH)
     assert buffer._buf_lst == file_list
 
+
 def test_buffer_get_buf():
     buffer = Buffer()
     assert ('W', 1, '0x00000001') == buffer._get_buf_information("2_W_1_0x00000001")
+
+
+@pytest.mark.parametrize("func, sys_argv",
+                         [("_check_buffer_read", [None, 'R', 1]), ("_check_buffer_write", [None, 'W', 1, 0x0000001]),
+                          ("_check_buffer_erase", [None, 'E', 1, 1]), ("_flush", [None, 'F'])])
+def test_buffer_run(mocker: MockerFixture, func, sys_argv):
+    mocker.patch(f"buffer.Buffer.{func}")
+    buffer = Buffer()
+    assert buffer.run(sys_argv) == []

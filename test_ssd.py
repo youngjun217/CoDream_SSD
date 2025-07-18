@@ -1,7 +1,8 @@
 import random
-from unittest.mock import call
+from unittest.mock import call, patch
 import pytest
 
+from buffer import Buffer
 from ssd import SSD, SSDOutput, SSDNand
 from pytest_mock import MockerFixture
 
@@ -172,7 +173,7 @@ def test_singleton_ssd_output(output):
 @pytest.mark.parametrize("input",
                          [[None, 'A'], [None, 'W', 10], [None, 'W', 10, '1', 1], [None, 'R'],
                           [None, 'R', 99, '0xABCDEF90'],
-                          [None, 'E', 10], [None, 'E', 10, 1, 1]])
+                          [None, 'E', 10], [None, 'E', 10, 1, 1], [None, 'F', 10, 1, 1], [None, 'F', 10]])
 def test_ssd_run_wrong_command(ssd, input):
     with pytest.raises(ValueError, match="ERROR"):
         ssd.run(input)
@@ -191,6 +192,15 @@ def test_erase_success(ssd):
     for i in range(11, 16):
         assert ssd_nand.read()[i] == f"{i:02d} 0x00000000\n"
 
+def test_erace_out_of_range(ssd):
+    ssd_nand = SSDNand()
+    for i in range(100):
+        ssd.run([None, 'W', i, dec_to_hex(TEST_WRITE_VALUE)])
+
+    ssd.run([None, 'E', 99, 2])
+    for i in range(99, 100):
+        assert ssd_nand.read()[i] == f"{i:02d} 0x00000000\n"
+    assert len(ssd_nand.read()) == 100
 
 def test_erase_size_error(ssd):
     with pytest.raises(ValueError, match="ERROR"):
@@ -218,3 +228,23 @@ def test_erase_wrong_index_error_not_digit(ssd, lba, size):
 def test_wrong_command_error(ssd, cmd):
     with pytest.raises(ValueError, match="ERROR"):
         ssd.run([None, cmd, 0, 100])
+
+@patch('buffer.Buffer.run')
+def test_flush_success(mock_buffer_run):
+    ssd = SSD()
+    ssd_nand = SSDNand()
+    mock_buffer_run.return_value = [[None, 'W', 1, '0x1234ABCD']]
+
+    ssd.run([None, 'F'])
+
+    assert ssd_nand.read()[1] == "01 0x1234ABCD\n"
+
+
+@patch('buffer.Buffer.run')
+def test_no_command(mock_buffer_run):
+    ssd = SSD()
+    ssd_nand = SSDNand()
+    ssd_output = SSDOutput()
+    mock_buffer_run.return_value = []
+
+    assert ssd.run([None, 'F']) == None

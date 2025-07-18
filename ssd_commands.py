@@ -21,16 +21,13 @@ class SSDCommand(ABC):
             self._raise_error()
 
     @abstractmethod
-    def _check_input_validity(self, args: list):
-        pass
+    def _check_input_validity(self, args: list): pass
 
     @abstractmethod
-    def args_parser(self, args: list):
-        pass
+    def args_parser(self, args: list): pass
 
     @abstractmethod
-    def execute(self):
-        pass
+    def execute(self): pass
 
 
 class SSDErrorCommand(SSDCommand):

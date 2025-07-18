@@ -255,7 +255,6 @@ class ShellFlushCommand:
 
 
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
-        pass
 
 
 class Shell:

@@ -182,8 +182,11 @@ class Test_shell:
             ShellEraseAndWriteAgingCommand(self.shell).execute()
 
 
-    def test_Flush(self):
-        pass
+    def test_Flush(self, setup_shell):
+        # Act
+        ShellFlushCommand(self.shell).execute()
+        # Assert
+        assert self.shell.send_command.call_count == 1
 
     def test_main_function_invaild_case(self, setup_shell):
         # Act & Assert

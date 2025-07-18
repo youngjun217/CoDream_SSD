@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 
-from ssd_texts import SSDNand, SSDOutput, SSDText
+from ssd_texts import SSDNand, SSDOutput, SSDText, MAX_NAND_SIZE
 
 
 class SSDCommand(ABC):
-    def __init__(self):
-        self._nand_txt: SSDText = SSDNand()
-        self._output_txt: SSDText = SSDOutput()
+    def __init__(self, nand_txt: SSDText, output_txt: SSDText):
+        self._nand_txt = nand_txt
+        self._output_txt = output_txt
 
     def run_command(self, args: list):
         self.args_parser(args)
@@ -31,8 +31,8 @@ class SSDCommand(ABC):
 
 
 class SSDErrorCommand(SSDCommand):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, nand_txt: SSDText, output_txt: SSDText):
+        super().__init__(nand_txt, output_txt)
 
     def _check_input_validity(self, args: list):
         return False
@@ -43,8 +43,8 @@ class SSDErrorCommand(SSDCommand):
 
 
 class SSDReadCommand(SSDCommand):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, nand_txt: SSDText, output_txt: SSDText):
+        super().__init__(nand_txt, output_txt)
         self._lba = 0
 
     def _check_input_validity(self, args: list):
@@ -52,7 +52,7 @@ class SSDReadCommand(SSDCommand):
             return False
 
         self.args_parser(args)
-        if not 0 <= self._lba < 100:
+        if not 0 <= self._lba < MAX_NAND_SIZE:
             return False
         return True
 
@@ -69,8 +69,8 @@ class SSDReadCommand(SSDCommand):
 
 
 class SSDWriteCommand(SSDCommand):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, nand_txt: SSDText, output_txt: SSDText):
+        super().__init__(nand_txt, output_txt)
         self._lba = 0
         self._value = 0
 
@@ -80,7 +80,7 @@ class SSDWriteCommand(SSDCommand):
             return False
 
         self.args_parser(args)
-        if not 0 <= self._lba < 100:
+        if not 0 <= self._lba < MAX_NAND_SIZE:
             return False
         if not 0 <= self._value <= 0xFFFFFFFF:
             return False
@@ -108,8 +108,8 @@ class SSDWriteCommand(SSDCommand):
 
 
 class SSDEraseCommand(SSDCommand):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, nand_txt: SSDText, output_txt: SSDText):
+        super().__init__(nand_txt, output_txt)
         self._lba = 0
         self._size = 0
 
@@ -118,7 +118,7 @@ class SSDEraseCommand(SSDCommand):
             return False
 
         self.args_parser(args)
-        if not 0 <= self._lba < 100:
+        if not 0 <= self._lba < MAX_NAND_SIZE:
             return False
         if not 1 <= self._size <= 10:
             return False
@@ -133,8 +133,8 @@ class SSDEraseCommand(SSDCommand):
 
     def execute(self):
         end_index = self._lba + self._size
-        if end_index > 100:
-            end_index = 100
+        if end_index > MAX_NAND_SIZE:
+            end_index = MAX_NAND_SIZE
 
         ssd_nand_txt = self._nand_txt.read()
         for i in range(self._lba, end_index):
@@ -143,8 +143,8 @@ class SSDEraseCommand(SSDCommand):
 
 
 class SSDFlushCommand(SSDCommand):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, nand_txt: SSDText, output_txt: SSDText):
+        super().__init__(nand_txt, output_txt)
         self._lba = 0
         self._size = 0
 

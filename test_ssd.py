@@ -6,6 +6,8 @@ from buffer import Buffer
 from ssd import SSD, SSDOutput, SSDNand
 from pytest_mock import MockerFixture
 
+from ssd_texts import MAX_NAND_SIZE
+
 TEST_LBA = 3
 TEST_WRITE_VALUE = 0x1298CDEF
 ERROR_MESSAGE = "ERROR"
@@ -143,7 +145,7 @@ def test_nand_write():
     ssd_nand = SSDNand()
 
     ssd_nand_txt = []
-    for i in range(0, 100):
+    for i in range(0, MAX_NAND_SIZE):
         rand_32bit = random.randint(0, 0xFFFFFFFF)
         newline = f"{i:02d} 0x{rand_32bit:08X}\n"
         ssd_nand_txt.append(newline)
@@ -181,7 +183,7 @@ def test_ssd_run_wrong_command(ssd, input):
 
 def test_erase_success(ssd):
     ssd_nand = SSDNand()
-    for i in range(100):
+    for i in range(MAX_NAND_SIZE):
         ssd.run([None, 'W', i, dec_to_hex(TEST_WRITE_VALUE)])
 
     ssd.run([None, 'E', 0, 10])
@@ -194,13 +196,13 @@ def test_erase_success(ssd):
 
 def test_erace_out_of_range(ssd):
     ssd_nand = SSDNand()
-    for i in range(100):
+    for i in range(MAX_NAND_SIZE):
         ssd.run([None, 'W', i, dec_to_hex(TEST_WRITE_VALUE)])
 
     ssd.run([None, 'E', 99, 2])
-    for i in range(99, 100):
+    for i in range(99, MAX_NAND_SIZE):
         assert ssd_nand.read()[i] == f"{i:02d} 0x00000000\n"
-    assert len(ssd_nand.read()) == 100
+    assert len(ssd_nand.read()) == MAX_NAND_SIZE
 
 def test_erase_size_error(ssd):
     with pytest.raises(ValueError, match="ERROR"):
@@ -212,7 +214,7 @@ def test_erase_size_error(ssd):
 
 def test_erase_wrong_index_error(ssd):
     with pytest.raises(ValueError, match="ERROR"):
-        ssd.run([None, 'E', 0, 100])
+        ssd.run([None, 'E', 0, MAX_NAND_SIZE])
 
     with pytest.raises(ValueError, match="ERROR"):
         ssd.run([None, 'E', -1, 10])

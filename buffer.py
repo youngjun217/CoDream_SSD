@@ -1,6 +1,6 @@
 import os
 
-from ssd_texts import SSDOutput, SSDText
+from ssd_texts import SSDOutput, SSDText, MAX_NAND_SIZE
 
 EMPTY = 0
 EMPTY_VALUE = 0x00000000
@@ -20,7 +20,7 @@ class Buffer:
         self._buffer_cnt = 0
         self._output_txt: SSDText = SSDOutput()
         self._run_command = []
-        self._buffer_cmd_memory = [[EMPTY, EMPTY_VALUE] for _ in range(100)]
+        self._buffer_cmd_memory = [[EMPTY, EMPTY_VALUE] for _ in range(MAX_NAND_SIZE)]
 
         self.create()
 

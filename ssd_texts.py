@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+MAX_NAND_SIZE = 100
+
 
 class SSDText(ABC):
     _instance = None
@@ -21,7 +23,7 @@ class SSDNand(SSDText):
         if not hasattr(self, 'initialized'):
             self.initialized = True
             ssd_nand_txt = []
-            for i in range(0, 100):
+            for i in range(0, MAX_NAND_SIZE):
                 newline = f"{i:02d} 0xBABOBABO\n"
                 ssd_nand_txt.append(newline)
             self.write(ssd_nand_txt)
@@ -29,8 +31,8 @@ class SSDNand(SSDText):
     def read(self):
         with open("ssd_nand.txt", 'r', encoding='utf-8') as file:
             lines = file.readlines()
-            fixed_size_lines = lines + ["\n"] * (100 - len(lines))
-            fixed_size_lines = fixed_size_lines[:100]
+            fixed_size_lines = lines + ["\n"] * (MAX_NAND_SIZE - len(lines))
+            fixed_size_lines = fixed_size_lines[:MAX_NAND_SIZE]
             return fixed_size_lines
 
     def write(self, output):

@@ -1,4 +1,5 @@
 import pytest
+import os.path
 from pytest_mock import MockerFixture
 from buffer import Buffer, BUFFER_FOLDER_PATH, WRITE, ERASE, EMPTY_VALUE
 
@@ -134,3 +135,14 @@ def test_erase_commands_split_by_write_are_not_merged(buffer: Buffer, mocker: Mo
     assert len(erase_entries) == 2
     assert any("_E_10_2" in entry for entry in erase_entries)
     assert any("_E_13_2" in entry for entry in erase_entries)
+
+def test_buffer_create():
+    buffer = Buffer()
+    file_list = os.listdir(BUFFER_FOLDER_PATH)
+
+    assert os.path.exists(BUFFER_FOLDER_PATH)
+    assert buffer._buf_lst == file_list
+
+def test_buffer_get_buf():
+    buffer = Buffer()
+    assert ('W', 1, '0x00000001') == buffer._get_buf_information("2_W_1_0x00000001")

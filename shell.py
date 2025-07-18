@@ -102,16 +102,6 @@ class ShellEraseCommand(Command):
             offset += 10
             self.erase_size -= erase_size
 
-        # caller_frame = inspect.stack()[4]
-        # caller_name = caller_frame.code_context
-        #
-        # if 'EraseAndWriteAgingCommand' in caller_name[0]:
-        #     return
-        # stack = inspect.stack()
-        # if len(stack) > 4 and stack[4].code_context:
-        #     caller_name = stack[4].code_context[0]
-        #     if 'EraseAndWriteAgingCommand' in caller_name:
-        #         return
 
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 

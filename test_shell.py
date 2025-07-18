@@ -90,9 +90,10 @@ class Test_shell:
 
     def test_help_output(self, setup_shell):
         # Act
-        self.shell.help()
+        ShellHelpCommand(self.shell).execute()
         # Assert
         assert '[Help]\n' in self.mock_print.call_args[0][0]
+
 
     def test_fullread_success(self, setup_shell):
         # Act

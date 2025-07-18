@@ -43,6 +43,7 @@ class Logger:
             timestamp = time.strftime("until_%y%m%d_%Hh_%Mm_%Ss")
             new_name = f"{timestamp}.log"
             os.rename(self.LOG_FILE, new_name)
+            time.sleep(0.3)
 
 
 class Command(ABC):
@@ -101,11 +102,6 @@ class ShellEraseCommand(Command):
             offset += 10
             self.erase_size -= erase_size
 
-        caller_frame = inspect.stack()[4]
-        caller_name = caller_frame.code_context
-
-        if 'EraseAndWriteAgingCommand' in caller_name[0]:
-            return
 
         self.shell.logger.print(f"{self.execute.__qualname__}()", "DONE")
 
@@ -293,6 +289,8 @@ class Shell:
             return self.ssd_interface.run([None, 'R', lba])
         if command == 'E':
             return self.ssd_interface.run([None, 'E', lba, value])
+        if command == 'F':
+            return self.ssd_interface.run([None, 'F'])
         return None
 
     def get_response(self):

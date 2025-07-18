@@ -43,7 +43,7 @@ class Logger:
             timestamp = time.strftime("until_%y%m%d_%Hh_%Mm_%Ss")
             new_name = f"{timestamp}.log"
             os.rename(self.LOG_FILE, new_name)
-            time.sleep(0.3)
+            time.sleep(1)
 
 
 class Command(ABC):

@@ -24,7 +24,7 @@ class SSDNand(SSDText):
             self.initialized = True
             ssd_nand_txt = []
             for i in range(0, MAX_NAND_SIZE):
-                newline = f"{i:02d} 0xBABOBABO\n"
+                newline = f"{i:02d} 0x0000000O\n"
                 ssd_nand_txt.append(newline)
             self.write(ssd_nand_txt)
 
